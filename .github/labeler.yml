@@ -1,0 +1,16 @@
+feat:
+  - head-branch: ['^feat', 'feat']
+fix:
+  - head-branch: ['^fix', 'fix']
+refactor:
+  - head-branch: ['^refactor', 'refactor']
+docs:
+  - head-branch: ['^docs', 'docs']
+test:
+  - head-branch: ['^test', 'test']
+chore:
+  - head-branch: ['^chore', 'chore']
+rename:
+  - head-branch: ['^rename', 'rename']
+style:
+  - head-branch: ['^style', 'style']
