@@ -1,0 +1,11 @@
+services:
+  spring:
+    image: ghcr.io/teumteumeat/teumteumeat-backend:develop
+    container_name: spring
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./configs:/configs
+    environment:
+      - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}

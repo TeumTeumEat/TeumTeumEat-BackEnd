@@ -1,8 +1,16 @@
 name: Docker Build
 
 on:
-  push:
-    branches: [ "main", "develop" ]
+  workflow_call: # 이 파일이 다른 워크플로우에서 호출될 수 있도록 설정
+    inputs:
+      git_ref:
+        description: 'The Git ref (branch or tag) to check out'
+        required: true
+        type: string
+    outputs:
+      tags:
+        description: "Generated Docker image tags"
+        value: ${{ jobs.build.outputs.tags }}
 
 env:
   REGISTRY: ghcr.io
