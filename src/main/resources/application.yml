@@ -1,3 +1,20 @@
 spring:
   application:
     name: TeumTeumEat
+  datasource:
+    username: root
+    password: Wlals14904!
+    url: jdbc:mysql://localhost:3306/teumteumEat
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        hbm2ddl:
+          auto: update
+  kakao:
+    auth:
+      client: 47a07455a424937d2fc6e37d3086829e
+      redirect: http://localhost:8080/auth/login/kakao
