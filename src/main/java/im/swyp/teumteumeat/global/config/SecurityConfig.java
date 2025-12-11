@@ -4,6 +4,8 @@ import im.swyp.teumteumeat.global.security.exception.CustomAccessDeniedHandler;
 import im.swyp.teumteumeat.global.security.exception.CustomAuthenticationEntryPoint;
 import im.swyp.teumteumeat.global.security.filter.JwtAuthenticationFilter;
 import im.swyp.teumteumeat.global.security.filter.JwtExceptionFilter;
+import im.swyp.teumteumeat.global.security.handler.OAuth2FailureHandler;
+import im.swyp.teumteumeat.global.security.handler.OAuth2SuccessHandler;
 import im.swyp.teumteumeat.global.security.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +30,8 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oauth2FailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -46,6 +50,8 @@ public class SecurityConfig {
                         .userInfoEndpoint(config -> config
                                 .userService(customOAuth2UserService)
                         )
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oauth2FailureHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class)
