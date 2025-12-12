@@ -15,8 +15,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 public class KakaoUtil {
 
@@ -72,7 +73,7 @@ public class KakaoUtil {
         try {
             kakaoProfile = objectMapper.readValue(response2.getBody(), KakaoDTO.KakaoProfile.class);
         } catch (JsonProcessingException e) {
-            System.out.println(Arrays.toString(e.getStackTrace()));
+            log.error("Kakao profile parsing error", e);
             throw new AuthHandler(CommonResponseCode.BAD_REQUEST);
         }
 
