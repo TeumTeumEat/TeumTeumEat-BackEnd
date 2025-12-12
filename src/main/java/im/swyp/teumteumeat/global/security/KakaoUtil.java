@@ -15,16 +15,20 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class KakaoUtil {
 
     @Value("${spring.kakao.auth.client}")
     private String client;
     @Value("${spring.kakao.auth.redirect}")
     private String redirect;
+
+    private final ObjectMapper objectMapper;
 
     public KakaoDTO.OAuthToken requestToken(String accessCode) {
         RestTemplate restTemplate = new RestTemplate();
@@ -41,8 +45,6 @@ public class KakaoUtil {
 
         ResponseEntity<String> response = restTemplate.exchange("https://kauth.kakao.com/oauth/token", HttpMethod.POST,
                 kakaoTokenRequest, String.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
 
         KakaoDTO.OAuthToken oAuthToken = null;
 
@@ -65,8 +67,6 @@ public class KakaoUtil {
 
         ResponseEntity<String> response2 = restTemplate2.exchange(
                 "https://kapi.kakao.com/v2/user/me", HttpMethod.GET, kakaoProfileRequest, String.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
 
         KakaoDTO.KakaoProfile kakaoProfile = null;
 
