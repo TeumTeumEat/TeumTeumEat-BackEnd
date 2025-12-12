@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.config.restTemplate;
+package im.swyp.teumteumeat.global.config.resttemplate;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -64,13 +64,13 @@ public class KakaoUtil {
 
         HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest = new HttpEntity<>(headers2);
 
-        ResponseEntity<String> response2 = restTemplate.exchange(
+        ResponseEntity<String> response = restTemplate.exchange(
                 "https://kapi.kakao.com/v2/user/me", HttpMethod.GET, kakaoProfileRequest, String.class);
 
         KakaoDTO.KakaoProfile kakaoProfile = null;
 
         try {
-            kakaoProfile = objectMapper.readValue(response2.getBody(), KakaoDTO.KakaoProfile.class);
+            kakaoProfile = objectMapper.readValue(response.getBody(), KakaoDTO.KakaoProfile.class);
         } catch (JsonProcessingException e) {
             log.error("Kakao profile parsing error", e);
             throw new AuthHandler(CommonResponseCode.BAD_REQUEST);
