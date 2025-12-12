@@ -29,9 +29,9 @@ public class KakaoUtil {
     private String redirect;
 
     private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate;
 
     public KakaoDTO.OAuthToken requestToken(String accessCode) {
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
@@ -57,7 +57,6 @@ public class KakaoUtil {
     }
 
     public KakaoDTO.KakaoProfile requestProfile(KakaoDTO.OAuthToken oAuthToken) {
-        RestTemplate restTemplate2 = new RestTemplate();
         HttpHeaders headers2 = new HttpHeaders();
 
         headers2.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -65,7 +64,7 @@ public class KakaoUtil {
 
         HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest = new HttpEntity<>(headers2);
 
-        ResponseEntity<String> response2 = restTemplate2.exchange(
+        ResponseEntity<String> response2 = restTemplate.exchange(
                 "https://kapi.kakao.com/v2/user/me", HttpMethod.GET, kakaoProfileRequest, String.class);
 
         KakaoDTO.KakaoProfile kakaoProfile = null;
