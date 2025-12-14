@@ -1,7 +1,7 @@
 package im.swyp.teumteumeat.global.security.dto;
 
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import org.jspecify.annotations.Nullable;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,8 +15,7 @@ import static im.swyp.teumteumeat.global.common.Constants.DELIMITER;
 
 public record CustomUserDetails(
         UserEntity user,
-        OAuth2Attributes oAuth2Attributes
-) implements UserDetails, OAuth2User {
+        OAuth2Attributes oAuth2Attributes) implements UserDetails, OAuth2User {
 
     public CustomUserDetails(UserEntity user) {
         this(user, null);

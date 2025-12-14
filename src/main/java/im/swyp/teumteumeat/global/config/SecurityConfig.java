@@ -25,42 +25,38 @@ import static im.swyp.teumteumeat.global.common.Constants.WHITELIST;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtExceptionFilter jwtExceptionFilter;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    private final CustomAccessDeniedHandler customAccessDeniedHandler;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
-    private final OAuth2FailureHandler oauth2FailureHandler;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final JwtExceptionFilter jwtExceptionFilter;
+        private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+        private final CustomAccessDeniedHandler customAccessDeniedHandler;
+        private final OAuth2SuccessHandler oAuth2SuccessHandler;
+        private final OAuth2FailureHandler oauth2FailureHandler;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
-        http
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .httpBasic(AbstractHttpConfigurer::disable)
+                                .formLogin(AbstractHttpConfigurer::disable)
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(WHITELIST).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login(configurer -> configurer
-                        .userInfoEndpoint(config -> config
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuth2SuccessHandler)
-                        .failureHandler(oauth2FailureHandler)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class)
-                .exceptionHandling(configurer -> configurer
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
-        ;
+                                .authorizeHttpRequests(authorize -> authorize
+                                                .requestMatchers(WHITELIST).permitAll()
+                                                .anyRequest().authenticated())
+                                .oauth2Login(configurer -> configurer
+                                                .userInfoEndpoint(config -> config
+                                                                .userService(customOAuth2UserService))
+                                                .successHandler(oAuth2SuccessHandler)
+                                                .failureHandler(oauth2FailureHandler))
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class)
+                                .exceptionHandling(configurer -> configurer
+                                                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                                                .accessDeniedHandler(customAccessDeniedHandler));
 
-        return http.build();
-    }
+                return http.build();
+        }
 }
