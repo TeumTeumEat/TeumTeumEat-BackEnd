@@ -17,10 +17,10 @@ public class CommuteInfoMapper {
         if (commuteInfo == null) {
             return null;
         }
-        return new CommuteInfoResponse(
-                commuteInfo.getStartTime(),
-                commuteInfo.getEndTime(),
-                commuteInfo.getUsageTime()
-        );
+        return CommuteInfoResponse.builder()
+                .startTime(commuteInfo.getStartTime())
+                .endTime(commuteInfo.getEndTime())
+                .usageTime(commuteInfo.getUsageTime())
+                .build();
     }
 }
