@@ -4,8 +4,10 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoReque
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
+import im.swyp.teumteumeat.domains.user.application.mapper.CommuteInfoMapper;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
+import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
@@ -31,13 +33,13 @@ public class UserUseCase {
     public void updateName(Long userId, NameRequest request) {
         UserEntity user = userService.getUserById(userId);
         String name = request.name();
-
-        user.updateName(name);
+        userService.updateName(user, name);
     }
 
     public CommuteInfoResponse getCommuteInfo(Long userId) {
         UserEntity user = userService.getUserById(userId);
-        CommuteInfoResponse response = userService.getCommuteInfo(user);
+        CommuteInfo commuteInfo = userService.getCommuteInfo(user);
+        CommuteInfoResponse response = CommuteInfoMapper.fromCommuteInfo(commuteInfo);
 
         if (response == null) {
             throw new BaseException(UserResponseCode.NOT_SET_COMMUTE_INFO);
@@ -48,6 +50,7 @@ public class UserUseCase {
     @Transactional
     public void updateCommuteInfo(Long userId, CommuteInfoRequest request) {
         UserEntity user = userService.getUserById(userId);
-        userService.updateCommuteInfo(user, request);
+        CommuteInfo commuteInfo = CommuteInfoMapper.toCommuteInfo(request);
+        userService.updateCommuteInfo(user, commuteInfo);
     }
 }

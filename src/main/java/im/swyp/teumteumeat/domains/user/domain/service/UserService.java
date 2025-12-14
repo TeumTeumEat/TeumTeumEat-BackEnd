@@ -1,8 +1,5 @@
 package im.swyp.teumteumeat.domains.user.domain.service;
 
-import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
-import im.swyp.teumteumeat.domains.user.application.mapper.CommuteInfoMapper;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
@@ -17,12 +14,15 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public CommuteInfoResponse getCommuteInfo(UserEntity user) {
-        return CommuteInfoMapper.fromCommuteInfo(user.getCommuteInfo());
+    public void updateName(UserEntity user, String name) {
+        user.updateName(name);
     }
 
-    public void updateCommuteInfo(UserEntity user, CommuteInfoRequest request) {
-        CommuteInfo commuteInfo = CommuteInfoMapper.toCommuteInfo(request);
+    public CommuteInfo getCommuteInfo(UserEntity user) {
+        return user.getCommuteInfo();
+    }
+
+    public void updateCommuteInfo(UserEntity user, CommuteInfo commuteInfo) {
         user.updateCommuteInfo(commuteInfo);
     }
 
