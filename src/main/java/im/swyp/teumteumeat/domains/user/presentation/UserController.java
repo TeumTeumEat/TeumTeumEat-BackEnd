@@ -1,7 +1,9 @@
 package im.swyp.teumteumeat.domains.user.presentation;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
+import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
@@ -23,6 +25,23 @@ public class UserController {
 
     private final UserUseCase userUseCase;
     private final JwtProvider jwtProvider;
+
+    @GetMapping("/name")
+    public ResponseEntity<ApiResponse<NameResponse>> getName(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        NameResponse response = userUseCase.getName(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @PatchMapping("/name")
+    public ResponseEntity<ApiResponse<Void>> updateName(
+            @RequestBody @Valid NameRequest request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        userUseCase.updateName(user.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
 
     @GetMapping("/commute-info")
     public ResponseEntity<ApiResponse<CommuteInfoResponse>> getCommuteInfo(

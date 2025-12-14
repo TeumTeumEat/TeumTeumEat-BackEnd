@@ -45,6 +45,10 @@ public class UserEntity extends BaseEntity {
                 .build();
     }
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
     public void updateCommuteInfo(CommuteInfo commuteInfo) {
         if (this.commuteInfo == null) {
             this.commuteInfo = commuteInfo;
