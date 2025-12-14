@@ -26,7 +26,8 @@ public abstract class OAuth2Attributes {
         return String.valueOf(attributes.get(userNameAttributeKey));
     }
 
-    public static OAuth2Attributes of(final String registrationId, final Map<String, Object> attributes, final String userNameAttributeKey) {
+    public static OAuth2Attributes of(final String registrationId, final Map<String, Object> attributes,
+            final String userNameAttributeKey) {
         if (SocialProvider.GOOGLE.getRegistrationId().equals(registrationId)) {
             return new GoogleOAuth2Attributes(attributes, userNameAttributeKey);
         }
@@ -35,7 +36,9 @@ public abstract class OAuth2Attributes {
             return new KakaoOAuth2Attributes(attributes, "id");
         }
 
-        //todo APPLE
+        if (SocialProvider.APPLE.getRegistrationId().equals(registrationId)) {
+            return new AppleOAuth2Attributes(attributes, "sub");
+        }
 
         throw new BaseException(AuthResponseCode.NOT_SUPPORTED_SOCIAL_PROVIDER);
     }

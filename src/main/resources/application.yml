@@ -20,10 +20,10 @@ spring:
         registration:
           kakao:
             client-id: 47a07455a424937d2fc6e37d3086829e
-            client-secret: NONE # 카카오는 Secret이 필수가 아니면 임의값 또는 생략
-            redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
+            client-secret: 8hOw2M5jB4FH2pzId9La60wS5PEeDaA1
             scope: # 필요한 동의 항목
               - profile_nickname
               - account_email
@@ -49,6 +49,10 @@ jwt:
 frontend:
   base-url: "http://localhost:8080"  # 프론트 없으니 일단 백엔드 주소로 설정
   main-page: "/api/v1/test/success"  # 로그인 성공 시 이동할 임시 주소
-  login-fail-page: "/login?error"    # 로그인 실패 시 이동할 주소
+  login-fail-page: "/api/v1/test/failure"     # 로그인 실패 시 이동할 주소
   local-url: "http://localhost:3000"
   local-secure-url: "https://localhost:3000"
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG

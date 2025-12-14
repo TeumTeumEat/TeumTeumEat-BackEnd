@@ -19,6 +19,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
@@ -26,10 +27,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        log.info("CustomOAuth2UserService.loadUser() executed");
         OAuth2User oAuth2User = super.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        log.info("Registration ID: {}", registrationId);
         // 식별자에 접근할 때 사용되는 값 e.g. "sub"
-        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
+                .getUserNameAttributeName();
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         // 유저 정보 생성
@@ -43,16 +47,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private UserEntity getOrSaveUser(OAuth2Attributes oAuth2Attributes) {
-        return userRepository.findBySocialProviderAndSocialId(oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId())
+        return userRepository
+                .findBySocialProviderAndSocialId(oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId())
                 .orElseGet(() -> userRepository.save(
-                                UserEntity.socialSignup(
-                                        oAuth2Attributes.getName(),
-                                        oAuth2Attributes.getEmail(),
-                                        oAuth2Attributes.getProvider(),
-                                        oAuth2Attributes.getProviderId()
-                                )
-                        )
-                );
+                        UserEntity.socialSignup(
+                                oAuth2Attributes.getName(),
+                                oAuth2Attributes.getEmail(),
+                                oAuth2Attributes.getProvider(),
+                                oAuth2Attributes.getProviderId())));
     }
 
 }

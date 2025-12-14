@@ -24,17 +24,20 @@ import java.io.IOException;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
-//    private final MobileAppProperties mobileAppProperties; //todo 모바일 앱은 DeepLink 생성
+    // private final MobileAppProperties mobileAppProperties; //todo 모바일 앱은 DeepLink
+    // 생성
     private final FrontendProperties frontendProperties; // 웹 테스트용
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+            Authentication authentication) throws IOException {
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
         UserEntity user = principal.user();
 
         Token jwtToken = jwtProvider.issueToken(user);
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendProperties.baseUrl())
+                .path(frontendProperties.mainPage())
                 .queryParam("accessToken", jwtToken.accessToken())
                 .queryParam("refreshToken", jwtToken.refreshToken())
                 .build()
