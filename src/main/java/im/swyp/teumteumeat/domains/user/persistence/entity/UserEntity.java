@@ -31,6 +31,10 @@ public class UserEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "commute_info_id")
+    private CommuteInfo commuteInfo;
+
     public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
         return UserEntity.builder()
                 .name(name)
@@ -39,5 +43,13 @@ public class UserEntity extends BaseEntity {
                 .socialId(socialId)
                 .role(Role.USER)
                 .build();
+    }
+
+    public void updateCommuteInfo(CommuteInfo commuteInfo) {
+        if (this.commuteInfo == null) {
+            this.commuteInfo = commuteInfo;
+        } else {
+            this.commuteInfo.updateCommuteInfo(commuteInfo);
+        }
     }
 }
