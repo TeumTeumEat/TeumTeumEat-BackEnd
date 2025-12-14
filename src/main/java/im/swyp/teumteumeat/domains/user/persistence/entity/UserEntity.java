@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.user.persistence.entity;
 
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,7 +12,7 @@ import lombok.*;
 @Builder(access = AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserEntity {
+public class UserEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
