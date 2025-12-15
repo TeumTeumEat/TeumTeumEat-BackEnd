@@ -35,3 +35,11 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### macOS ###
+.DS_Store
+
+### Test outputs ###
+test_output*.txt
+
+*.yml

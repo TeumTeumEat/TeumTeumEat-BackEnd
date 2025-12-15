@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.config;
+package im.swyp.teumteumeat.global.config.jackson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +18,7 @@ public class JacksonConfig {
         // 날짜/시간 모듈 등록
         mapper.registerModule(new JavaTimeModule());
 
-        // 날짜를 ISO-8601 형식 문자열로 직렬화 (timestamp 대체)
+        // 날짜를 ISO-8601 형식 문자열로 직렬화 (timestamp 대신)
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // null 값 필드 제외
