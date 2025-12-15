@@ -4,7 +4,7 @@ import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -17,16 +17,16 @@ public class CommuteInfo extends BaseEntity {
     @Column(name = "commute_info_id")
     private Long id;
 
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
     private int usageTime;
 
     @Builder
     private CommuteInfo(
-            LocalDateTime startTime,
-            LocalDateTime endTime,
+            LocalTime startTime,
+            LocalTime endTime,
             int usageTime
     ) {
         this.startTime = startTime;
