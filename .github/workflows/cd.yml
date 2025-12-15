@@ -53,6 +53,7 @@ jobs:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
           key: ${{ secrets.KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           source: "configs/, docker-compose.yml"
@@ -64,6 +65,7 @@ jobs:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
           key: ${{ secrets.KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
@@ -74,6 +76,8 @@ jobs:
             IMAGE_PATH="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
             IMAGE_PATH="${IMAGE_PATH,,}"
             sed -i "s|image: ${IMAGE_PATH}:.*|image: ${IMAGE_PATH}:${RELEASE_VERSION#v}|g" docker-compose.yml
+
+            sed -i "s|NGINX_HOST|${{ secrets.HOST }}|g" ./configs/nginx/default.conf
             
             mv ./configs/.env ./
 
