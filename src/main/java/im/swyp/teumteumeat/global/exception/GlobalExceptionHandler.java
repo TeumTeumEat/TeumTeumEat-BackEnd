@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -68,5 +69,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("MethodArgumentNotValidException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.INVALID_METHOD_ARGUMENT;
         return new ResponseEntity<>(ApiResponse.ofFail(responseCode, e.getBindingResult().getFieldErrors()), status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        log.error("JSON Parse Error: ", e);
+        BaseResponseCode responseCode = CommonResponseCode.BAD_REQUEST;
+        return new ResponseEntity<>(ApiResponse.ofFail(responseCode), responseCode.getStatus());
     }
 }
