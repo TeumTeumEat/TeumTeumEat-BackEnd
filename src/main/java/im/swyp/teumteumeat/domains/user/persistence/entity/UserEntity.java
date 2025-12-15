@@ -1,10 +1,14 @@
 package im.swyp.teumteumeat.domains.user.persistence.entity;
 
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -34,6 +38,9 @@ public class UserEntity extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "commute_info_id")
     private CommuteInfo commuteInfo;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Goal> goals = new ArrayList<>();
 
     public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
         return UserEntity.builder()
