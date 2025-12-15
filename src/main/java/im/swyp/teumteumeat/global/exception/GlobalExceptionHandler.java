@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,6 +32,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         log.error("DataIntegrityViolationException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.DATA_INTEGRITY_VIOLATION;
+        return new ResponseEntity<>(ApiResponse.ofFail(responseCode), responseCode.getStatus());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
+        log.error("AccessDeniedException: ", e);
+        BaseResponseCode responseCode = CommonResponseCode.FORBIDDEN;
         return new ResponseEntity<>(ApiResponse.ofFail(responseCode), responseCode.getStatus());
     }
 
