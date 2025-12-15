@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.application.usecase;
 
+import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
+import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
@@ -20,6 +22,7 @@ import java.util.List;
 public class GoalUseCase {
 
     private final GoalService goalService;
+    private final CategoryService categoryService;
     private final UserService userService;
 
     public GoalListResponse getGoals(Long userId) {
@@ -30,9 +33,10 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void createGoal(Long userId, GoalRequest goalRequest) {
+    public void createGoal(Long userId, GoalRequest request) {
         UserEntity user = userService.getUserById(userId);
-        Goal goal = GoalMapper.toGoal(user, goalRequest);
+        Category category = categoryService.getCategoryById(request.categoryId());
+        Goal goal = GoalMapper.toGoal(user, request, category);
         goalService.createGoal(goal);
     }
 }

@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +29,7 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createGoal(
-            @RequestBody GoalRequest goalRequest,
+            @RequestBody @Valid GoalRequest goalRequest,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         goalUseCase.createGoal(user.getUserId(), goalRequest);

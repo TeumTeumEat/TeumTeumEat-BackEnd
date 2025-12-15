@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.goal.application.dto.response;
 
+import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryResponse;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import lombok.Builder;
 
@@ -14,6 +15,8 @@ public record GoalResponse(
 
         LocalDate startDate,
 
-        LocalDate endDate
+        LocalDate endDate,
+
+        CategoryResponse category
 ) {
 }

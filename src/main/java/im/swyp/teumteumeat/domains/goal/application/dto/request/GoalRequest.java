@@ -11,6 +11,8 @@ public record GoalRequest(
         GoalType type,
 
         @NotNull(message = "날짜는 비어있을 수 없습니다.")
-        LocalDate endDate
+        LocalDate endDate,
+
+        Long categoryId
 ) {
 }

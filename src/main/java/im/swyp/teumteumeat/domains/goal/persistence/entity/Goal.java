@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.goal.persistence.entity;
 
+import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
@@ -28,7 +29,9 @@ public class Goal extends BaseEntity {
 
     private LocalDate endDate;
 
-//    private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
 //    private List<Document> documents = new ArrayList<>();
 
@@ -36,10 +39,12 @@ public class Goal extends BaseEntity {
     private Goal(
             UserEntity user,
             GoalType type,
-            LocalDate endDate
+            LocalDate endDate,
+            Category category
     ) {
         this.user = user;
         this.type = type;
         this.endDate = endDate;
+        this.category = category;
     }
 }
