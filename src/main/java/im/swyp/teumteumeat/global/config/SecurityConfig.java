@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.global.config;
 
+import im.swyp.teumteumeat.global.security.AppleUtil;
+import im.swyp.teumteumeat.global.security.component.CustomOAuth2AuthorizationRequestResolver;
 import im.swyp.teumteumeat.global.security.exception.CustomAccessDeniedHandler;
 import im.swyp.teumteumeat.global.security.exception.CustomAuthenticationEntryPoint;
 import im.swyp.teumteumeat.global.security.filter.JwtAuthenticationFilter;
@@ -15,8 +17,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.util.LinkedMultiValueMap;
 
 import static im.swyp.teumteumeat.global.common.Constants.WHITELIST;
 
@@ -32,6 +40,9 @@ public class SecurityConfig {
         private final CustomAccessDeniedHandler customAccessDeniedHandler;
         private final OAuth2SuccessHandler oAuth2SuccessHandler;
         private final OAuth2FailureHandler oauth2FailureHandler;
+        private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
+        private final AppleUtil appleUtil;
+        private final im.swyp.teumteumeat.global.security.repository.HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -47,6 +58,13 @@ public class SecurityConfig {
                                                 .requestMatchers(WHITELIST).permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2Login(configurer -> configurer
+                                                .authorizationEndpoint(endpoint -> endpoint
+                                                                .authorizationRequestRepository(
+                                                                                httpCookieOAuth2AuthorizationRequestRepository)
+                                                                .authorizationRequestResolver(
+                                                                                customOAuth2AuthorizationRequestResolver))
+                                                .tokenEndpoint(endpoint -> endpoint
+                                                                .accessTokenResponseClient(accessTokenResponseClient()))
                                                 .userInfoEndpoint(config -> config
                                                                 .userService(customOAuth2UserService))
                                                 .successHandler(oAuth2SuccessHandler)
@@ -58,5 +76,32 @@ public class SecurityConfig {
                                                 .accessDeniedHandler(customAccessDeniedHandler));
 
                 return http.build();
+        }
+
+        @Bean
+        public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+                RestClientAuthorizationCodeTokenResponseClient client = new RestClientAuthorizationCodeTokenResponseClient();
+                client.setParametersConverter(authorizationCodeGrantRequest -> {
+                        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+                        parameters.add(OAuth2ParameterNames.GRANT_TYPE,
+                                        AuthorizationGrantType.AUTHORIZATION_CODE.getValue());
+                        parameters.add(OAuth2ParameterNames.CODE, authorizationCodeGrantRequest
+                                        .getAuthorizationExchange().getAuthorizationResponse().getCode());
+                        String redirectUri = authorizationCodeGrantRequest.getAuthorizationExchange()
+                                        .getAuthorizationRequest().getRedirectUri();
+                        if (redirectUri != null) {
+                                parameters.add(OAuth2ParameterNames.REDIRECT_URI, redirectUri);
+                        }
+                        parameters.add(OAuth2ParameterNames.CLIENT_ID,
+                                        authorizationCodeGrantRequest.getClientRegistration().getClientId());
+
+                        String registrationId = authorizationCodeGrantRequest.getClientRegistration()
+                                        .getRegistrationId();
+                        if ("apple".equalsIgnoreCase(registrationId)) {
+                                parameters.set("client_secret", appleUtil.createClientSecret());
+                        }
+                        return parameters;
+                });
+                return client;
         }
 }

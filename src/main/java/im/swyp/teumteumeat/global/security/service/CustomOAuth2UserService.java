@@ -28,13 +28,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("CustomOAuth2UserService.loadUser() executed");
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         log.info("Registration ID: {}", registrationId);
-        // 식별자에 접근할 때 사용되는 값 e.g. "sub"
-        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
-                .getUserNameAttributeName();
-        Map<String, Object> attributes = oAuth2User.getAttributes();
+
+        Map<String, Object> attributes;
+        String userNameAttributeName;
+
+        if ("apple".equalsIgnoreCase(registrationId)) {
+            // Apple은 UserInfo Endpoint를 호출하지 않고 id_token을 디코딩하여 정보를 가져옴
+            String idToken = userRequest.getAdditionalParameters().get("id_token").toString();
+            attributes = decodeJwtTokenPayload(idToken);
+            attributes.put("id_token", idToken);
+            attributes.put("sub", attributes.get("sub")); // Apple의 식별자는 sub
+            userNameAttributeName = "sub";
+        } else {
+            // Kakao, Google 등은 기존 방식대로 UserInfo Endpoint 호출
+            OAuth2User oAuth2User = super.loadUser(userRequest);
+            attributes = oAuth2User.getAttributes();
+            userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
+                    .getUserNameAttributeName();
+        }
 
         // 유저 정보 생성
         OAuth2Attributes oAuth2Attributes = OAuth2Attributes.of(registrationId, attributes, userNameAttributeName);
@@ -57,4 +71,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 oAuth2Attributes.getProviderId())));
     }
 
+    public Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
+        Map<String, Object> jwtClaims = new java.util.HashMap<>();
+        try {
+            String[] parts = jwtToken.split("\\.");
+            java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
+            String payload = new String(decoder.decode(parts[1]));
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> map = mapper.readValue(payload, Map.class);
+            jwtClaims.putAll(map);
+            return jwtClaims;
+        } catch (Exception e) {
+            log.error("Failed to parse JWT token", e);
+        }
+        return jwtClaims;
+    }
 }
