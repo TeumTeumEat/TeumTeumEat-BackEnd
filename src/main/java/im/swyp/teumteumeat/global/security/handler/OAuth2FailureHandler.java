@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 
@@ -26,8 +28,8 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
         log.error("OAuth2 Login Failed. Request URI: {}", request.getRequestURI());
         log.error("Error Message: {}", exception.getMessage());
 
-        if (exception instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException oauth2Exception) {
-            org.springframework.security.oauth2.core.OAuth2Error error = oauth2Exception.getError();
+        if (exception instanceof OAuth2AuthenticationException oauth2Exception) {
+            OAuth2Error error = oauth2Exception.getError();
             log.error("OAuth2 Error Code: {}", error.getErrorCode());
             log.error("OAuth2 Error Description: {}", error.getDescription());
             log.error("OAuth2 Error URI: {}", error.getUri());
