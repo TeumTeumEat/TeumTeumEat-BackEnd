@@ -4,7 +4,7 @@ import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
 
@@ -28,6 +28,8 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class AppleUtil {
+
+    private final ResourceLoader resourceLoader;
 
     @Value("${spring.apple.team-id}")
     private String teamId;
@@ -61,8 +63,7 @@ public class AppleUtil {
     }
 
     private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        ClassPathResource resource = new ClassPathResource(keyPath);
-        InputStream inputStream = resource.getInputStream();
+        InputStream inputStream = resourceLoader.getResource(keyPath).getInputStream();
         byte[] bdata = FileCopyUtils.copyToByteArray(inputStream);
         String privateKeyString = new String(bdata, StandardCharsets.UTF_8);
 
