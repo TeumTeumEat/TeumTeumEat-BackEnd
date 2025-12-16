@@ -30,10 +30,20 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createGoal(
-            @RequestBody @Valid GoalRequest goalRequest,
+            @RequestBody @Valid GoalRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        goalUseCase.createGoal(user.getUserId(), goalRequest);
+        goalUseCase.createGoal(user.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @PatchMapping
+    public ResponseEntity<ApiResponse<Void>> updateGoal(
+            @NotNull Long goalId,
+            @RequestBody @Valid GoalRequest request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        goalUseCase.updateGoal(user.getUserId(), goalId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 

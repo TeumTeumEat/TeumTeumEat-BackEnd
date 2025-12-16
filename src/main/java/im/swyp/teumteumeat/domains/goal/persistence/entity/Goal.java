@@ -56,4 +56,8 @@ public class Goal extends BaseEntity {
             throw new BaseException(FORBIDDEN);
         }
     }
+
+    public void updateGoal(Goal goal) {
+        this.endDate = goal.getEndDate();
+    }
 }

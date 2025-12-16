@@ -41,6 +41,16 @@ public class GoalUseCase {
     }
 
     @Transactional
+    public void updateGoal(Long userId, Long goalId, GoalRequest request) {
+        UserEntity user = userService.getUserById(userId);
+        Category category = categoryService.getCategoryById(request.categoryId());
+        Goal updateGoal = GoalMapper.toGoal(user, request, category);
+        updateGoal.validateOwner(userId);
+
+        goalService.updateGoal(goalId, updateGoal);
+    }
+
+    @Transactional
     public void deleteGoal(Long goalId, Long userId) {
         Goal goal = goalService.getGoal(goalId);
         goal.validateOwner(userId);

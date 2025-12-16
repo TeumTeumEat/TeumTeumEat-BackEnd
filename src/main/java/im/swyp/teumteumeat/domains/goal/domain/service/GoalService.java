@@ -28,6 +28,11 @@ public class GoalService {
         goalRepository.save(goal);
     }
 
+    public void updateGoal(Long goalId, Goal updateGoal) {
+        Goal goal = getGoalById(goalId);
+        goal.updateGoal(updateGoal);
+    }
+
     public void deleteGoal(Long goalId) {
         goalRepository.deleteById(goalId);
     }
