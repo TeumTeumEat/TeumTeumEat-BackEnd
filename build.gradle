@@ -50,6 +50,17 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+
+	// Spring AI
+	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter:1.0.0'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+}
+
+// Spring AI
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
+	}
 }
 
 tasks.named('test') {
