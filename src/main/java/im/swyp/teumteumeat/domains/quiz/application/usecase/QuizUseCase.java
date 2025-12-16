@@ -53,7 +53,7 @@ public class QuizUseCase {
                 categoryName,
                 documentContent,
                 3) // 난이도는 고정하거나 파라미터로 받기
-                + "\n반드시 다음 JSON 형식을 지켜주세요:\n" + converter.getFormat();
+                + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n" + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
