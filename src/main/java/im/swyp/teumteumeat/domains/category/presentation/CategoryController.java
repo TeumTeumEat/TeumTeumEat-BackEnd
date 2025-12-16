@@ -39,6 +39,17 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @PatchMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> updateCategory(
+            @NotNull Long categoryId,
+            @RequestBody @Valid CategoryRequest request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        categoryUseCase.updateCategory(categoryId, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
     @DeleteMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(

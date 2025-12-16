@@ -36,4 +36,10 @@ public class Category extends BaseEntity {
         this.path = path;
         this.description = description;
     }
+
+    public void updateCategory(Category category) {
+        this.name = category.getName();
+        this.path = category.getPath();
+        this.description = category.getDescription();
+    }
 }

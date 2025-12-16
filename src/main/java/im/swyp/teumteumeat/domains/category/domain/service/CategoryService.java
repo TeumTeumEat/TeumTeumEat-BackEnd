@@ -23,12 +23,17 @@ public class CategoryService {
         categoryRepository.save(category);
     }
 
-    public Category getCategoryById(Long id) {
-        return getOrThrow(id);
+    public void updateCategory(Long categoryId, Category updateCategory) {
+        Category category = getCategoryById(categoryId);
+        category.updateCategory(updateCategory);
     }
 
     public void deleteCategory(Long categoryId) {
         categoryRepository.deleteById(categoryId);
+    }
+
+    public Category getCategoryById(Long id) {
+        return getOrThrow(id);
     }
 
     /* HELPER METHOD */

@@ -7,7 +7,6 @@ import im.swyp.teumteumeat.domains.category.application.mapper.CategoryMapper;
 import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.global.annotation.UseCase;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +26,15 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public void createCategory(@Valid CategoryRequest request) {
+    public void createCategory(CategoryRequest request) {
         Category category = CategoryMapper.toCategory(request);
         categoryService.createCategory(category);
+    }
+
+    @Transactional
+    public void updateCategory(Long categoryId, CategoryRequest request) {
+        Category updateCategory = CategoryMapper.toCategory(request);
+        categoryService.updateCategory(categoryId, updateCategory);
     }
 
     @Transactional
