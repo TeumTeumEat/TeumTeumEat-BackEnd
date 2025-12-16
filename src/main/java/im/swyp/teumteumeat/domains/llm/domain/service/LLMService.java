@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.llm.domain.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import im.swyp.teumteumeat.domains.llm.application.dto.request.LLMRequest;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
@@ -31,7 +30,6 @@ public class LLMService {
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 llmRequest.getCategory(),
-                llmRequest.getType(),
                 llmRequest.getLevel())
                 + "\n반드시 다음 JSON 형식을 지켜주세요:\n" + converter.getFormat();
 
