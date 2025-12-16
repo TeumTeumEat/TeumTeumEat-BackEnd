@@ -1,22 +1,32 @@
 package im.swyp.teumteumeat.domains.quiz.persistence.entity;
 
-import im.swyp.teumteumeat.domains.llm.domain.constant.QuizType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
+import im.swyp.teumteumeat.global.base.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
-public class Quiz {
+@Getter
+@Table(name = "quiz")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Quiz extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "quiz_id")
     private Long id;
 
-    private Enum<QuizType> quizType;
+    @Enumerated(EnumType.STRING)
+    private QuizType quizType;
 
+    @Column(nullable = false)
     private String content;
 
-    private int answer;
+    @Column(nullable = false)
+    private String answer;
 
+    @Column(nullable = false)
     private String description;
+
 }

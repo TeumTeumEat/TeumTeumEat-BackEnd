@@ -63,6 +63,42 @@ public class LLMService {
         }
     }
 
+    public String generateContent(String promptMessage) {
+        // OpenAI API 호출 (RestClient 사용)
+        RestClient restClient = RestClient.builder()
+                .baseUrl("https://api.openai.com/v1")
+                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .build();
+
+        try {
+            // 요청 전송
+            OpenAiResponse response = restClient.post()
+                    .uri("/chat/completions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "model", "gpt-4o-mini", // 모델명 확인
+                            "messages", List.of(
+                                    Map.of("role", "system", "content", "당신은 교육 자료 생성 전문가입니다."),
+                                    Map.of("role", "user", "content", promptMessage))))
+                    .retrieve()
+                    .body(OpenAiResponse.class);
+
+            // 응답 추출
+            if (response == null || response.choices() == null || response.choices().isEmpty()) {
+                throw new RuntimeException("OpenAI 응답이 비어있습니다.");
+            }
+
+            String content = response.choices().get(0).message().content();
+            log.info("AI Raw 응답: {}", content);
+
+            return content;
+
+        } catch (Exception e) {
+            log.error("AI 요청 중 에러 발생", e);
+            throw new RuntimeException("AI 자료 생성 실패: " + e.getMessage());
+        }
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     record OpenAiResponse(List<Choice> choices) {
     }

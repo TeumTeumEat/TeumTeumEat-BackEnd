@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.llm.application.usecase;
 
 import im.swyp.teumteumeat.domains.llm.application.dto.request.LLMRequest;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import org.springframework.ai.converter.BeanOutputConverter;
@@ -27,5 +28,10 @@ public class LLMUseCase {
                 + "\n반드시 다음 JSON 형식을 지켜주세요:\n" + converter.getFormat();
 
         return llmService.generateAnswer(promptMessage);
+    }
+
+    public String generateDocumentContent(String category) {
+        String promptMessage = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category);
+        return llmService.generateContent(promptMessage);
     }
 }
