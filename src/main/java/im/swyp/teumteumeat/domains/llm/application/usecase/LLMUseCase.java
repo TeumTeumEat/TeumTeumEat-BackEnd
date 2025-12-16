@@ -22,8 +22,8 @@ public class LLMUseCase {
 
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
-                request.getCategory(),
-                request.getLevel())
+                request.category(),
+                request.level())
                 + "\n반드시 다음 JSON 형식을 지켜주세요:\n" + converter.getFormat();
 
         return llmService.generateAnswer(promptMessage);

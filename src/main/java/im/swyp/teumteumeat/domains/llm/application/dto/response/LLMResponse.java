@@ -1,10 +1,18 @@
 package im.swyp.teumteumeat.domains.llm.application.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
 
-@Getter
-@AllArgsConstructor
-public class LLMResponse {
-    private String answer;
+import java.util.List;
+
+@Builder
+public record LLMResponse(
+        List<Quiz> quizzes) {
+    @Builder
+    public record Quiz(
+            String question,
+            List<String> options,
+            String answer,
+            String type,
+            String explanation) {
+    }
 }
