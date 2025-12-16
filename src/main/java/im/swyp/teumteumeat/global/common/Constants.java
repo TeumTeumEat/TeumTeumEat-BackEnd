@@ -27,6 +27,5 @@ public abstract class Constants {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/api/v1/test/**",
-            "/api/llm/quiz/generate"
     };
 }
