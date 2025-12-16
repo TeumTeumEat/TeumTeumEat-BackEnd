@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.user.presentation;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -57,6 +58,14 @@ public class UserController {
     ) {
         userUseCase.updateCommuteInfo(user.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @GetMapping("/onboarding-completed")
+    public ResponseEntity<ApiResponse<CompletedResponse>> getOnboardingCompleted(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        CompletedResponse onboardingCompleted = userUseCase.isOnboardingCompleted(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, onboardingCompleted));
     }
 
     @GetMapping("/auth/success")

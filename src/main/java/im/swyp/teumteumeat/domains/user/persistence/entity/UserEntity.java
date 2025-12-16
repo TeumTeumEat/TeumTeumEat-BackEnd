@@ -42,6 +42,8 @@ public class UserEntity extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Goal> goals = new ArrayList<>();
 
+    private boolean onboardingCompleted;
+
     public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
         return UserEntity.builder()
                 .name(name)
@@ -62,5 +64,9 @@ public class UserEntity extends BaseEntity {
         } else {
             this.commuteInfo.updateCommuteInfo(commuteInfo);
         }
+    }
+
+    public void changeOnboardingCompleted(boolean onboardingCompleted) {
+        this.onboardingCompleted = onboardingCompleted;
     }
 }
