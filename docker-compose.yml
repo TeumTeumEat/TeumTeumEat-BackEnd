@@ -11,6 +11,7 @@ services:
     environment:
       - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}
+      - SPRING_APPLE_KEY_PATH=file:/configs/AuthKey_Q3BP7MWHVD.p8
 
   nginx:
     image: nginx:stable-alpine
