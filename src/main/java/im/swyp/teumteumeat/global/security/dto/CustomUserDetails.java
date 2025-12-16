@@ -45,4 +45,8 @@ public record CustomUserDetails(
     public Map<String, Object> getAttributes() {
         return oAuth2Attributes.getAttributes();
     }
+
+    public Long getUserId() {
+        return user.getId();
+    }
 }
