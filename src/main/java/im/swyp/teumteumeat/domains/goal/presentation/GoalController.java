@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +34,15 @@ public class GoalController {
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         goalUseCase.createGoal(user.getUserId(), goalRequest);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteGoal(
+        @NotNull Long goalId,
+        @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        goalUseCase.deleteGoal(goalId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

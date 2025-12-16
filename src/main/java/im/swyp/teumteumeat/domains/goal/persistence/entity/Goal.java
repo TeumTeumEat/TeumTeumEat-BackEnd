@@ -4,10 +4,13 @@ import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+
+import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
 @Entity
 @Getter
@@ -46,5 +49,11 @@ public class Goal extends BaseEntity {
         this.type = type;
         this.endDate = endDate;
         this.category = category;
+    }
+
+    public void validateOwner(Long userId) {
+        if (!this.user.getId().equals(userId)) {
+            throw new BaseException(FORBIDDEN);
+        }
     }
 }

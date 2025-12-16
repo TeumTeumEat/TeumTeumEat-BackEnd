@@ -39,4 +39,12 @@ public class GoalUseCase {
         Goal goal = GoalMapper.toGoal(user, request, category);
         goalService.createGoal(goal);
     }
+
+    @Transactional
+    public void deleteGoal(Long goalId, Long userId) {
+        Goal goal = goalService.getGoal(goalId);
+        goal.validateOwner(userId);
+
+        goalService.deleteGoal(goalId);
+    }
 }

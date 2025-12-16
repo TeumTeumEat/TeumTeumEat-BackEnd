@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +36,16 @@ public class CategoryController {
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         categoryUseCase.createCategory(request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(
+            @NotNull Long categoryId,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        categoryUseCase.deleteCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

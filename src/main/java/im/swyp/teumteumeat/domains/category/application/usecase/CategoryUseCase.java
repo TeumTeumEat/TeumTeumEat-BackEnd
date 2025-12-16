@@ -31,4 +31,9 @@ public class CategoryUseCase {
         Category category = CategoryMapper.toCategory(request);
         categoryService.createCategory(category);
     }
+
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        categoryService.deleteCategory(categoryId);
+    }
 }

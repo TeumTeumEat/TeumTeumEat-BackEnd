@@ -27,6 +27,10 @@ public class CategoryService {
         return getOrThrow(id);
     }
 
+    public void deleteCategory(Long categoryId) {
+        categoryRepository.deleteById(categoryId);
+    }
+
     /* HELPER METHOD */
     private Category getOrThrow(Long id) {
         return categoryRepository.findById(id)
