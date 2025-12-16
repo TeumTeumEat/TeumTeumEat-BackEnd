@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum UserResponseCode implements BaseResponseCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "USER-001", "존재하지 않는 유저입니다."),
+    NOT_SET_COMMUTE_INFO(HttpStatus.NOT_FOUND, "USER-002", "아직 온보딩 정보가 설정되어 있지 않습니다.")
     ;
 
     private final HttpStatus status;
