@@ -16,7 +16,7 @@ public class LLMController {
 
     private final LLMService llmService;
 
-    @GetMapping("/quiz/generate")
+    @PostMapping("/quiz/generate")
     public ResponseEntity<ApiResponse<LLMResponse>> createContent(@RequestBody LLMRequest request) {
         LLMResponse answer = llmService.generateAnswer(request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, answer));
