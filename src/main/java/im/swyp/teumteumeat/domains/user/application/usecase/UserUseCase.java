@@ -57,6 +57,7 @@ public class UserUseCase {
         userService.updateCommuteInfo(user, commuteInfo);
     }
 
+    @Transactional
     public CompletedResponse isOnboardingCompleted(Long userId) {
         UserEntity user = userService.getUserById(userId);
         if (
