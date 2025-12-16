@@ -1,10 +1,13 @@
 package im.swyp.teumteumeat.domains.userQuiz.application.usecase;
 
+import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
+import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
@@ -20,6 +23,9 @@ public class UserQuizUseCase {
     private final QuizService quizService;
     private final UserQuizService userQuizService;
     private final UserService userService;
+    private final QuizMapper quizMapper;
+
+    private final QuizUseCase quizUseCase;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -41,5 +47,26 @@ public class UserQuizUseCase {
                 .correctAnswer(quiz.getAnswer())
                 .explanation(quiz.getDescription())
                 .build();
+    }
+
+    @Transactional
+    public java.util.List<QuizSetResponse> getQuizzesForSolving(
+            Long documentId, Long userId) {
+        java.util.List<Quiz> quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);
+
+        if (quizzesUnsolved.isEmpty()) {
+            quizUseCase.createQuizzesForDocument(documentId);
+            quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);
+        }
+
+        return quizzesUnsolved.stream()
+                .map(quizMapper::toQuestionResponse)
+                .toList();
+    }
+
+    public QuizSetResponse getQuizForSolving(
+            Long quizId) {
+        Quiz quiz = quizService.getQuizById(quizId);
+        return quizMapper.toQuestionResponse(quiz);
     }
 }
