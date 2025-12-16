@@ -50,8 +50,8 @@ public class GoalController {
 
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteGoal(
-        @NotNull Long goalId,
-        @AuthenticationPrincipal CustomUserDetails user
+            @NotNull Long goalId,
+            @AuthenticationPrincipal CustomUserDetails user
     ) {
         goalUseCase.deleteGoal(goalId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));

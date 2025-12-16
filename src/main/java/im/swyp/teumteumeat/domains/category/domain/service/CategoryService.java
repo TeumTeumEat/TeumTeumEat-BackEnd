@@ -16,6 +16,10 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
+    public Category getCategoryById(Long categoryId) {
+        return getOrThrow(categoryId);
+    }
+
     public List<Category> getCategories() {
         return categoryRepository.findAll();
     }
@@ -35,10 +39,6 @@ public class CategoryService {
 
     public void deleteCategory(Long categoryId) {
         categoryRepository.deleteById(categoryId);
-    }
-
-    public Category getCategoryById(Long id) {
-        return getOrThrow(id);
     }
 
     /* HELPER METHOD */

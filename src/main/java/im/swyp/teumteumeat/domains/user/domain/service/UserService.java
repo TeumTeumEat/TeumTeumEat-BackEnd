@@ -14,6 +14,10 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    public UserEntity getUserById(Long userId) {
+        return getOrThrow(userId);
+    }
+
     public void updateName(UserEntity user, String name) {
         user.updateName(name);
     }
@@ -24,10 +28,6 @@ public class UserService {
 
     public void updateCommuteInfo(UserEntity user, CommuteInfo commuteInfo) {
         user.updateCommuteInfo(commuteInfo);
-    }
-
-    public UserEntity getUserById(Long id) {
-        return getOrThrow(id);
     }
 
     /* HELPER METHOD */

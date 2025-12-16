@@ -50,8 +50,8 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void deleteGoal(Long goalId, Long userId) {
-        Goal goal = goalService.getGoal(goalId);
+    public void deleteGoal(Long userId, Long goalId) {
+        Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
         goalService.deleteGoal(goalId);

@@ -17,8 +17,8 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
 
-    public Goal getGoal(Long goalId) {
-        return getGoalById(goalId);
+    public Goal getGoalById(Long goalId) {
+        return getOrThrow(goalId);
     }
 
     public List<Goal> getGoals(UserEntity user) {
@@ -37,10 +37,6 @@ public class GoalService {
 
     public void deleteGoal(Long goalId) {
         goalRepository.deleteById(goalId);
-    }
-
-    public Goal getGoalById(Long id) {
-        return getOrThrow(id);
     }
 
     /* HELPER METHOD */
