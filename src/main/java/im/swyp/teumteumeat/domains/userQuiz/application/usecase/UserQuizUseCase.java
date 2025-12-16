@@ -52,8 +52,10 @@ public class UserQuizUseCase {
     @Transactional
     public java.util.List<QuizSetResponse> getQuizzesForSolving(
             Long documentId, Long userId) {
+        // 사용자가 푼 적 없는 퀴즈만 제공
         java.util.List<Quiz> quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);
 
+        // 해당 카테고리 자료 퀴즈를 사용자가 다 풀었을 시 퀴즈 추가 생성
         if (quizzesUnsolved.isEmpty()) {
             quizUseCase.createQuizzesForDocument(documentId);
             quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);

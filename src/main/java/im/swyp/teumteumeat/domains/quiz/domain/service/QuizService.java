@@ -23,6 +23,11 @@ public class QuizService {
                 return quizRepository.findByCategoryDocumentId(documentId);
         }
 
+        public List<Quiz> getUnsolvedQuizzes(Long documentId, Long userId, int limit) {
+                return quizRepository.findUnsolvedQuizzes(documentId, userId,
+                                org.springframework.data.domain.PageRequest.of(0, limit));
+        }
+
         public Quiz getQuizById(Long quizId) {
                 return quizRepository.findById(quizId)
                                 .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
