@@ -7,7 +7,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocum
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
-import im.swyp.teumteumeat.domains.quiz.persistence.repository.UserQuizHistoryRepository;
+import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +21,14 @@ public class CategoryDocumentUseCase {
 
     private final CategoryDocumentService categoryDocumentService;
     private final CategoryService categoryService;
-    private final LLMService llmService; // LLMService 직접 사용
-    private final UserQuizHistoryRepository userQuizHistoryRepository;
+    private final LLMService llmService;
+    private final UserQuizRepository userQuizRepository;
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByCategoryId(categoryId);
-        List<Long> consumedDocumentIds = userQuizHistoryRepository.findConsumedDocumentIdsByUserId(userId);
+        // 1. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
+        List<Long> consumedDocumentIds = userQuizRepository.findConsumedDocumentIdsByUserId(userId);
 
         // 유저가 해당 카테고리에서 본 적 없는 카테고리 자료들을 조회
         List<CategoryDocument> unconsumedDocuments = documents.stream()

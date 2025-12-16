@@ -1,5 +1,6 @@
-package im.swyp.teumteumeat.domains.quiz.persistence.entity;
+package im.swyp.teumteumeat.domains.userQuiz.persistence.entity;
 
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -10,13 +11,13 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "user_quiz_history")
+@Table(name = "user_quiz")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserQuizHistory extends BaseEntity { // 추후 퀴즈 복습 기능 및 스탬프에서 활용 가능
+public class UserQuiz extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "history_id")
+    @Column(name = "id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,7 +32,7 @@ public class UserQuizHistory extends BaseEntity { // 추후 퀴즈 복습 기능
     private boolean isCorrect;
 
     @Builder
-    public UserQuizHistory(UserEntity user, Quiz quiz, boolean isCorrect) {
+    public UserQuiz(UserEntity user, Quiz quiz, boolean isCorrect) {
         this.user = user;
         this.quiz = quiz;
         this.isCorrect = isCorrect;
