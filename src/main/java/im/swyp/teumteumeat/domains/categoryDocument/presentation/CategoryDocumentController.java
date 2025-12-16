@@ -24,7 +24,7 @@ public class CategoryDocumentController {
     public ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        List<CategoryDocumentResponse> responses = categoryDocumentUseCase.getDocuments(categoryId);
+        List<CategoryDocumentResponse> responses = categoryDocumentUseCase.getDocuments(categoryId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, responses));
     }
 

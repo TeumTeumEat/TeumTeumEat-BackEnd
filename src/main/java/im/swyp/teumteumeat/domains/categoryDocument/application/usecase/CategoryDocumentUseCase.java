@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.Cat
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.llm.application.usecase.LLMUseCase;
+import im.swyp.teumteumeat.domains.quiz.persistence.repository.UserQuizHistoryRepository;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,17 +21,26 @@ public class CategoryDocumentUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final CategoryService categoryService;
     private final LLMUseCase llmUseCase;
+    private final UserQuizHistoryRepository userQuizHistoryRepository;
 
     @Transactional
-    public List<CategoryDocumentResponse> getDocuments(Long categoryId) {
+    public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByCategoryId(categoryId);
+        List<Long> consumedDocumentIds = userQuizHistoryRepository.findConsumedDocumentIdsByUserId(userId);
 
-        if (documents.isEmpty()) {
+        // 유저가 해당 카테고리에서 본 적 없는 카테고리 자료들을 조회
+        List<CategoryDocument> unconsumedDocuments = documents.stream()
+                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                .toList();
+
+        // 유저가 해당 카테고리에서 카테고리 자료를 모두 소비했을 때
+        if (unconsumedDocuments.isEmpty()) {
+            // 카테고리 자료 생성
             CategoryDocument createdDocument = createDocumentInternal(categoryId);
-            documents = List.of(createdDocument);
+            unconsumedDocuments = List.of(createdDocument);
         }
 
-        return documents.stream()
+        return unconsumedDocuments.stream()
                 .map(CategoryDocumentResponse::from)
                 .toList();
     }
