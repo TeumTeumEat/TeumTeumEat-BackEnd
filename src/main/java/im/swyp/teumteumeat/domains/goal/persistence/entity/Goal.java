@@ -57,7 +57,9 @@ public class Goal extends BaseEntity {
         }
     }
 
-    public void updateGoal(Goal goal) {
-        this.endDate = goal.getEndDate();
+    public void updateGoal(
+            LocalDate endDate
+    ) {
+        this.endDate = (endDate != null) ? endDate : this.endDate;
     }
 }

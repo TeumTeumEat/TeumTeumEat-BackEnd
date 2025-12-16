@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.category.presentation;
 
-import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryRequest;
+import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryCreateRequest;
+import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;
 import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryListResponse;
 import im.swyp.teumteumeat.domains.category.application.usecase.CategoryUseCase;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -32,7 +33,7 @@ public class CategoryController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createCategory(
-            @RequestBody @Valid CategoryRequest request,
+            @RequestBody @Valid CategoryCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         categoryUseCase.createCategory(request);
@@ -43,7 +44,7 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
             @NotNull Long categoryId,
-            @RequestBody @Valid CategoryRequest request,
+            @RequestBody @Valid CategoryUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         categoryUseCase.updateCategory(categoryId, request);

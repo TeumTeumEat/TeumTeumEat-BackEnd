@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.category.domain.service;
 
+import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.category.persistence.repository.CategoryRepository;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
@@ -23,9 +24,13 @@ public class CategoryService {
         categoryRepository.save(category);
     }
 
-    public void updateCategory(Long categoryId, Category updateCategory) {
+    public void updateCategory(Long categoryId, CategoryUpdateRequest request) {
         Category category = getCategoryById(categoryId);
-        category.updateCategory(updateCategory);
+        category.updateCategory(
+                request.name(),
+                request.path(),
+                request.description()
+        );
     }
 
     public void deleteCategory(Long categoryId) {

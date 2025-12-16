@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
-public record GoalRequest(
+public record GoalCreateRequest(
 
         @NotNull(message = "종류는 비어있을 수 없습니다.")
         GoalType type,

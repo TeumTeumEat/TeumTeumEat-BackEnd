@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.goal.domain.service;
 
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -28,9 +29,10 @@ public class GoalService {
         goalRepository.save(goal);
     }
 
-    public void updateGoal(Long goalId, Goal updateGoal) {
-        Goal goal = getGoalById(goalId);
-        goal.updateGoal(updateGoal);
+    public void updateGoal(Goal goal, GoalUpdateRequest request) {
+        goal.updateGoal(
+                request.endDate()
+        );
     }
 
     public void deleteGoal(Long goalId) {

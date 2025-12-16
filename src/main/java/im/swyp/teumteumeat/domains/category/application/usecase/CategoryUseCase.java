@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.category.application.usecase;
 
-import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryRequest;
+import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryCreateRequest;
+import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;
 import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryListResponse;
 import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryResponse;
 import im.swyp.teumteumeat.domains.category.application.mapper.CategoryMapper;
@@ -26,15 +27,14 @@ public class CategoryUseCase {
     }
 
     @Transactional
-    public void createCategory(CategoryRequest request) {
+    public void createCategory(CategoryCreateRequest request) {
         Category category = CategoryMapper.toCategory(request);
         categoryService.createCategory(category);
     }
 
     @Transactional
-    public void updateCategory(Long categoryId, CategoryRequest request) {
-        Category updateCategory = CategoryMapper.toCategory(request);
-        categoryService.updateCategory(categoryId, updateCategory);
+    public void updateCategory(Long categoryId, CategoryUpdateRequest request) {
+        categoryService.updateCategory(categoryId, request);
     }
 
     @Transactional

@@ -2,7 +2,8 @@ package im.swyp.teumteumeat.domains.goal.application.usecase;
 
 import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
-import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.goal.application.mapper.GoalMapper;
@@ -33,7 +34,7 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void createGoal(Long userId, GoalRequest request) {
+    public void createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
         Category category = categoryService.getCategoryById(request.categoryId());
         Goal goal = GoalMapper.toGoal(user, request, category);
@@ -41,13 +42,11 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void updateGoal(Long userId, Long goalId, GoalRequest request) {
-        UserEntity user = userService.getUserById(userId);
-        Category category = categoryService.getCategoryById(request.categoryId());
-        Goal updateGoal = GoalMapper.toGoal(user, request, category);
-        updateGoal.validateOwner(userId);
+    public void updateGoal(Long userId, Long goalId, GoalUpdateRequest request) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
 
-        goalService.updateGoal(goalId, updateGoal);
+        goalService.updateGoal(goal, request);
     }
 
     @Transactional

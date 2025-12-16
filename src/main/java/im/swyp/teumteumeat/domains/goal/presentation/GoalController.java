@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.presentation;
 
-import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -30,7 +31,7 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createGoal(
-            @RequestBody @Valid GoalRequest request,
+            @RequestBody @Valid GoalCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         goalUseCase.createGoal(user.getUserId(), request);
@@ -40,7 +41,7 @@ public class GoalController {
     @PatchMapping
     public ResponseEntity<ApiResponse<Void>> updateGoal(
             @NotNull Long goalId,
-            @RequestBody @Valid GoalRequest request,
+            @RequestBody @Valid GoalUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         goalUseCase.updateGoal(user.getUserId(), goalId, request);

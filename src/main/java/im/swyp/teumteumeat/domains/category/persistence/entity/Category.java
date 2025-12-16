@@ -37,9 +37,13 @@ public class Category extends BaseEntity {
         this.description = description;
     }
 
-    public void updateCategory(Category category) {
-        this.name = category.getName();
-        this.path = category.getPath();
-        this.description = category.getDescription();
+    public void updateCategory(
+            String name,
+            String path,
+            String description
+    ) {
+        this.name = (name != null) ? name : this.name;
+        this.path = (path != null) ? path : this.path;
+        this.description = (description != null) ? description : this.description;
     }
 }

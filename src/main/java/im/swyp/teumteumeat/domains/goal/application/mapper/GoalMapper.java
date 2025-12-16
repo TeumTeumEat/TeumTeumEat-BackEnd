@@ -2,7 +2,7 @@ package im.swyp.teumteumeat.domains.goal.application.mapper;
 
 import im.swyp.teumteumeat.domains.category.application.mapper.CategoryMapper;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
-import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
@@ -14,7 +14,7 @@ import java.util.List;
 public class GoalMapper {
     public static Goal toGoal(
             UserEntity user,
-            GoalRequest request,
+            GoalCreateRequest request,
             Category category
     ) {
         return Goal.builder()
