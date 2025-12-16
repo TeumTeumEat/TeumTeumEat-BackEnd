@@ -3,6 +3,8 @@ package im.swyp.teumteumeat.global.common.util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.util.SerializationUtils;
 
 import java.util.Base64;
@@ -25,14 +27,14 @@ public class CookieUtils {
     }
 
     public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(name, value)
+        ResponseCookie cookie = ResponseCookie.from(name, value)
                 .path("/")
                 .sameSite("None")
                 .secure(true)
                 .httpOnly(true)
                 .maxAge(maxAge)
                 .build();
-        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
@@ -40,7 +42,7 @@ public class CookieUtils {
         if (cookies != null && cookies.length > 0) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(name)) {
-                    org.springframework.http.ResponseCookie deleteCookie = org.springframework.http.ResponseCookie
+                    ResponseCookie deleteCookie = ResponseCookie
                             .from(name, "")
                             .path("/")
                             .sameSite("None")
@@ -48,7 +50,7 @@ public class CookieUtils {
                             .httpOnly(true)
                             .maxAge(0)
                             .build();
-                    response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, deleteCookie.toString());
+                    response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
                 }
             }
         }

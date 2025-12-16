@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.global.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,8 +17,8 @@ public class TestController {
                 "<p>Refresh Token: " + refreshToken + "</p>";
     }
 
-    @org.springframework.beans.factory.annotation.Autowired
-    private org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties oauth2ClientProperties;
+    @Autowired
+    private OAuth2ClientProperties oauth2ClientProperties;
 
     @GetMapping("/api/v1/test/failure")
     public String loginFailure() {
