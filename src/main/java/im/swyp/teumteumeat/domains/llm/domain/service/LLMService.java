@@ -1,9 +1,7 @@
 package im.swyp.teumteumeat.domains.llm.domain.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import im.swyp.teumteumeat.domains.llm.application.dto.request.LLMRequest;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
-import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,15 +21,9 @@ public class LLMService {
     @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
-    public LLMResponse generateAnswer(LLMRequest llmRequest) {
+    public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-
-        // 프롬프트 메시지 구성
-        String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
-                llmRequest.getCategory(),
-                llmRequest.getLevel())
-                + "\n반드시 다음 JSON 형식을 지켜주세요:\n" + converter.getFormat();
 
         // OpenAI API 호출 (RestClient 사용)
         RestClient restClient = RestClient.builder()
@@ -48,8 +40,7 @@ public class LLMService {
                             "model", "gpt-4o-mini", // 모델명 확인
                             "messages", List.of(
                                     Map.of("role", "system", "content", "당신은 퀴즈 생성 전문가입니다."),
-                                    Map.of("role", "user", "content", promptMessage)
-                            ),
+                                    Map.of("role", "user", "content", promptMessage)),
                             "response_format", Map.of("type", "json_object") // JSON 모드 활성화
                     ))
                     .retrieve()
@@ -73,11 +64,14 @@ public class LLMService {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record OpenAiResponse(List<Choice> choices) {}
+    record OpenAiResponse(List<Choice> choices) {
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Choice(Message message) {}
+    record Choice(Message message) {
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Message(String content) {}
+    record Message(String content) {
+    }
 }
