@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,8 +31,22 @@ public class Quiz extends BaseEntity {
     @Column(nullable = false)
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String options; // 퀴즈 선지
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_document_id")
     private CategoryDocument categoryDocument;
+
+    @Builder
+    public Quiz(CategoryDocument categoryDocument, String content, String options, String answer, String description,
+            QuizType quizType) {
+        this.categoryDocument = categoryDocument;
+        this.content = content;
+        this.options = options;
+        this.answer = answer;
+        this.description = description;
+        this.quizType = quizType;
+    }
 
 }

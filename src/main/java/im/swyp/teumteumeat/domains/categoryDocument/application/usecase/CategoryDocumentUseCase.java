@@ -5,7 +5,8 @@ import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
-import im.swyp.teumteumeat.domains.llm.application.usecase.LLMUseCase;
+import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.persistence.repository.UserQuizHistoryRepository;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class CategoryDocumentUseCase {
 
     private final CategoryDocumentService categoryDocumentService;
     private final CategoryService categoryService;
-    private final LLMUseCase llmUseCase;
+    private final LLMService llmService; // LLMService 직접 사용
     private final UserQuizHistoryRepository userQuizHistoryRepository;
 
     @Transactional
@@ -54,7 +55,8 @@ public class CategoryDocumentUseCase {
         Category category = categoryService.getCategoryById(categoryId);
 
         // LLM을 통해 콘텐츠 생성
-        String content = llmUseCase.generateDocumentContent(category.getName());
+        String prompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName());
+        String content = llmService.generateContent(prompt);
 
         CategoryDocument document = CategoryDocument.builder()
                 .category(category)
