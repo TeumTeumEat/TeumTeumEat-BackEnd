@@ -21,65 +21,52 @@ public class LLMService {
     @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
+    @Value("${spring.ai.openai.chat.options.model}")
+    private String model;
+
+    @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
+    private String baseUrl;
+
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
-        // OpenAI API 호출 (RestClient 사용)
-        RestClient restClient = RestClient.builder()
-                .baseUrl("https://api.openai.com/v1")
-                .defaultHeader("Authorization", "Bearer " + apiKey)
-                .build();
+        // 공통 API 호출 (JSON 모드 활성화)
+        String content = callOpenAiApi(promptMessage, "당신은 퀴즈 생성 전문가입니다.", true);
 
-        try {
-            // 요청 전송
-            OpenAiResponse response = restClient.post()
-                    .uri("/chat/completions")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of(
-                            "model", "gpt-4o-mini", // 모델명 확인
-                            "messages", List.of(
-                                    Map.of("role", "system", "content", "당신은 퀴즈 생성 전문가입니다."),
-                                    Map.of("role", "user", "content", promptMessage)),
-                            "response_format", Map.of("type", "json_object") // JSON 모드 활성화
-                    ))
-                    .retrieve()
-                    .body(OpenAiResponse.class); // 아래 정의한 DTO로 받음
-
-            // 응답 추출 및 DTO 변환
-            if (response == null || response.choices() == null || response.choices().isEmpty()) {
-                throw new RuntimeException("OpenAI 응답이 비어있습니다.");
-            }
-
-            String content = response.choices().get(0).message().content();
-            log.info("AI Raw 응답: {}", content);
-
-            // 파싱 (DTO로 변환)
-            return converter.convert(content);
-
-        } catch (Exception e) {
-            log.error("AI 요청 중 에러 발생", e);
-            throw new RuntimeException("AI 퀴즈 생성 실패: " + e.getMessage());
-        }
+        // 파싱 (DTO로 변환)
+        return converter.convert(content);
     }
 
     public String generateContent(String promptMessage) {
+        // 공통 API 호출 (JSON 모드 비활성화)
+        return callOpenAiApi(promptMessage, "당신은 교육 자료 생성 전문가입니다.", false);
+    }
+
+    private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
         // OpenAI API 호출 (RestClient 사용)
         RestClient restClient = RestClient.builder()
-                .baseUrl("https://api.openai.com/v1")
+                .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
                 .build();
 
         try {
+            // 요청 바디 구성
+            Map<String, Object> requestBody = new java.util.HashMap<>();
+            requestBody.put("model", model);
+            requestBody.put("messages", List.of(
+                    Map.of("role", "system", "content", systemRole),
+                    Map.of("role", "user", "content", promptMessage)));
+
+            if (jsonMode) {
+                requestBody.put("response_format", Map.of("type", "json_object"));
+            }
+
             // 요청 전송
             OpenAiResponse response = restClient.post()
                     .uri("/chat/completions")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of(
-                            "model", "gpt-4o-mini", // 모델명 확인
-                            "messages", List.of(
-                                    Map.of("role", "system", "content", "당신은 교육 자료 생성 전문가입니다."),
-                                    Map.of("role", "user", "content", promptMessage))))
+                    .body(requestBody)
                     .retrieve()
                     .body(OpenAiResponse.class);
 
@@ -89,13 +76,13 @@ public class LLMService {
             }
 
             String content = response.choices().get(0).message().content();
-            log.info("AI Raw 응답: {}", content);
+            log.debug("AI Raw 응답: {}", content);
 
             return content;
 
         } catch (Exception e) {
             log.error("AI 요청 중 에러 발생", e);
-            throw new RuntimeException("AI 자료 생성 실패: " + e.getMessage());
+            throw new RuntimeException("AI 요청 실패: " + e.getMessage());
         }
     }
 
