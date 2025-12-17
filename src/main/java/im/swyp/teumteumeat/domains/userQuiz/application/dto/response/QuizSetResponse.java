@@ -5,7 +5,7 @@ import java.util.List;
 
 @Builder
 public record QuizSetResponse(
-        Long id,
+        Long quizId,
         String question,
         List<String> options,
         String type) {

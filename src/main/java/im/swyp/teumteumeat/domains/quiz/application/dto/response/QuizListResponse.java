@@ -8,7 +8,7 @@ import java.util.List;
 public record QuizListResponse(List<QuizDto> quizzes) {
     @Builder
     public record QuizDto(
-            Long id,
+            Long quizId,
             String question,
             List<String> options,
             String answer,
