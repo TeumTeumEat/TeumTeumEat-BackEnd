@@ -69,4 +69,8 @@ public class UserEntity extends BaseEntity {
     public void changeOnboardingCompleted(boolean onboardingCompleted) {
         this.onboardingCompleted = onboardingCompleted;
     }
+
+    public void updateRole(Role role) {
+        this.role = role;
+    }
 }
