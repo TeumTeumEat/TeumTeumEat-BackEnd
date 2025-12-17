@@ -12,7 +12,7 @@ public class QuizMapper {
 
     public QuizListResponse.QuizDto toDto(Quiz quiz) {
         return QuizListResponse.QuizDto.builder()
-                .id(quiz.getId())
+                .quizId(quiz.getId())
                 .question(quiz.getContent())
                 .options(convertOptionsToList(quiz.getOptions()))
                 .answer(quiz.getAnswer())
@@ -24,7 +24,7 @@ public class QuizMapper {
     public QuizSetResponse toQuestionResponse(
             Quiz quiz) {
         return QuizSetResponse.builder()
-                .id(quiz.getId())
+                .quizId(quiz.getId())
                 .question(quiz.getContent())
                 .options(convertOptionsToList(quiz.getOptions()))
                 .type(quiz.getQuizType().name())
