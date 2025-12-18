@@ -12,6 +12,9 @@ public record PresignedUrlResponse(
         URL presignedUrl,
 
         @Schema(description = "업로드 후 파일 접근 URL")
-        String fileUrl
+        String fileUrl,
+
+        @Schema(description = "파일 고유 Key")
+        String key
 ) {
 }

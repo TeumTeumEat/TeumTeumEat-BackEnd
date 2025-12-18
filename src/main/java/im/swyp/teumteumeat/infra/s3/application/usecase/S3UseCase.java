@@ -30,7 +30,7 @@ public class S3UseCase {
         URL presignedUrl = s3Service.generatePresignedUrl(key);
         String fileUrl = s3Service.generateFileUrl(key);
 
-        return S3Mapper.toPresignedUrlResponse(presignedUrl, fileUrl);
+        return S3Mapper.toPresignedUrlResponse(presignedUrl, fileUrl, key);
     }
 
     // PDF 파일 확장자인지 검사
