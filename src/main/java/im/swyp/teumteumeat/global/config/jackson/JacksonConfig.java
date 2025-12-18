@@ -25,7 +25,7 @@ public class JacksonConfig {
         mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
 
         // snake_case 네이밍 전략 적용
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        // mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
         // JSON Pretty Print 활성화
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
