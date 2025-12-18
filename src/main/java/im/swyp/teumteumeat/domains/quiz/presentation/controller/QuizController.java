@@ -58,7 +58,7 @@ public class QuizController implements QuizApi {
     @Override
     @DeleteMapping("categories/{categoryId}/documents/{documentId}/quizzes/{quizId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteCategory(
+    public ResponseEntity<ApiResponse<Void>> deleteQuiz(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
             @PathVariable Long quizId,

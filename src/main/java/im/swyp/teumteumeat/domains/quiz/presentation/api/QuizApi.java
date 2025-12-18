@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.quiz.presentation.api;
 
-import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
@@ -9,7 +8,6 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,7 +70,7 @@ public interface QuizApi {
                     description = "삭제 성공"
             )
     )
-    ResponseEntity<ApiResponse<Void>> deleteCategory(
+    ResponseEntity<ApiResponse<Void>> deleteQuiz(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
             @PathVariable Long quizId,
