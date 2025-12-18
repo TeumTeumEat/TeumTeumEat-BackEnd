@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResp
 import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
+import im.swyp.teumteumeat.domains.user.presentation.api.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -21,11 +22,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserApi {
 
     private final UserUseCase userUseCase;
     private final JwtProvider jwtProvider;
 
+    @Override
     @GetMapping("/name")
     public ResponseEntity<ApiResponse<NameResponse>> getName(
             @AuthenticationPrincipal CustomUserDetails user
@@ -34,6 +36,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
+    @Override
     @PatchMapping("/name")
     public ResponseEntity<ApiResponse<Void>> updateName(
             @RequestBody @Valid NameRequest request,
@@ -43,6 +46,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @GetMapping("/commute-info")
     public ResponseEntity<ApiResponse<CommuteInfoResponse>> getCommuteInfo(
             @AuthenticationPrincipal CustomUserDetails user
@@ -51,6 +55,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
+    @Override
     @PatchMapping("/commute-info")
     public ResponseEntity<ApiResponse<Void>> updateCommuteInfo(
             @RequestBody @Valid CommuteInfoRequest request,
@@ -60,6 +65,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @GetMapping("/onboarding-completed")
     public ResponseEntity<ApiResponse<CompletedResponse>> getOnboardingCompleted(
             @AuthenticationPrincipal CustomUserDetails user
@@ -73,6 +79,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, tokenResponse));
     }
 
+    @Override
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<String>> tokenReissue(@RequestBody ReissueRequest request) {
         String reissuedAccessToken = jwtProvider.reissueAccessToken(request.refreshToken());

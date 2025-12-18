@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.categoryDocument.presentation.api;
 
-import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryListResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;

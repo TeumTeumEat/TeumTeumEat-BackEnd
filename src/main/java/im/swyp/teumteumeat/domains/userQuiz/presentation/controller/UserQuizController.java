@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissi
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
+import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -18,11 +19,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/user-quizzes")
 @RequiredArgsConstructor
-public class UserQuizController {
+public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
 
     // 유저가 퀴즈를 푸는 기능
+    @Override
     @PostMapping("/submit")
     public ResponseEntity<ApiResponse<QuizSubmissionResponse>> submitQuiz(
             @RequestBody @Valid QuizSubmissionRequest request,
@@ -32,6 +34,7 @@ public class UserQuizController {
     }
 
     // 퀴즈 10개 조회 (정답 미포함)
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(
             @RequestParam Long documentId,
@@ -41,9 +44,11 @@ public class UserQuizController {
     }
 
     // 퀴즈 1개 조회 (정답 미포함)
+    @Override
     @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse<QuizSetResponse>> getQuiz(
-            @PathVariable Long quizId) {
+            @PathVariable Long quizId,
+            @AuthenticationPrincipal CustomUserDetails user) {
         var response = userQuizUseCase.getQuizForSolving(quizId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
