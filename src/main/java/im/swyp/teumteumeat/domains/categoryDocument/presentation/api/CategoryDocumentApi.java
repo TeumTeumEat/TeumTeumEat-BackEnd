@@ -1,0 +1,61 @@
+package im.swyp.teumteumeat.domains.categoryDocument.presentation.api;
+
+import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
+import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
+
+@Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
+public interface CategoryDocumentApi {
+
+    @Operation(
+            summary = "전체 카테고리 자료(요약글) 목록 조회"
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = CategoryDocumentResponse.class,
+                    description = "조회 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
+            @PathVariable Long categoryId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "전체 카테고리 자료(요약글) 생성",
+            description = "관리자(ADMIN)만 생성할 수 있습니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "생성 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> createDocument(
+            @PathVariable Long categoryId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "전체 카테고리 자료(요약글) 삭제",
+            description = "관리자(ADMIN)만 삭제할 수 있습니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "삭제 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> deleteDocument(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+}

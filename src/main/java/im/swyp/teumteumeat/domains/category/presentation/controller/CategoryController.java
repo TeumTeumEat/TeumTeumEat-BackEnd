@@ -1,9 +1,10 @@
-package im.swyp.teumteumeat.domains.category.presentation;
+package im.swyp.teumteumeat.domains.category.presentation.controller;
 
 import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryCreateRequest;
 import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;
 import im.swyp.teumteumeat.domains.category.application.dto.response.CategoryListResponse;
 import im.swyp.teumteumeat.domains.category.application.usecase.CategoryUseCase;
+import im.swyp.teumteumeat.domains.category.presentation.api.CategoryApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -18,10 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
-public class CategoryController {
+public class CategoryController implements CategoryApi {
 
     private final CategoryUseCase categoryUseCase;
 
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<CategoryListResponse>> getCategories(
             @AuthenticationPrincipal CustomUserDetails user
@@ -30,6 +32,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, categories));
     }
 
+    @Override
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createCategory(
@@ -40,6 +43,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @PatchMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
@@ -51,6 +55,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @DeleteMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(

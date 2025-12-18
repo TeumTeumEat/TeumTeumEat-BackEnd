@@ -1,9 +1,10 @@
-package im.swyp.teumteumeat.domains.goal.presentation;
+package im.swyp.teumteumeat.domains.goal.presentation.controller;
 
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
+import im.swyp.teumteumeat.domains.goal.presentation.api.GoalApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -17,10 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/goals")
 @RequiredArgsConstructor
-public class GoalController {
+public class GoalController implements GoalApi {
 
     private final GoalUseCase goalUseCase;
 
+    @Override
     @GetMapping
     public ResponseEntity<ApiResponse<GoalListResponse>> getGoals(
             @AuthenticationPrincipal CustomUserDetails user
@@ -29,6 +31,7 @@ public class GoalController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
@@ -38,6 +41,7 @@ public class GoalController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @PatchMapping
     public ResponseEntity<ApiResponse<Void>> updateGoal(
             @NotNull Long goalId,
@@ -48,6 +52,7 @@ public class GoalController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteGoal(
             @NotNull Long goalId,
