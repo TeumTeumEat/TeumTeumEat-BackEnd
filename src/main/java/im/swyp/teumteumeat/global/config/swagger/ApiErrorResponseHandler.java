@@ -45,21 +45,27 @@ public class ApiErrorResponseHandler {
 
         addExamplesToResponses(responses, statusWithExampleHolders);
     }
-
     private ExampleHolder createExampleHolder(ApiErrorResponseExplanation apiErrorResponseExample) {
+        // 1. 어노테이션에서 클래스 정보와 이름 정보를 가져옴
         Class<? extends BaseResponseCode> enumClass = apiErrorResponseExample.exceptionCode();
+        String targetName = apiErrorResponseExample.name();
+
+        // 2. 해당 클래스의 모든 Enum 상수들을 가져옴
         BaseResponseCode[] codes = enumClass.getEnumConstants();
 
-        if (codes != null && codes.length > 0) {
-            BaseResponseCode responseCode = codes[0];
-
-            return ExampleHolder.builder()
-                    .httpStatusCode(responseCode.getStatus().value())
-                    .name(((Enum<?>) responseCode).name())
-                    .errorCode(responseCode.getCode())
-                    .description(responseCode.getMessage())
-                    .holder(createSwaggerExample(responseCode, responseCode.getMessage()))
-                    .build();
+        if (codes != null) {
+            // 3. name이 일치하는 상수 하나만 필터링
+            return Arrays.stream(codes)
+                    .filter(code -> ((Enum<?>) code).name().equals(targetName))
+                    .findFirst()
+                    .map(responseCode -> ExampleHolder.builder()
+                            .httpStatusCode(responseCode.getStatus().value())
+                            .name(((Enum<?>) responseCode).name())
+                            .errorCode(responseCode.getCode())
+                            .description(responseCode.getMessage())
+                            .holder(createSwaggerExample(responseCode, responseCode.getMessage()))
+                            .build())
+                    .orElse(null); // 일치하는 이름이 없을 경우
         }
 
         return null;
