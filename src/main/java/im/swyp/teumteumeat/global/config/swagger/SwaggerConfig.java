@@ -6,8 +6,10 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
@@ -16,6 +18,8 @@ import org.springframework.web.method.HandlerMethod;
 @RequiredArgsConstructor
 public class SwaggerConfig {
 
+    @Value("${swagger.server-url}")
+    private String serverUrl;
     private final ApiSuccessResponseHandler apiSuccessResponseHandler;
     private final ApiErrorResponseHandler apiErrorResponseHandler;
 
@@ -32,6 +36,7 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .components(components)
+                .addServersItem(new Server().url(serverUrl))
                 .addSecurityItem(securityRequirement)
                 .info(new Info()
                         .title("TeumTeumEat API")
