@@ -1,0 +1,78 @@
+package im.swyp.teumteumeat.domains.goal.presentation.api;
+
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
+import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
+import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestBody;
+
+@Tag(name = "Goal", description = "목표 API")
+public interface GoalApi {
+
+    @Operation(
+            summary = "전체 목표 목록 조회",
+            description = "요청 유저의 전체 목표 목록을 조회합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = GoalListResponse.class,
+                    description = "조회 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<GoalListResponse>> getGoals(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "목표 생성",
+            description = "요청 유저의 목표를 생성합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "생성 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> createGoal(
+            @RequestBody @Valid GoalCreateRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "목표 수정",
+            description = "요청 유저의 목표를 수정합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "수정 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> updateGoal(
+            @NotNull Long goalId,
+            @RequestBody @Valid GoalUpdateRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "목표 삭제",
+            description = "요청 유저의 목표를 삭제합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "삭제 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> deleteGoal(
+            @NotNull Long goalId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+}
