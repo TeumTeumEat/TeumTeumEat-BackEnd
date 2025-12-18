@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.category.presentation;
+package im.swyp.teumteumeat.domains.category.presentation.controller;
 
 import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryCreateRequest;
 import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;

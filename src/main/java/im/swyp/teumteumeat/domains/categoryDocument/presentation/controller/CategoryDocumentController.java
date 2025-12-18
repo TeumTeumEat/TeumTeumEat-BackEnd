@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.categoryDocument.presentation;
+package im.swyp.teumteumeat.domains.categoryDocument.presentation.controller;
 
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.application.usecase.CategoryDocumentUseCase;

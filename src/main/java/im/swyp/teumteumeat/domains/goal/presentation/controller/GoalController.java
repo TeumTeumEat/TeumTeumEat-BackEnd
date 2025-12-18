@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.goal.presentation;
+package im.swyp.teumteumeat.domains.goal.presentation.controller;
 
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;

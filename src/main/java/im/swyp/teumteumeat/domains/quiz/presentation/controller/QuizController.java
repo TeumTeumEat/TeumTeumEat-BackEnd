@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.quiz.presentation;
+package im.swyp.teumteumeat.domains.quiz.presentation.controller;
 
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
