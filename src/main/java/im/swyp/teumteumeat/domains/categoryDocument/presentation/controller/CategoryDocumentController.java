@@ -6,7 +6,6 @@ import im.swyp.teumteumeat.domains.categoryDocument.presentation.api.CategoryDoc
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +25,7 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     @GetMapping("/{categoryId}/documents")
     public ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
             @PathVariable Long categoryId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user) {
+            @AuthenticationPrincipal CustomUserDetails user) {
         List<CategoryDocumentResponse> responses = categoryDocumentUseCase.getDocuments(categoryId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, responses));
     }
@@ -36,7 +35,7 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createDocument(
             @PathVariable Long categoryId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user) {
+            @AuthenticationPrincipal CustomUserDetails user) {
         categoryDocumentUseCase.createDocument(categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -46,7 +45,7 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteDocument(
             @PathVariable Long documentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user) {
+            @AuthenticationPrincipal CustomUserDetails user) {
         categoryDocumentUseCase.deleteDocument(documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
