@@ -20,8 +20,12 @@ public class QuizService {
 
         private final QuizRepository quizRepository;
 
+        public List<Quiz> getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
+                return quizRepository.findByCategoryDocumentId(categoryDocumentId);
+        }
+
         public List<Quiz> getQuizzesByDocumentId(Long documentId) {
-                return quizRepository.findByCategoryDocumentId(documentId);
+                return quizRepository.findByDocumentId(documentId);
         }
 
         public List<Quiz> getUnsolvedQuizzes(Long documentId, Long userId, int limit) {

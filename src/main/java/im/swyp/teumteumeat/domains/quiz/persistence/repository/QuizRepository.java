@@ -11,11 +11,13 @@ import java.util.List;
 
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
-    List<Quiz> findByCategoryDocumentId(Long categoryDocumentId);
+        List<Quiz> findByCategoryDocumentId(Long categoryDocumentId);
 
-    @Query("SELECT q FROM Quiz q WHERE q.categoryDocument.id = :documentId " +
-            "AND q.id NOT IN (SELECT uq.quiz.id FROM UserQuiz uq WHERE uq.user.id = :userId) " +
-            "ORDER BY function('RAND')")
-    List<Quiz> findUnsolvedQuizzes(@Param("documentId") Long documentId,
-            @Param("userId") Long userId, Pageable pageable);
+        List<Quiz> findByDocumentId(Long documentId);
+
+        @Query("SELECT q FROM Quiz q WHERE q.categoryDocument.id = :documentId " +
+                        "AND q.id NOT IN (SELECT uq.quiz.id FROM UserQuiz uq WHERE uq.user.id = :userId) " +
+                        "ORDER BY function('RAND')")
+        List<Quiz> findUnsolvedQuizzes(@Param("documentId") Long documentId,
+                        @Param("userId") Long userId, Pageable pageable);
 }

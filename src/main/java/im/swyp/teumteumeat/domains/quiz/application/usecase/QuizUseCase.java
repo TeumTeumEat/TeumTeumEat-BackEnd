@@ -26,7 +26,15 @@ public class QuizUseCase {
     private final LLMService llmService;
     private final QuizMapper quizMapper;
 
-    public QuizListResponse getQuizzes(Long documentId) {
+    public QuizListResponse getQuizzesByCategoryDocumentId(Long documentId) {
+        List<Quiz> quizzes = quizService.getQuizzesByCategoryDocumentId(documentId);
+        List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
+                .map(quizMapper::toDto)
+                .toList();
+        return new QuizListResponse(quizDtos);
+    }
+
+    public QuizListResponse getQuizzesByDocumentId(Long documentId) {
         List<Quiz> quizzes = quizService.getQuizzesByDocumentId(documentId);
         List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
                 .map(quizMapper::toDto)
@@ -63,6 +71,31 @@ public class QuizUseCase {
 
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromCategoryDocument(
+                    document,
+                    quizDto.question(),
+                    quizDto.options() != null ? String.join(",", quizDto.options()) : "",
+                    quizDto.answer(),
+                    quizDto.type(),
+                    quizDto.explanation());
+        });
+    }
+
+    // 퀴즈 세트 생성 (PDF Document)
+    @Transactional
+    public void createQuizzesForPdfDocument(im.swyp.teumteumeat.domains.document.persistence.entity.Document document) {
+        String categoryName = "Available Document";
+        String documentContent = document.getRawContent();
+        int difficulty = 3; // 난이도 임시 고정
+
+        BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
+
+        String prompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(), categoryName, documentContent,
+                difficulty) + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
+                + converter.getFormat();
+        LLMResponse response = llmService.generateAnswer(prompt);
+
+        response.quizzes().forEach(quizDto -> {
+            quizService.createQuizFromPdfDocument(
                     document,
                     quizDto.question(),
                     quizDto.options() != null ? String.join(",", quizDto.options()) : "",

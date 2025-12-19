@@ -26,7 +26,17 @@ public class QuizController implements QuizApi {
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        QuizListResponse response = quizUseCase.getQuizzes(documentId);
+        QuizListResponse response = quizUseCase.getQuizzesByCategoryDocumentId(documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    // PDF 문서에 대한 퀴즈 목록 조회
+    @GetMapping("goals/{goalId}/document/{documentId}/quizzes")
+    public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzesOfDocument(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        QuizListResponse response = quizUseCase.getQuizzesByDocumentId(documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
