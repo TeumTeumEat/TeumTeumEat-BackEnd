@@ -26,14 +26,16 @@ public class QuizUseCase {
     private final LLMService llmService;
     private final QuizMapper quizMapper;
 
-    public QuizListResponse getQuizzesByCategoryDocumentId(Long documentId) {
-        List<Quiz> quizzes = quizService.getQuizzesByCategoryDocumentId(documentId);
+    // 카테고리 기반 퀴즈
+    public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
+        List<Quiz> quizzes = quizService.getQuizzesByCategoryDocumentId(categoryDocumentId);
         List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
                 .map(quizMapper::toDto)
                 .toList();
         return new QuizListResponse(quizDtos);
     }
 
+    // pdf 자료 기반 퀴즈
     public QuizListResponse getQuizzesByDocumentId(Long documentId) {
         List<Quiz> quizzes = quizService.getQuizzesByDocumentId(documentId);
         List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
