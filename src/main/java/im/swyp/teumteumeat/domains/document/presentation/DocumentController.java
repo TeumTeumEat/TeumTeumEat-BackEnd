@@ -16,7 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/goals/{goalId}/document")
+@RequestMapping("/api/v1/goals/{goalId}/documents")
 @RequiredArgsConstructor
 public class DocumentController {
 
