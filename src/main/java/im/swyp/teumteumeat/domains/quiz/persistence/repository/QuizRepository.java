@@ -18,6 +18,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
         @Query("SELECT q FROM Quiz q WHERE q.categoryDocument.id = :documentId " +
                         "AND q.id NOT IN (SELECT uq.quiz.id FROM UserQuiz uq WHERE uq.user.id = :userId) " +
                         "ORDER BY function('RAND')")
-        List<Quiz> findUnsolvedQuizzes(@Param("documentId") Long documentId,
+        List<Quiz> findUnsolvedCategoryQuizzes(@Param("documentId") Long documentId,
+                        @Param("userId") Long userId, Pageable pageable);
+
+        @Query("SELECT q FROM Quiz q WHERE q.document.id = :documentId " +
+                        "AND q.id NOT IN (SELECT uq.quiz.id FROM UserQuiz uq WHERE uq.user.id = :userId) " +
+                        "ORDER BY function('RAND')")
+        List<Quiz> findUnsolvedDocumentQuizzes(@Param("documentId") Long documentId,
                         @Param("userId") Long userId, Pageable pageable);
 }

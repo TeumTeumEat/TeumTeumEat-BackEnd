@@ -28,8 +28,13 @@ public class QuizService {
                 return quizRepository.findByDocumentId(documentId);
         }
 
-        public List<Quiz> getUnsolvedQuizzes(Long documentId, Long userId, int limit) {
-                return quizRepository.findUnsolvedQuizzes(documentId, userId,
+        public List<Quiz> getUnsolvedCategoryQuizzes(Long categoryDocumentId, Long userId, int limit) {
+                return quizRepository.findUnsolvedCategoryQuizzes(categoryDocumentId, userId,
+                                org.springframework.data.domain.PageRequest.of(0, limit));
+        }
+
+        public List<Quiz> getUnsolvedDocumentQuizzes(Long documentId, Long userId, int limit) {
+                return quizRepository.findUnsolvedDocumentQuizzes(documentId, userId,
                                 org.springframework.data.domain.PageRequest.of(0, limit));
         }
 

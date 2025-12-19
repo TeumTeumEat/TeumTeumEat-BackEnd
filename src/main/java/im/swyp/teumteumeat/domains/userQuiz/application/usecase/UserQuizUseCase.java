@@ -53,14 +53,23 @@ public class UserQuizUseCase {
 
     @Transactional
     public List<QuizSetResponse> getQuizzesForSolving(
-            Long documentId, Long userId) {
+            Long documentId, Long userId, String documentType) {
         // 사용자가 푼 적 없는 퀴즈만 제공
-        List<Quiz> quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);
+        List<Quiz> quizzesUnsolved;
+        if ("DOCUMENT".equalsIgnoreCase(documentType)) {
+            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, 10);
+        } else {
+            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+        }
 
-        // 해당 카테고리 자료 퀴즈를 사용자가 다 풀었을 시 퀴즈 추가 생성
+        // 해당 카테고리 자료 퀴즈(모든 유저가 접근 가능)를 사용자가 다 풀었을 시 퀴즈 추가 생성
         if (quizzesUnsolved.isEmpty()) {
-            quizUseCase.createQuizzesForDocument(documentId);
-            quizzesUnsolved = quizService.getUnsolvedQuizzes(documentId, userId, 10);
+            if ("DOCUMENT".equalsIgnoreCase(documentType)) {
+                // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
+            } else {
+                quizUseCase.createQuizzesForDocument(documentId);
+                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+            }
         }
 
         return quizzesUnsolved.stream()
