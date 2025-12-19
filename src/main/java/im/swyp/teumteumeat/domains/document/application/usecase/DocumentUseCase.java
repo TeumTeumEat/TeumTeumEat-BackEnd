@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentLLMService;
 import im.swyp.teumteumeat.domains.document.domain.service.OCRService;
-import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 
 @UseCase
 @RequiredArgsConstructor
@@ -27,8 +27,8 @@ public class DocumentUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
-    private final QuizUseCase quizUseCase;
     private final OCRService ocrService;
+    private final DocumentLLMService documentLLMService;
 
     @Transactional
     public void uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -40,8 +40,12 @@ public class DocumentUseCase {
 
         // OCR
         ocrService.extractContent(document);
+
+        // Summary (요약)
+        documentLLMService.generateSummary(document);
+
         // 퀴즈 생성
-        quizUseCase.createQuizzesForPdfDocument(document.getId());
+        documentLLMService.createQuizzes(document);
     }
 
     // 해당 목표의 모든 문서 반환
