@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import im.swyp.teumteumeat.domains.document.domain.service.OCRService;
+import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
+
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +27,8 @@ public class DocumentUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
+    private final QuizUseCase quizUseCase;
+    private final OCRService ocrService;
 
     @Transactional
     public void uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -32,7 +37,11 @@ public class DocumentUseCase {
 
         Document document = DocumentMapper.toDocument(user, goal, request);
         documentService.createDocument(document);
-        //todo AI 처리 : OCR[rawContent], LLM[summary], 퀴즈 생성
+
+        // OCR
+        ocrService.extractContent(document);
+        // 퀴즈 생성
+        quizUseCase.createQuizzesForPdfDocument(document.getId());
     }
 
     // 해당 목표의 모든 문서 반환
@@ -41,7 +50,7 @@ public class DocumentUseCase {
         goal.validateOwner(userId);
 
         List<Document> documents = documentService.getDocumentsByGoalId(goalId);
-        List<DocumentResponse> responses =  documents.stream().map(DocumentMapper::fromDocument).toList();
+        List<DocumentResponse> responses = documents.stream().map(DocumentMapper::fromDocument).toList();
         return DocumentMapper.toDocumentListResponse(responses);
     }
 

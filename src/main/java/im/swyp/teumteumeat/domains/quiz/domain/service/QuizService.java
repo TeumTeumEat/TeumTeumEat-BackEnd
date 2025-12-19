@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.quiz.domain.service;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
@@ -39,7 +40,7 @@ public class QuizService {
         }
 
         @Transactional
-        public void createQuiz(
+        public void createQuizFromCategoryDocument(
                         CategoryDocument document,
                         String question, String options, String answer, String type, String explanation) {
                 // QuizType 매핑 로직 필요 (String -> Enum)
@@ -49,6 +50,27 @@ public class QuizService {
 
                 Quiz quiz = Quiz.builder()
                                 .categoryDocument(document)
+                                .content(question)
+                                .options(options)
+                                .answer(answer)
+                                .description(explanation)
+                                .quizType(quizType)
+                                .build();
+
+                quizRepository.save(quiz);
+        }
+
+        @Transactional
+        public void createQuizFromPdfDocument(
+                        Document document,
+                        String question, String options, String answer, String type, String explanation) {
+                // QuizType 매핑 로직 필요 (String -> Enum)
+                QuizType quizType = "OX".equalsIgnoreCase(type)
+                                ? QuizType.OX
+                                : QuizType.MCQ;
+
+                Quiz quiz = Quiz.builder()
+                                .document(document)
                                 .content(question)
                                 .options(options)
                                 .answer(answer)

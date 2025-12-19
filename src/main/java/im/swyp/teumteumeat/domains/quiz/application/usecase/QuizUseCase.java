@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +28,8 @@ public class QuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
     private final QuizMapper quizMapper;
+
+    private final DocumentService documentService;
 
     public QuizListResponse getQuizzes(Long documentId) {
         List<Quiz> quizzes = quizService.getQuizzesByDocumentId(documentId);
@@ -46,6 +51,22 @@ public class QuizUseCase {
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
+        generateAndSaveQuizzes(document, categoryName, documentContent);
+    }
+
+    @Transactional
+    public void createQuizzesForPdfDocument(Long documentId) {
+        Document document = documentService
+                .getDocumentById(documentId);
+
+        String documentContent = document.getRawContent();
+        // 카테고리 설정
+        String categoryName = "Available Document";
+
+        generateAndSaveQuizzes(document, categoryName, documentContent);
+    }
+
+    private void generateAndSaveQuizzes(Object documentEntity, String categoryName, String documentContent) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
         // 프롬프트 메시지 구성: 카테고리 뿐만 아니라 문서 내용도 참고하도록 수정
@@ -58,13 +79,23 @@ public class QuizUseCase {
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
         response.quizzes().forEach(quizDto -> {
-            quizService.createQuiz(
-                    document,
-                    quizDto.question(),
-                    quizDto.options() != null ? String.join(",", quizDto.options()) : "", // 퀴즈 선지 배열로 변환
-                    quizDto.answer(),
-                    quizDto.type(),
-                    quizDto.explanation());
+            if (documentEntity instanceof CategoryDocument) {
+                quizService.createQuizFromCategoryDocument(
+                        (CategoryDocument) documentEntity,
+                        quizDto.question(),
+                        quizDto.options() != null ? String.join(",", quizDto.options()) : "",
+                        quizDto.answer(),
+                        quizDto.type(),
+                        quizDto.explanation());
+            } else if (documentEntity instanceof Document) {
+                quizService.createQuizFromPdfDocument(
+                        (Document) documentEntity,
+                        quizDto.question(),
+                        quizDto.options() != null ? String.join(",", quizDto.options()) : "", // 퀴즈 선지 배열로 변환
+                        quizDto.answer(),
+                        quizDto.type(),
+                        quizDto.explanation());
+            }
         });
     }
 
