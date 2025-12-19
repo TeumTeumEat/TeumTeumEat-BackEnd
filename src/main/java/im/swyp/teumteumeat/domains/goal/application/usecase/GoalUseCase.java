@@ -36,7 +36,11 @@ public class GoalUseCase {
     @Transactional
     public void createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
-        Category category = categoryService.getCategoryById(request.categoryId());
+
+        Category category = null;
+        if (request.categoryId() != null) {
+            category = categoryService.getCategoryById(request.categoryId());
+        }
         Goal goal = GoalMapper.toGoal(user, request, category);
         goalService.createGoal(goal);
     }

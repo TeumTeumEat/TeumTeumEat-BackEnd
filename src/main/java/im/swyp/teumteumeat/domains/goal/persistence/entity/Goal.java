@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
@@ -9,6 +10,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
@@ -36,7 +39,8 @@ public class Goal extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
-//    private List<Document> documents = new ArrayList<>();
+    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Document> documents = new ArrayList<>();
 
     @Builder
     private Goal(
