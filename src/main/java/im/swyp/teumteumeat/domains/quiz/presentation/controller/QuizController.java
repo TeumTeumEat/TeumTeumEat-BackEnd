@@ -31,6 +31,7 @@ public class QuizController implements QuizApi {
     }
 
     // PDF 문서에 대한 퀴즈 목록 조회
+    @Override
     @GetMapping("goals/{goalId}/document/{documentId}/quizzes")
     public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzesOfDocument(
             @PathVariable Long goalId,
