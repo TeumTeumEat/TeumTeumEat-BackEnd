@@ -1,1 +1,0 @@
-set $service_url spring-blue;
