@@ -13,6 +13,8 @@ import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.infra.ocr.domain.service.OcrService;
 import im.swyp.teumteumeat.infra.s3.domain.service.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import static im.swyp.teumteumeat.domains.document.domain.constant.FileStatus.*;
 
 @Slf4j
 @UseCase
@@ -103,8 +107,18 @@ public class DocumentUseCase {
         imageUrl = urlEncode(imageUrl);
 
         // OCR API 호출
-        String rawContent = ocrService.extractText(imageUrl);
-        document.updateRawContent(rawContent);
+        document.updateStatus(PROCESSING);
+
+        try {
+            String rawContent = ocrService.extractText(imageUrl);
+            document.updateRawContent(rawContent);
+        } catch (Exception e) {
+            log.error("FAILED OCR PROCESSING:", e);
+            document.updateStatus(FAILED);
+            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+        }
+
+        document.updateStatus(COMPLETED);
     }
 
     // 외부 API의 URL 정규식 통과를 위해 한글 및 공백을 인코딩
