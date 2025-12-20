@@ -51,11 +51,8 @@ public class QuizService {
         @Transactional
         public void createQuizFromCategoryDocument(
                         CategoryDocument document,
-                        String question, String options, String answer, String type, String explanation) {
-                // QuizType 매핑 로직 필요 (String -> Enum)
-                QuizType quizType = "OX".equalsIgnoreCase(type)
-                                ? QuizType.OX
-                                : QuizType.MCQ;
+                        String question, String options, String answer, QuizType type, String explanation) {
+                // QuizType 매핑 로직 불필요 (DTO에서 자동 변환)
 
                 Quiz quiz = Quiz.builder()
                                 .categoryDocument(document)
@@ -63,7 +60,7 @@ public class QuizService {
                                 .options(options)
                                 .answer(answer)
                                 .description(explanation)
-                                .quizType(quizType)
+                                .quizType(type)
                                 .build();
 
                 quizRepository.save(quiz);
@@ -72,11 +69,8 @@ public class QuizService {
         @Transactional
         public void createQuizFromPdfDocument(
                         Document document,
-                        String question, String options, String answer, String type, String explanation) {
-                // QuizType 매핑 로직 필요 (String -> Enum)
-                QuizType quizType = "OX".equalsIgnoreCase(type)
-                                ? QuizType.OX
-                                : QuizType.MCQ;
+                        String question, String options, String answer, QuizType type, String explanation) {
+                // QuizType 매핑 로직 불필요 (DTO에서 자동 변환)
 
                 Quiz quiz = Quiz.builder()
                                 .document(document)
@@ -84,7 +78,7 @@ public class QuizService {
                                 .options(options)
                                 .answer(answer)
                                 .description(explanation)
-                                .quizType(quizType)
+                                .quizType(type)
                                 .build();
 
                 quizRepository.save(quiz);

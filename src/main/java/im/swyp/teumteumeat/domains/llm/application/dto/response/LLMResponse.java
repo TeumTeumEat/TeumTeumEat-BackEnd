@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.llm.application.dto.response;
 
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import lombok.Builder;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public record LLMResponse(
                         String question,
                         List<String> options,
                         String answer,
-                        String type,
+                        QuizType type,
                         String explanation) {
         }
 }
