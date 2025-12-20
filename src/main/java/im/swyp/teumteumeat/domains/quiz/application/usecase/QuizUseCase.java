@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -84,7 +85,7 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (PDF Document)
     @Transactional
-    public void createQuizzesForPdfDocument(im.swyp.teumteumeat.domains.document.persistence.entity.Document document) {
+    public void createQuizzesForPdfDocument(Document document) {
         String categoryName = "Available Document";
         String documentContent = document.getRawContent();
         int difficulty = 3; // 난이도 임시 고정
