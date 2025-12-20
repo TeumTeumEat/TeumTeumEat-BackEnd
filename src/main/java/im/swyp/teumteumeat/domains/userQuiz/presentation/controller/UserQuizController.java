@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResp
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -38,7 +39,7 @@ public class UserQuizController implements UserQuizApi {
     @GetMapping
     public ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(
             @RequestParam Long documentId,
-            @RequestParam(required = false, defaultValue = "CATEGORY") String documentType,
+            @RequestParam(required = false, defaultValue = "CATEGORY") GoalType documentType,
             @AuthenticationPrincipal CustomUserDetails user) {
         List<QuizSetResponse> response = userQuizUseCase.getQuizzesForSolving(documentId, user.getUserId(),
                 documentType);

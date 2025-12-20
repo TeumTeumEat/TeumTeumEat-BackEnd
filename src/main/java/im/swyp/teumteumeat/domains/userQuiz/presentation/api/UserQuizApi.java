@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.userQuiz.presentation.api;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -32,7 +33,7 @@ public interface UserQuizApi {
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizSetResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(
                         @RequestParam Long documentId,
-                        @RequestParam(required = false, defaultValue = "CATEGORY") String documentType,
+                        @RequestParam(required = false, defaultValue = "CATEGORY") GoalType documentType,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "퀴즈 1개 조회 (정답 미포함)")

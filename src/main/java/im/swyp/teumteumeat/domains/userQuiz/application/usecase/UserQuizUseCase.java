@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResp
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,10 +54,10 @@ public class UserQuizUseCase {
 
     @Transactional
     public List<QuizSetResponse> getQuizzesForSolving(
-            Long documentId, Long userId, String documentType) {
+            Long documentId, Long userId, GoalType documentType) {
         // 사용자가 푼 적 없는 퀴즈만 제공
         List<Quiz> quizzesUnsolved;
-        if ("DOCUMENT".equalsIgnoreCase(documentType)) {
+        if (GoalType.DOCUMENT == documentType) {
             quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, 10);
         } else {
             quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
@@ -64,7 +65,7 @@ public class UserQuizUseCase {
 
         // 해당 카테고리 자료 퀴즈(모든 유저가 접근 가능)를 사용자가 다 풀었을 시 퀴즈 추가 생성
         if (quizzesUnsolved.isEmpty()) {
-            if ("DOCUMENT".equalsIgnoreCase(documentType)) {
+            if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
                 quizUseCase.createQuizzesForDocument(documentId);
