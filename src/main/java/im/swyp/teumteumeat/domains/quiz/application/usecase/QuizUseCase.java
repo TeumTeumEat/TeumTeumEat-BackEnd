@@ -14,6 +14,8 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class QuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
     private final QuizMapper quizMapper;
+    private final ObjectMapper objectMapper;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -76,11 +79,20 @@ public class QuizUseCase {
             quizService.createQuizFromCategoryDocument(
                     document,
                     quizDto.question(),
-                    quizDto.options() != null ? String.join(",", quizDto.options()) : "",
+                    convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation());
         });
+
+    }
+
+    @SneakyThrows
+    private String convertOptionsToJson(List<String> options) {
+        if (options == null || options.isEmpty()) {
+            return "[]";
+        }
+        return objectMapper.writeValueAsString(options);
     }
 
     // 퀴즈 세트 생성 (PDF Document)
@@ -100,7 +112,7 @@ public class QuizUseCase {
             quizService.createQuizFromPdfDocument(
                     document,
                     quizDto.question(),
-                    quizDto.options() != null ? String.join(",", quizDto.options()) : "",
+                    convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation());

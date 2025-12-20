@@ -6,13 +6,13 @@ import java.util.List;
 
 @Builder
 public record LLMResponse(
-        List<Quiz> quizzes) {
-    @Builder
-    public record Quiz(
-            String question,
-            List<String> options,
-            String answer,
-            String type,
-            String explanation) {
-    }
+                List<Quiz> quizzes) {
+        @Builder
+        public record Quiz(
+                        String question,
+                        List<String> options,
+                        String answer,
+                        String type,
+                        String explanation) {
+        }
 }
