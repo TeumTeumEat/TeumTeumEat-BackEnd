@@ -52,27 +52,20 @@ public class QuizService {
         public void createQuizFromCategoryDocument(
                         CategoryDocument document,
                         String question, String options, String answer, QuizType type, String explanation) {
-                // QuizType 매핑 로직 불필요 (DTO에서 자동 변환)
-
-                Quiz quiz = Quiz.builder()
-                                .categoryDocument(document)
-                                .content(question)
-                                .options(options)
-                                .answer(answer)
-                                .description(explanation)
-                                .quizType(type)
-                                .build();
-
-                quizRepository.save(quiz);
+                saveQuiz(document, null, question, options, answer, type, explanation);
         }
 
         @Transactional
         public void createQuizFromPdfDocument(
                         Document document,
                         String question, String options, String answer, QuizType type, String explanation) {
-                // QuizType 매핑 로직 불필요 (DTO에서 자동 변환)
+                saveQuiz(null, document, question, options, answer, type, explanation);
+        }
 
+        private void saveQuiz(CategoryDocument categoryDocument, Document document,
+                        String question, String options, String answer, QuizType type, String explanation) {
                 Quiz quiz = Quiz.builder()
+                                .categoryDocument(categoryDocument)
                                 .document(document)
                                 .content(question)
                                 .options(options)
