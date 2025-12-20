@@ -80,6 +80,7 @@ public class Document extends BaseEntity {
 
     public void updateRawContent(String rawContent) {
         this.rawContent = rawContent;
+        this.updateStatus(FileStatus.COMPLETED);
     }
 
     public void updateSummary(String summary) {
