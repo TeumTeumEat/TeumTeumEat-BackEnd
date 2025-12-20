@@ -1,9 +1,23 @@
 services:
-  spring:
+  spring-blue:
     image: ghcr.io/teumteumeat/teumteumeat-backend:develop
-    container_name: spring
+    container_name: spring-blue
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./configs:/configs
+    environment:
+      - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}
+      - SPRING_APPLE_KEY_PATH=file:/configs/AuthKey_Q3BP7MWHVD.p8
+
+  spring-green:
+    image: ghcr.io/teumteumeat/teumteumeat-backend:develop
+    container_name: spring-green
+    ports:
+      - "8081:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -23,6 +37,7 @@ services:
       - ./configs/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./configs/certbot/conf:/etc/letsencrypt
       - ./configs/certbot/www:/var/www/certbot
+      - ./configs/nginx/service-url.inc:/etc/nginx/conf.d/service-url.inc
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
 
   certbot:
