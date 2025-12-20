@@ -86,13 +86,12 @@ public class QuizUseCase {
     // 퀴즈 세트 생성 (PDF Document)
     @Transactional
     public void createQuizzesForPdfDocument(Document document) {
-        String categoryName = "Available Document";
         String documentContent = document.getRawContent();
         int difficulty = 3; // 난이도 임시 고정
 
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
-        String prompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(), categoryName, documentContent,
+        String prompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(), documentContent,
                 difficulty) + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
                 + converter.getFormat();
         LLMResponse response = llmService.generateAnswer(prompt);
