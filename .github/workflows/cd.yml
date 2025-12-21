@@ -57,7 +57,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           key: ${{ secrets.KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-          source: "configs/, docker-compose.yml"
+          source: "configs/, scripts/, docker-compose.yml"
           target: ${{ env.PROJECT_PATH }}
 
       - name: Deploy Application
@@ -82,5 +82,5 @@ jobs:
             
             mv ./configs/.env ./
 
-            docker compose pull
-            docker compose up -d --remove-orphans
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh
