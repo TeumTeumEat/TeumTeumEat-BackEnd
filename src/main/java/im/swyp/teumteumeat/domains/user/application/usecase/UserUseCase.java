@@ -3,9 +3,11 @@ package im.swyp.teumteumeat.domains.user.application.usecase;
 import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
 import im.swyp.teumteumeat.domains.user.application.mapper.CommuteInfoMapper;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -71,5 +73,19 @@ public class UserUseCase {
         } else {
             return CompletedResponse.builder().completed(false).build();
         }
+    }
+
+    public UserSettingsResponse getUserSettings(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+
+        return UserSettingsResponse.builder()
+                .pushEnabled(user.isPushEnabled())
+                .build();
+    }
+
+    @Transactional
+    public void updateUserSettings(Long userId, UserSettingsRequest request) {
+        UserEntity user = userService.getUserById(userId);
+        userService.updateSettings(user, request);
     }
 }
