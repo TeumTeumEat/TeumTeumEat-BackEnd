@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.config;
+package im.swyp.teumteumeat.global.config.s3;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
