@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -13,6 +14,8 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 
 import java.util.List;
 
@@ -25,8 +28,19 @@ public class QuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
     private final QuizMapper quizMapper;
+    private final ObjectMapper objectMapper;
 
-    public QuizListResponse getQuizzes(Long documentId) {
+    // 카테고리 기반 퀴즈
+    public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
+        List<Quiz> quizzes = quizService.getQuizzesByCategoryDocumentId(categoryDocumentId);
+        List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
+                .map(quizMapper::toDto)
+                .toList();
+        return new QuizListResponse(quizDtos);
+    }
+
+    // pdf 자료 기반 퀴즈
+    public QuizListResponse getQuizzesByDocumentId(Long documentId) {
         List<Quiz> quizzes = quizService.getQuizzesByDocumentId(documentId);
         List<QuizListResponse.QuizDto> quizDtos = quizzes.stream()
                 .map(quizMapper::toDto)
@@ -39,29 +53,66 @@ public class QuizUseCase {
         return quizMapper.toDto(quiz);
     }
 
-    // 퀴즈 세트 생성
+    // 퀴즈 세트 생성 (CategoryDocument)
     @Transactional
     public void createQuizzesForDocument(Long documentId) {
         CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
+        generateAndSaveQuizzes(document, categoryName, documentContent);
+    }
+
+    private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
-        // 프롬프트 메시지 구성: 카테고리 뿐만 아니라 문서 내용도 참고하도록 수정
+        // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 categoryName,
                 documentContent,
-                3) // 난이도는 고정하거나 파라미터로 받기
+                3) // 난이도
                 + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n" + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
         response.quizzes().forEach(quizDto -> {
-            quizService.createQuiz(
+            quizService.createQuizFromCategoryDocument(
                     document,
                     quizDto.question(),
-                    quizDto.options() != null ? String.join(",", quizDto.options()) : "", // 퀴즈 선지 배열로 변환
+                    convertOptionsToJson(quizDto.options()),
+                    quizDto.answer(),
+                    quizDto.type(),
+                    quizDto.explanation());
+        });
+
+    }
+
+    @SneakyThrows
+    private String convertOptionsToJson(List<String> options) {
+        if (options == null || options.isEmpty()) {
+            return "[]";
+        }
+        return objectMapper.writeValueAsString(options);
+    }
+
+    // 퀴즈 세트 생성 (PDF Document)
+    @Transactional
+    public void createQuizzesForPdfDocument(Document document) {
+        String documentContent = document.getRawContent();
+        int difficulty = 3; // 난이도 임시 고정
+
+        BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
+
+        String prompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(), documentContent,
+                difficulty) + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
+                + converter.getFormat();
+        LLMResponse response = llmService.generateAnswer(prompt);
+
+        response.quizzes().forEach(quizDto -> {
+            quizService.createQuizFromPdfDocument(
+                    document,
+                    quizDto.question(),
+                    convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation());
