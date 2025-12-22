@@ -18,7 +18,7 @@ public class CategoryDocument extends BaseEntity {
     @Column(name = "category_document_id")
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, length = 500)
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
