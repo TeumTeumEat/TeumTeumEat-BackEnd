@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
@@ -29,6 +30,7 @@ public class QuizUseCase {
     private final LLMService llmService;
     private final QuizMapper quizMapper;
     private final ObjectMapper objectMapper;
+    private final DocumentService documentService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -55,22 +57,25 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (CategoryDocument)
     @Transactional
-    public void createQuizzesForDocument(Long documentId) {
+    public void createQuizzesForDocument(Long documentId, int difficulty, String topic) {
         CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
-        generateAndSaveQuizzes(document, categoryName, documentContent);
+        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topic);
     }
 
-    private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent) {
+    private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
+            int difficulty, String topic) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
+        String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 categoryName,
                 documentContent,
-                3) // 난이도
+                difficulty,
+                topicInstruction) // 주제 (없으면 전반적인 내용)
                 + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n" + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
@@ -82,7 +87,8 @@ public class QuizUseCase {
                     convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
                     quizDto.type(),
-                    quizDto.explanation());
+                    quizDto.explanation(),
+                    topicInstruction);
         });
 
     }
@@ -95,16 +101,18 @@ public class QuizUseCase {
         return objectMapper.writeValueAsString(options);
     }
 
-    // 퀴즈 세트 생성 (PDF Document)
+    // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
-    public void createQuizzesForPdfDocument(Document document) {
+    public void createQuizzesForPdfDocument(Document document, int difficulty, String topic) {
         String documentContent = document.getRawContent();
-        int difficulty = 3; // 난이도 임시 고정
+        String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
         String prompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(), documentContent,
-                difficulty) + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
+                difficulty,
+                topicInstruction) // 주제 (없으면 전반적인 내용)
+                + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
                 + converter.getFormat();
         LLMResponse response = llmService.generateAnswer(prompt);
 
@@ -115,8 +123,16 @@ public class QuizUseCase {
                     convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
                     quizDto.type(),
-                    quizDto.explanation());
+                    quizDto.explanation(),
+                    topicInstruction);
         });
+    }
+
+    // 퀴즈 세트 생성 (PDF Document) - Document ID, 퀴즈 재생성
+    @Transactional
+    public void createQuizzesForPdfDocumentById(Long documentId, int difficulty, String topic) {
+        Document document = documentService.getDocumentById(documentId);
+        createQuizzesForPdfDocument(document, difficulty, topic);
     }
 
     @Transactional

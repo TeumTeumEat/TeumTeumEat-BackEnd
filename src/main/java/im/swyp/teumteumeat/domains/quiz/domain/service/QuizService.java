@@ -51,19 +51,22 @@ public class QuizService {
         @Transactional
         public void createQuizFromCategoryDocument(
                         CategoryDocument document,
-                        String question, String options, String answer, QuizType type, String explanation) {
-                saveQuiz(document, null, question, options, answer, type, explanation);
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic) {
+                saveQuiz(document, null, question, options, answer, type, explanation, topic);
         }
 
         @Transactional
         public void createQuizFromPdfDocument(
                         Document document,
-                        String question, String options, String answer, QuizType type, String explanation) {
-                saveQuiz(null, document, question, options, answer, type, explanation);
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic) {
+                saveQuiz(null, document, question, options, answer, type, explanation, topic);
         }
 
         private void saveQuiz(CategoryDocument categoryDocument, Document document,
-                        String question, String options, String answer, QuizType type, String explanation) {
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic) {
                 Quiz quiz = Quiz.builder()
                                 .categoryDocument(categoryDocument)
                                 .document(document)
@@ -72,6 +75,7 @@ public class QuizService {
                                 .answer(answer)
                                 .description(explanation)
                                 .quizType(type)
+                                .topic(topic)
                                 .build();
 
                 quizRepository.save(quiz);

@@ -6,6 +6,9 @@ import im.swyp.teumteumeat.domains.quiz.presentation.api.QuizApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,8 +63,25 @@ public class QuizController implements QuizApi {
     public ResponseEntity<ApiResponse<Void>> createQuizzes(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
+            @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
+            @RequestParam(required = false) @Size(max = 30) String topic,
             @AuthenticationPrincipal CustomUserDetails user) {
-        quizUseCase.createQuizzesForDocument(documentId);
+        quizUseCase.createQuizzesForDocument(documentId, difficulty, topic);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    // PDF 문서에 대한 퀴즈 생성
+    @Override
+    @PostMapping("goals/{goalId}/documents/{documentId}/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
+            @RequestParam(required = false) @Size(max = 30) String topic,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        quizUseCase.createQuizzesForPdfDocumentById(documentId, difficulty, topic);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 

@@ -35,6 +35,9 @@ public class Quiz extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String options; // 퀴즈 선지
 
+    @Column(length = 30)
+    private String topic;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_document_id")
     private CategoryDocument categoryDocument;
@@ -46,7 +49,7 @@ public class Quiz extends BaseEntity {
     @Builder
     public Quiz(CategoryDocument categoryDocument, Document document, String content, String options, String answer,
             String description,
-            QuizType quizType) {
+            QuizType quizType, String topic) {
         this.categoryDocument = categoryDocument;
         this.document = document;
         this.content = content;
@@ -54,5 +57,6 @@ public class Quiz extends BaseEntity {
         this.answer = answer;
         this.description = description;
         this.quizType = quizType;
+        this.topic = topic;
     }
 }
