@@ -66,7 +66,7 @@ public class QuizController implements QuizApi {
             @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
             @RequestParam(required = false) @Size(max = 30) String topic,
             @AuthenticationPrincipal CustomUserDetails user) {
-        quizUseCase.createQuizzesForDocument(documentId, difficulty, topic);
+        quizUseCase.createQuizzesForDocument(documentId, difficulty, topic, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 

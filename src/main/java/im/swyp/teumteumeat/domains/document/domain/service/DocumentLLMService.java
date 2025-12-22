@@ -31,8 +31,10 @@ public class DocumentLLMService {
         String documentContent = document.getRawContent();
         int difficulty = 3; // 난이도 임시 고정
 
-        String prompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(), categoryName, documentContent,
-                difficulty);
+        int questionCount = 10;
+        String prompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(), categoryName, questionCount,
+                documentContent,
+                difficulty, "전반적인 내용");
         LLMResponse response = llmService.generateAnswer(prompt);
 
         response.quizzes().forEach(quizDto -> {

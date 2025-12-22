@@ -11,6 +11,8 @@ import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListRespons
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
@@ -31,6 +33,7 @@ public class QuizUseCase {
     private final QuizMapper quizMapper;
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
+    private final UserService userService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -57,22 +60,25 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (CategoryDocument)
     @Transactional
-    public void createQuizzesForDocument(Long documentId, int difficulty, String topic) {
+    public void createQuizzesForDocument(Long documentId, int difficulty, String topic, Long userId) {
         CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
-        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topic);
+        int questionCount = calculateQuestionCount(userId);
+
+        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topic, questionCount);
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
-            int difficulty, String topic) {
+            int difficulty, String topic, int questionCount) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
         String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 categoryName,
+                questionCount,
                 documentContent,
                 difficulty,
                 topicInstruction) // 주제 (없으면 전반적인 내용)
@@ -104,12 +110,17 @@ public class QuizUseCase {
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
     public void createQuizzesForPdfDocument(Document document, int difficulty, String topic) {
+        // PDF 업로드 시에는 문서 소유자의 이동시간을 기준으로 생성
+        int questionCount = calculateQuestionCount(document.getGoal().getUser().getId());
+
         String documentContent = document.getRawContent();
         String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
-        String prompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(), documentContent,
+        String prompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(),
+                questionCount,
+                documentContent,
                 difficulty,
                 topicInstruction) // 주제 (없으면 전반적인 내용)
                 + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
@@ -138,5 +149,30 @@ public class QuizUseCase {
     @Transactional
     public void deleteQuiz(Long quizId) {
         quizService.deleteQuiz(quizId);
+    }
+
+    private int calculateQuestionCount(Long userId) {
+        if (userId == null) {
+            return 10;
+        }
+
+        try {
+            var user = userService.getUserById(userId);
+            if (user.getCommuteInfo() == null) {
+                return 10;
+            }
+
+            int usageTime = user.getCommuteInfo().getUsageTime();
+
+            if (usageTime <= 5)
+                return 3;
+            if (usageTime <= 7)
+                return 5;
+            if (usageTime <= 10)
+                return 7;
+            return 10;
+        } catch (Exception e) {
+            return 10; // 유저 조회 실패 등 예외 시 기본값
+        }
     }
 }
