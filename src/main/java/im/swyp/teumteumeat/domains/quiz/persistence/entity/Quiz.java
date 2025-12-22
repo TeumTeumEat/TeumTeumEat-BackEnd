@@ -23,7 +23,7 @@ public class Quiz extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private QuizType quizType;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 80)
     private String content;
 
     @Column(nullable = false)
