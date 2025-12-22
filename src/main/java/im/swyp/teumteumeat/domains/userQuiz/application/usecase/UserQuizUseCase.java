@@ -68,12 +68,15 @@ public class UserQuizUseCase {
     @Transactional
     public List<QuizSetResponse> getQuizzesForSolving(
             Long documentId, Long userId, GoalType documentType) {
+        // 이동시간 기반 문제 수 계산
+        int quizCount = quizUseCase.calculateQuestionCount(userId);
+
         // 사용자가 푼 적 없는 퀴즈만 제공
         List<Quiz> quizzesUnsolved;
         if (GoalType.DOCUMENT == documentType) {
-            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, 10);
+            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
         } else {
-            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
         }
 
         // 해당 카테고리 자료 퀴즈(모든 유저가 접근 가능)를 사용자가 다 풀었을 시 퀴즈 추가 생성
@@ -81,8 +84,8 @@ public class UserQuizUseCase {
             if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
-                quizUseCase.createQuizzesForDocument(documentId, userId, 10);
-                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+                quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
+                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
             }
         }
 

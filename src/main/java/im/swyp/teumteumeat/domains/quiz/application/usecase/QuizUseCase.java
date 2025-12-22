@@ -188,7 +188,7 @@ public class QuizUseCase {
         quizService.deleteQuiz(quizId);
     }
 
-    private int calculateQuestionCount(Long userId) {
+    public int calculateQuestionCount(Long userId) {
         if (userId == null) {
             return 10;
         }
