@@ -131,7 +131,7 @@ public class QuizUseCase {
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
     public void createQuizzesForPdfDocument(Document document) {
-        // PDF 업로드 시에는 문서 소유자의 이동시간을 기준으로 생성
+        // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
         int questionCount = calculateQuestionCount(document.getGoal().getUser().getId());
 
         String documentContent = document.getRawContent();
