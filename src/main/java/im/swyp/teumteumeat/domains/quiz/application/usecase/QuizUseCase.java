@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.quiz.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
@@ -73,20 +74,20 @@ public class QuizUseCase {
         var goal = goalRepository
                 .findTopByUserIdAndCategoryIdOrderByCreatedAtDesc(userId, document.getCategory().getId())
                 .orElseThrow(() -> new BaseException(
-                       CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
+                        CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
 
         int questionCount = calculateQuestionCount(userId);
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
-        String difficultyName = goal.getDifficulty().name();
+        Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = goal.getPrompt();
 
-        generateAndSaveQuizzes(document, categoryName, documentContent, difficultyName, topicInstruction,
+        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
                 questionCount);
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
-            String difficulty, String topic, int questionCount) {
+            Difficulty difficulty, String topic, int questionCount) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
         String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
@@ -112,7 +113,8 @@ public class QuizUseCase {
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation(),
-                    storedTopic);
+                    storedTopic,
+                    difficulty);
         });
 
     }
@@ -135,7 +137,7 @@ public class QuizUseCase {
 
         // Goal 정보 가져오기
         var goal = document.getGoal();
-        String difficulty = goal.getDifficulty().name();
+        Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : "전반적인 내용";
 
@@ -163,7 +165,8 @@ public class QuizUseCase {
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation(),
-                    storedTopic);
+                    storedTopic,
+                    difficulty);
         });
     }
 
