@@ -32,7 +32,8 @@ public class GoalService {
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
         goal.updateGoal(
                 request.endDate(),
-                request.difficulty()
+                request.difficulty(),
+                request.prompt()
         );
     }
 

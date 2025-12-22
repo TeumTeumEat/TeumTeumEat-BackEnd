@@ -22,6 +22,7 @@ public class GoalMapper {
                 .type(request.type())
                 .endDate(request.endDate())
                 .difficulty(request.difficulty())
+                .prompt(request.prompt())
                 .category(category)
                 .build();
     }
@@ -33,6 +34,7 @@ public class GoalMapper {
                 .startDate(LocalDate.from(goal.getCreatedDate()))
                 .endDate(goal.getEndDate())
                 .difficulty(goal.getDifficulty())
+                .prompt(goal.getPrompt())
                 .category(goal.getCategory() != null
                         ? CategoryMapper.fromCategory(goal.getCategory())
                         : null)

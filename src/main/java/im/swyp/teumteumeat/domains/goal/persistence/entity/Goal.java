@@ -43,6 +43,8 @@ public class Goal extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    private String prompt;
+
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
 
@@ -52,12 +54,14 @@ public class Goal extends BaseEntity {
             GoalType type,
             LocalDate endDate,
             Difficulty difficulty,
+            String prompt,
             Category category
     ) {
         this.user = user;
         this.type = type;
         this.endDate = endDate;
         this.difficulty = difficulty;
+        this.prompt = prompt;
         this.category = category;
     }
 
@@ -69,9 +73,11 @@ public class Goal extends BaseEntity {
 
     public void updateGoal(
             LocalDate endDate,
-            Difficulty difficulty
+            Difficulty difficulty,
+            String prompt
     ) {
         this.endDate = (endDate != null) ? endDate : this.endDate;
         this.difficulty = (difficulty != null) ? difficulty : this.difficulty;
+        this.prompt = (prompt != null) ? prompt : this.prompt;
     }
 }

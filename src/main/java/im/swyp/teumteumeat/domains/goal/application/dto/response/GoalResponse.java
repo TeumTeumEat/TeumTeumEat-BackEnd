@@ -26,6 +26,9 @@ public record GoalResponse(
         @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
         Difficulty difficulty,
 
+        @Schema(description = "(Nullable) 프롬프트", example = "~~식으로 문제를 내줘.")
+        String prompt,
+
         CategoryResponse category
 ) {
 }

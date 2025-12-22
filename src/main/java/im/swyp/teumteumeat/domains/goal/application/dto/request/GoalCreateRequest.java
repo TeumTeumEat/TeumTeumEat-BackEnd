@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public record GoalCreateRequest(
 
         @NotNull(message = "종류는 비어있을 수 없습니다.")
-        @Schema(description = "목표 타입", example = "CATEGORY (Schema에서 ENUM 타입 확인)")
+        @Schema(description = "목표 타입", example = "CATEGORY/DOCUMENT (Schema에서 ENUM 타입 확인)")
         GoalType type,
 
         @NotNull(message = "날짜는 비어있을 수 없습니다.")
@@ -20,6 +20,9 @@ public record GoalCreateRequest(
         @NotNull(message = "난이도는 비어있을 수 없습니다.")
         @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
         Difficulty difficulty,
+
+        @Schema(description = "프롬프트", example = "~~식으로 문제를 내줘.")
+        String prompt,
 
         @Schema(description = "카테고리 ID", example = "1")
         Long categoryId
