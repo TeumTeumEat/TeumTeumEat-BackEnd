@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
@@ -72,7 +73,7 @@ public class QuizUseCase {
 
         // Goal 조회 (해당 유저/카테고리의 최신 목표)
         var goal = goalRepository
-                .findTopByUserIdAndCategoryIdOrderByCreatedAtDesc(userId, document.getCategory().getId())
+                .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, document.getCategory().getId())
                 .orElseThrow(() -> new BaseException(
                         CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
 

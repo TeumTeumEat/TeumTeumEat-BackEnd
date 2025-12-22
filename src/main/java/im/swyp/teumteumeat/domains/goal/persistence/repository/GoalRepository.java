@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findAllByUserId(Long userId);
 
-    Optional<Goal> findTopByUserIdAndCategoryIdOrderByCreatedAtDesc(Long userId, Long categoryId);
+    Optional<Goal> findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(Long userId, Long categoryId);
 }
