@@ -37,7 +37,7 @@ public interface GoalApi {
             summary = "목표 생성",
             description = "요청 유저의 목표를 생성합니다." +
                     "<br>type이 DOCUMENT인 경우 POST/PATCH에서 categoryId는 입력하지 않으며 category가 반환되지 않습니다." +
-                    "<br>prompt는 미입력 가능하며 null인 경우 반환되지 않습니다."
+                    "<br>prompt는 30자 이하/미입력 가능하며 null인 경우 반환되지 않습니다."
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
