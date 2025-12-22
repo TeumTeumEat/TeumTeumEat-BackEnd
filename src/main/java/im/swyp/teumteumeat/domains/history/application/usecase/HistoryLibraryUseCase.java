@@ -20,7 +20,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @UseCase
 @RequiredArgsConstructor
@@ -163,7 +162,7 @@ public class HistoryLibraryUseCase {
 
             if (quiz.getDocument() != null) {
                 Document doc = quiz.getDocument();
-                categoryName = "PDF 자료"; // PDF는 별도 카테고리로 묶거나 Goal 이름을 써야 하는데 Goal 정보가 멀다.
+                categoryName = "PDF 자료"; // 카테고리 고려하기..
                 uniqueKey = "DOC_" + doc.getId();
 
                 if (!processedKeys.contains(uniqueKey)) {

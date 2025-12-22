@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
@@ -15,6 +16,12 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
     List<Long> findConsumedDocumentIdsByUserId(@Param("userId") Long userId);
 
     List<UserQuiz> findAllByUserIdAndCreatedDateBetween(Long userId, java.time.LocalDateTime start,
+            java.time.LocalDateTime end);
+
+    Optional<UserQuiz> findByUserAndQuizAndCreatedDateBetween(
+            im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity user,
+            im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz quiz,
+            java.time.LocalDateTime start,
             java.time.LocalDateTime end);
 
     @Query("SELECT DISTINCT CAST(u.createdDate AS date) FROM UserQuiz u WHERE u.user.id = :userId ORDER BY CAST(u.createdDate AS date) DESC")
