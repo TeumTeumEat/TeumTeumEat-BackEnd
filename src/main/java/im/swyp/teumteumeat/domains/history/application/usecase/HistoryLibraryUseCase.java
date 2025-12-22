@@ -55,9 +55,13 @@ public class HistoryLibraryUseCase {
     }
 
     private int calculateStreak(Long userId) {
-        List<LocalDate> days = userQuizRepository.findDistinctDaysByUserId(userId);
-        if (days.isEmpty())
+        List<java.sql.Date> rawDays = userQuizRepository.findDistinctDaysByUserId(userId);
+        if (rawDays.isEmpty())
             return 0;
+
+        List<LocalDate> days = rawDays.stream()
+                .map(java.sql.Date::toLocalDate)
+                .toList();
 
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
