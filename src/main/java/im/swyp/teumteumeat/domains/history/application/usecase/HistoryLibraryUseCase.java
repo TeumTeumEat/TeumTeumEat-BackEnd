@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.history.application.dto.response.*;
+import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
@@ -209,53 +210,71 @@ public class HistoryLibraryUseCase {
 
     // date 포함 버전
     @Transactional(readOnly = true)
-    public HistoryDetailResponse getHistoryDetail(Long userId, GoalType type, Long id, LocalDate date) {
+    public HistorySummaryResponse getHistorySummary(Long userId, GoalType type, Long id, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        // 1. 해당 날짜에 푼 퀴즈 ID들 조회
         List<UserQuiz> quizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay);
 
-        String title = "";
-        String summary = "";
-
-        // 로직 다시 정리:
-        // 필터링
-        List<Quiz> targetQuizzes = quizzes.stream()
-                .map(UserQuiz::getQuiz)
-                .filter(q -> {
+        // 필터링 및 첫 번째 항목 찾기
+        UserQuiz targetQuiz = quizzes.stream()
+                .filter(uq -> {
                     if (type == GoalType.DOCUMENT)
-                        return q.getDocument() != null && q.getDocument().getId().equals(id);
+                        return uq.getQuiz().getDocument() != null && uq.getQuiz().getDocument().getId().equals(id);
                     if (type == GoalType.CATEGORY)
-                        return q.getCategoryDocument() != null && q.getCategoryDocument().getId().equals(id);
+                        return uq.getQuiz().getCategoryDocument() != null
+                                && uq.getQuiz().getCategoryDocument().getId().equals(id);
                     return false;
                 })
-                .toList();
+                .findFirst()
+                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
-        if (targetQuizzes.isEmpty()) {
-            throw new BaseException(CommonResponseCode.NOT_FOUND); // 해당 날짜 기록 없음
-        }
+        String title;
+        String summary;
+        Quiz quiz = targetQuiz.getQuiz();
 
-        // 제목, 요약 추출 (첫 번째 퀴즈 기준)
-        Quiz first = targetQuizzes.get(0);
         if (type == GoalType.DOCUMENT) {
-            title = first.getDocument().getFileName();
-            summary = first.getDocument().getSummary();
+            title = quiz.getDocument().getFileName();
+            summary = quiz.getDocument().getSummary();
         } else {
-            title = first.getCategoryDocument().getCategory().getName();
-            summary = first.getCategoryDocument().getContent();
+            title = quiz.getCategoryDocument().getCategory().getName();
+            summary = quiz.getCategoryDocument().getContent();
         }
 
-        List<im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse.QuizDto> quizDtos = targetQuizzes
-                .stream()
-                .map(quizMapper::toDto)
-                .toList();
-
-        return HistoryDetailResponse.builder()
+        return HistorySummaryResponse.builder()
                 .title(title)
                 .summary(summary)
-                .createdAt(startOfDay) // 날짜 정보
-                .solvedQuizzes(quizDtos)
+                .createdAt(startOfDay)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public HistoryQuizListResponse getHistoryQuizzes(Long userId, GoalType type, Long id, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        List<UserQuiz> quizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay);
+
+        List<QuizListResponse.QuizDto> quizDtos = quizzes
+                .stream()
+                .filter(uq -> {
+                    if (type == GoalType.DOCUMENT)
+                        return uq.getQuiz().getDocument() != null && uq.getQuiz().getDocument().getId().equals(id);
+                    if (type == GoalType.CATEGORY)
+                        return uq.getQuiz().getCategoryDocument() != null
+                                && uq.getQuiz().getCategoryDocument().getId().equals(id);
+                    return false;
+                })
+                .map(uq -> quizMapper.toDto(uq.getQuiz()))
+                .toList();
+
+        if (quizDtos.isEmpty()) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
+        }
+
+        return HistoryQuizListResponse.builder()
+                .createdAt(startOfDay)
+                .quizzes(quizDtos)
                 .build();
     }
 }

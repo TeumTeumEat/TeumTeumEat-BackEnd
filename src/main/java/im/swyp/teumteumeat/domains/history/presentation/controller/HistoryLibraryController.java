@@ -47,14 +47,25 @@ public class HistoryLibraryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
-    // 상세 내용 보기 (요약 + 퀴즈 목록)
-    @GetMapping("/details/{type}/{id}")
-    public ResponseEntity<ApiResponse<HistoryDetailResponse>> getHistoryDetail(
+    // 상세 내용 보기 (요약)
+    @GetMapping("/details/summary/{type}/{id}")
+    public ResponseEntity<ApiResponse<HistorySummaryResponse>> getHistorySummary(
             @PathVariable GoalType type,
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal CustomUserDetails user) {
-        HistoryDetailResponse response = historyLibraryUseCase.getHistoryDetail(user.getUserId(), type, id, date);
+        HistorySummaryResponse response = historyLibraryUseCase.getHistorySummary(user.getUserId(), type, id, date);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    // 상세 내용 보기 (퀴즈 목록)
+    @GetMapping("/details/quizzes/{type}/{id}")
+    public ResponseEntity<ApiResponse<HistoryQuizListResponse>> getHistoryQuizzes(
+            @PathVariable GoalType type,
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        HistoryQuizListResponse response = historyLibraryUseCase.getHistoryQuizzes(user.getUserId(), type, id, date);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 }

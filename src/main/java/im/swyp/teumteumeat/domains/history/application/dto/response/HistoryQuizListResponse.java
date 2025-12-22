@@ -7,9 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
-public record HistoryDetailResponse(
-                String title,
-                String summary, // Full summary
-                LocalDateTime createdAt,
-                List<QuizListResponse.QuizDto> solvedQuizzes) {
+public record HistoryQuizListResponse(
+        LocalDateTime createdAt,
+        List<QuizListResponse.QuizDto> quizzes) {
 }
