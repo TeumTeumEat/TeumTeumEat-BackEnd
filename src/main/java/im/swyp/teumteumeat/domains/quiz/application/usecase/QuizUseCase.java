@@ -64,9 +64,16 @@ public class QuizUseCase {
         return quizMapper.toDto(quiz);
     }
 
-    // 퀴즈 세트 생성 (CategoryDocument)
+    // 퀴즈 세트 생성 (CategoryDocument) - 기본 (이동시간 기준)
     @Transactional
     public void createQuizzesForDocument(Long documentId, Long userId) {
+        int questionCount = calculateQuestionCount(userId);
+        createQuizzesForDocument(documentId, userId, questionCount);
+    }
+
+    // 퀴즈 세트 생성 (CategoryDocument) - 문제 수 지정 (퀴즈 채우기 용)
+    @Transactional
+    public void createQuizzesForDocument(Long documentId, Long userId, int questionCount) {
         CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
@@ -76,8 +83,6 @@ public class QuizUseCase {
                 .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, document.getCategory().getId())
                 .orElseThrow(() -> new BaseException(
                         CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
-
-        int questionCount = calculateQuestionCount(userId);
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
