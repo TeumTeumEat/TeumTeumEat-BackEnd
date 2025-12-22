@@ -40,7 +40,7 @@ public interface QuizApi {
                         @PathVariable Long quizId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다 (문제 은행 기여).")
+        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,
