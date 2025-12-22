@@ -29,7 +29,7 @@ public class Quiz extends BaseEntity {
     @Column(nullable = false)
     private String answer;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 120)
     private String description;
 
     @Column(columnDefinition = "TEXT")
