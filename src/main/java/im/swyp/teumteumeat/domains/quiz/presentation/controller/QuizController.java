@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class QuizController implements QuizApi {
 
     private final QuizUseCase quizUseCase;
+    private final im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase documentUseCase;
 
     // 해당 카테고리 자료의 모든 퀴즈 조회
     @Override
@@ -59,7 +60,6 @@ public class QuizController implements QuizApi {
     // 해당 카테고리 자료에 대한 퀴즈 생성
     @Override
     @PostMapping("categories/{categoryId}/documents/{documentId}/quizzes")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createQuizzes(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
@@ -73,13 +73,15 @@ public class QuizController implements QuizApi {
     // PDF 문서에 대한 퀴즈 생성
     @Override
     @PostMapping("goals/{goalId}/documents/{documentId}/quizzes")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
             @RequestParam(required = false) @Size(max = 30) String topic,
             @AuthenticationPrincipal CustomUserDetails user) {
+
+        // 문서 소유권 검증 (실패 시 예외 발생)
+        documentUseCase.getDocument(user.getUserId(), goalId, documentId);
 
         quizUseCase.createQuizzesForPdfDocumentById(documentId, difficulty, topic);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
