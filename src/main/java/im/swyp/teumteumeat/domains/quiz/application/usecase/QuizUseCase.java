@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocum
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -14,6 +15,8 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,7 @@ public class QuizUseCase {
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
     private final UserService userService;
+    private final GoalRepository goalRepository;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -60,18 +64,29 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (CategoryDocument)
     @Transactional
-    public void createQuizzesForDocument(Long documentId, int difficulty, String topic, Long userId) {
+    public void createQuizzesForDocument(Long documentId, Long userId) {
         CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
+        // Goal 조회 (해당 유저/카테고리의 최신 목표)
+        var goal = goalRepository
+                .findTopByUserIdAndCategoryIdOrderByCreatedAtDesc(userId, document.getCategory().getId())
+                .orElseThrow(() -> new BaseException(
+                       CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
+
         int questionCount = calculateQuestionCount(userId);
 
-        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topic, questionCount);
+        // Goal의 difficulty(Enum)와 prompt(String) 사용
+        String difficultyName = goal.getDifficulty().name();
+        String topicInstruction = goal.getPrompt();
+
+        generateAndSaveQuizzes(document, categoryName, documentContent, difficultyName, topicInstruction,
+                questionCount);
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
-            int difficulty, String topic, int questionCount) {
+            String difficulty, String topic, int questionCount) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
         String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
@@ -86,6 +101,9 @@ public class QuizUseCase {
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
+        // Topic 저장 시 길이 제한 (30자)
+        String storedTopic = (topic != null && topic.length() > 30) ? topic.substring(0, 30) : topic;
+
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromCategoryDocument(
                     document,
@@ -94,7 +112,7 @@ public class QuizUseCase {
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation(),
-                    topicInstruction);
+                    storedTopic);
         });
 
     }
@@ -109,12 +127,17 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
-    public void createQuizzesForPdfDocument(Document document, int difficulty, String topic) {
+    public void createQuizzesForPdfDocument(Document document) {
         // PDF 업로드 시에는 문서 소유자의 이동시간을 기준으로 생성
         int questionCount = calculateQuestionCount(document.getGoal().getUser().getId());
 
         String documentContent = document.getRawContent();
-        String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
+
+        // Goal 정보 가져오기
+        var goal = document.getGoal();
+        String difficulty = goal.getDifficulty().name();
+        String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
+                : "전반적인 내용";
 
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 
@@ -127,6 +150,11 @@ public class QuizUseCase {
                 + converter.getFormat();
         LLMResponse response = llmService.generateAnswer(prompt);
 
+        // Topic 저장 시 길이 제한 (30자)
+        String storedTopic = (topicInstruction != null && topicInstruction.length() > 30)
+                ? topicInstruction.substring(0, 30)
+                : topicInstruction;
+
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromPdfDocument(
                     document,
@@ -135,15 +163,15 @@ public class QuizUseCase {
                     quizDto.answer(),
                     quizDto.type(),
                     quizDto.explanation(),
-                    topicInstruction);
+                    storedTopic);
         });
     }
 
     // 퀴즈 세트 생성 (PDF Document) - Document ID, 퀴즈 재생성
     @Transactional
-    public void createQuizzesForPdfDocumentById(Long documentId, int difficulty, String topic) {
+    public void createQuizzesForPdfDocumentById(Long documentId) {
         Document document = documentService.getDocumentById(documentId);
-        createQuizzesForPdfDocument(document, difficulty, topic);
+        createQuizzesForPdfDocument(document);
     }
 
     @Transactional

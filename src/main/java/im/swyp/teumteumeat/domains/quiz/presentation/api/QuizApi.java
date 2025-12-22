@@ -45,8 +45,6 @@ public interface QuizApi {
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,
                         @PathVariable Long documentId,
-                        @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
-                        @RequestParam(required = false) String topic,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 생성(재생성)할 수 있습니다.")
@@ -54,8 +52,6 @@ public interface QuizApi {
         ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
-                        @RequestParam(required = false, defaultValue = "3") @Min(1) @Max(3) int difficulty,
-                        @RequestParam(required = false) String topic,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "퀴즈 삭제", description = "관리자(ADMIN)만 삭제할 수 있습니다.")

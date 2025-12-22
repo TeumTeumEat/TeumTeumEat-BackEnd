@@ -56,8 +56,7 @@ public class DocumentUseCase {
         documentSummaryService.generateSummary(document);
 
         // 퀴즈 생성
-        quizUseCase.createQuizzesForPdfDocument(document, request.difficulty() != null ? request.difficulty() : 3,
-                request.quizTopic());
+        quizUseCase.createQuizzesForPdfDocument(document);
     }
 
     // 해당 목표의 모든 문서 반환

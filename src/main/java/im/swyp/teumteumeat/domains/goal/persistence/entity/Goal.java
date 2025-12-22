@@ -43,6 +43,7 @@ public class Goal extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(length = 30)
     private String prompt;
 
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
