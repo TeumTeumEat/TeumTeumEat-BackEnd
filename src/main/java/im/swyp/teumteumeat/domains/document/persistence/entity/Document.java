@@ -41,7 +41,7 @@ public class Document extends BaseEntity {
     @Lob
     private String rawContent;
 
-    @Lob
+    @Column(length = 500)
     private String summary;
 
     @Enumerated(EnumType.STRING)
@@ -56,8 +56,7 @@ public class Document extends BaseEntity {
             long fileSize,
             String rawContent,
             String summary,
-            FileStatus status
-    ) {
+            FileStatus status) {
         this.user = user;
         this.goal = goal;
         this.fileName = fileName;

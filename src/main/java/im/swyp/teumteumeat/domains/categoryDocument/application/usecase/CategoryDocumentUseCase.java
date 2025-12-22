@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
+import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class CategoryDocumentUseCase {
     private final CategoryService categoryService;
     private final LLMService llmService;
     private final UserQuizRepository userQuizRepository;
+    private final GoalRepository goalRepository;
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
@@ -38,7 +40,7 @@ public class CategoryDocumentUseCase {
         // 유저가 해당 카테고리에서 카테고리 자료를 모두 소비했을 때
         if (unconsumedDocuments.isEmpty()) {
             // 카테고리 자료 생성
-            CategoryDocument createdDocument = createDocumentInternal(categoryId);
+            CategoryDocument createdDocument = createDocumentInternal(categoryId, userId);
             unconsumedDocuments = List.of(createdDocument);
         }
 
@@ -48,15 +50,25 @@ public class CategoryDocumentUseCase {
     }
 
     @Transactional
-    public void createDocument(Long categoryId) {
-        createDocumentInternal(categoryId);
+    public void createDocument(Long categoryId, Long userId) {
+        createDocumentInternal(categoryId, userId);
     }
 
-    private CategoryDocument createDocumentInternal(Long categoryId) {
+    private CategoryDocument createDocumentInternal(Long categoryId, Long userId) {
         Category category = categoryService.getCategoryById(categoryId);
 
-        // LLM을 통해 콘텐츠 생성
-        String prompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName());
+        // Goal 정보 가져오기
+        var goal = goalRepository
+                .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElse(null);
+
+        String topicInstruction = (goal != null && goal.getPrompt() != null && !goal.getPrompt().isEmpty())
+                ? goal.getPrompt()
+                : "전반적인 내용";
+
+        // LLM을 통해 콘텐츠 생성 (Goal의 prompt 반영)
+        String prompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
+                topicInstruction);
         String content = llmService.generateContent(prompt);
 
         CategoryDocument document = CategoryDocument.builder()

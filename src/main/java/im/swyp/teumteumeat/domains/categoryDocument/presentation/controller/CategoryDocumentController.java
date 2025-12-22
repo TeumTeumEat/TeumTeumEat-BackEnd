@@ -36,7 +36,7 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     public ResponseEntity<ApiResponse<Void>> createDocument(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        categoryDocumentUseCase.createDocument(categoryId);
+        categoryDocumentUseCase.createDocument(categoryId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 

@@ -81,7 +81,7 @@ public class UserQuizUseCase {
             if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
-                quizUseCase.createQuizzesForDocument(documentId);
+                quizUseCase.createQuizzesForDocument(documentId, userId);
                 quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
             }
         }
