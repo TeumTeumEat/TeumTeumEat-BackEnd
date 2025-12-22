@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.goal.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
@@ -35,6 +36,9 @@ public class Goal extends BaseEntity {
 
     private LocalDate endDate;
 
+    @Enumerated(EnumType.STRING)
+    private Difficulty difficulty;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -47,11 +51,13 @@ public class Goal extends BaseEntity {
             UserEntity user,
             GoalType type,
             LocalDate endDate,
+            Difficulty difficulty,
             Category category
     ) {
         this.user = user;
         this.type = type;
         this.endDate = endDate;
+        this.difficulty = difficulty;
         this.category = category;
     }
 
@@ -62,8 +68,10 @@ public class Goal extends BaseEntity {
     }
 
     public void updateGoal(
-            LocalDate endDate
+            LocalDate endDate,
+            Difficulty difficulty
     ) {
         this.endDate = (endDate != null) ? endDate : this.endDate;
+        this.difficulty = (difficulty != null) ? difficulty : this.difficulty;
     }
 }

@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.goal.application.dto.request;
 
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,10 @@ public record GoalCreateRequest(
         @NotNull(message = "날짜는 비어있을 수 없습니다.")
         @Schema(description = "목표 종료일")
         LocalDate endDate,
+
+        @NotNull(message = "난이도는 비어있을 수 없습니다.")
+        @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
+        Difficulty difficulty,
 
         @Schema(description = "카테고리 ID", example = "1")
         Long categoryId
