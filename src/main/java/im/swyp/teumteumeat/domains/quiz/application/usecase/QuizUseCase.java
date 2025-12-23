@@ -130,7 +130,7 @@ public class QuizUseCase {
     @Transactional
     public void createQuizzesForPdfDocument(Document document) {
         // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
-        int questionCount = calculateQuestionCount(document.getGoal().getUser().getId());
+        int questionCount = calculateQuestionCount(document.getUser().getId());
 
         String documentContent = document.getRawContent();
 
@@ -152,7 +152,7 @@ public class QuizUseCase {
         LLMResponse response = llmService.generateAnswer(prompt);
 
         // Topic 저장 시 길이 제한 (30자)
-        String storedTopic = (topicInstruction != null && topicInstruction.length() > 30)
+        String storedTopic = (topicInstruction.length() > 30)
                 ? topicInstruction.substring(0, 30)
                 : topicInstruction;
 
