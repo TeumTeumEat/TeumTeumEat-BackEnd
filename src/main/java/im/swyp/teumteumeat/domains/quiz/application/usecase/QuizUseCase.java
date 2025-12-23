@@ -173,8 +173,9 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (PDF Document) - Document ID, 퀴즈 재생성
     @Transactional
-    public void createQuizzesForPdfDocumentById(Long documentId) {
+    public void createQuizzesForPdfDocumentById(Long documentId, Long userId) {
         Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
         createQuizzesForPdfDocument(document);
     }
 

@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 public class QuizController implements QuizApi {
 
     private final QuizUseCase quizUseCase;
-    private final im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase documentUseCase;
 
     // 해당 카테고리 자료의 모든 퀴즈 조회
     @Override
@@ -74,10 +73,7 @@ public class QuizController implements QuizApi {
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
 
-        // 문서 소유권 검증 (실패 시 예외 발생)
-        documentUseCase.getDocument(user.getUserId(), goalId, documentId);
-
-        quizUseCase.createQuizzesForPdfDocumentById(documentId);
+        quizUseCase.createQuizzesForPdfDocumentById(documentId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
