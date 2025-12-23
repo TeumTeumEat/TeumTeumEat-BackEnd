@@ -5,10 +5,12 @@ import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
-import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
-import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,14 +25,14 @@ public class CategoryDocumentUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final CategoryService categoryService;
     private final LLMService llmService;
-    private final UserQuizRepository userQuizRepository;
-    private final GoalRepository goalRepository;
+    private final UserQuizService userQuizService;
+    private final GoalService goalService;
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByCategoryId(categoryId);
         // 1. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
-        List<Long> consumedDocumentIds = userQuizRepository.findConsumedDocumentIdsByUserId(userId);
+        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
 
         // 유저가 해당 카테고리에서 본 적 없는 카테고리 자료들을 조회
         List<CategoryDocument> unconsumedDocuments = documents.stream()
@@ -58,9 +60,12 @@ public class CategoryDocumentUseCase {
         Category category = categoryService.getCategoryById(categoryId);
 
         // Goal 정보 가져오기
-        var goal = goalRepository
-                .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
-                .orElse(null);
+        Goal goal = null;
+        try {
+            goal = goalService.findLatestGoal(userId, categoryId);
+        } catch (BaseException e) {
+            // Goal이 없는 경우 허용 (null 처리)
+        }
 
         String topicInstruction = (goal != null && goal.getPrompt() != null && !goal.getPrompt().isEmpty())
                 ? goal.getPrompt()

@@ -6,7 +6,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
+
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -17,8 +17,7 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
-import im.swyp.teumteumeat.global.exception.BaseException;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
 import java.util.List;
+
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 @UseCase
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class QuizUseCase {
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
     private final UserService userService;
-    private final GoalRepository goalRepository;
+    private final GoalService goalService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -72,10 +73,7 @@ public class QuizUseCase {
         String documentContent = document.getContent();
 
         // Goal 조회 (해당 유저/카테고리의 최신 목표)
-        var goal = goalRepository
-                .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, document.getCategory().getId())
-                .orElseThrow(() -> new BaseException(
-                        CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
+        Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
 
         int questionCount = calculateQuestionCount(userId);
 
@@ -137,7 +135,7 @@ public class QuizUseCase {
         String documentContent = document.getRawContent();
 
         // Goal 정보 가져오기
-        var goal = document.getGoal();
+        Goal goal = document.getGoal();
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : "전반적인 내용";
@@ -190,7 +188,7 @@ public class QuizUseCase {
         }
 
         try {
-            var user = userService.getUserById(userId);
+            UserEntity user = userService.getUserById(userId);
             if (user.getCommuteInfo() == null) {
                 return 10;
             }

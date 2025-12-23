@@ -33,12 +33,16 @@ public class GoalService {
         goal.updateGoal(
                 request.endDate(),
                 request.difficulty(),
-                request.prompt()
-        );
+                request.prompt());
     }
 
     public void deleteGoal(Long goalId) {
         goalRepository.deleteById(goalId);
+    }
+
+    public Goal findLatestGoal(Long userId, Long categoryId) {
+        return goalRepository.findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
     }
 
     /* HELPER METHOD */
