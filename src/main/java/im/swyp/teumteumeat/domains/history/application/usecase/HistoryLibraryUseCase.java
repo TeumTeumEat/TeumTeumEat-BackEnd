@@ -7,9 +7,9 @@ import im.swyp.teumteumeat.domains.history.application.dto.response.*;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
-import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
+
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
-import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
@@ -25,7 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class HistoryLibraryUseCase {
 
-    private final UserQuizRepository userQuizRepository;
+    private final UserQuizService userQuizService;
     private final QuizMapper quizMapper;
 
     @Transactional(readOnly = true)
@@ -35,8 +35,7 @@ public class HistoryLibraryUseCase {
         LocalDateTime startOfMonth = now.withDayOfMonth(1).with(LocalTime.MIN);
         LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth()).with(LocalTime.MAX);
 
-        List<UserQuiz> monthlyQuizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfMonth,
-                endOfMonth);
+        List<UserQuiz> monthlyQuizzes = userQuizService.getQuizzesByDateRange(userId, startOfMonth, endOfMonth);
 
         // 스탬프 날짜 추출 (중복 제거)
         List<LocalDate> stampedDates = monthlyQuizzes.stream()
@@ -45,7 +44,7 @@ public class HistoryLibraryUseCase {
                 .sorted()
                 .toList();
 
-        int currentStreak = calculateStreak(userId);
+        int currentStreak = userQuizService.calculateCurrentStreak(userId);
 
         return CalendarResponse.builder()
                 .stampedDates(stampedDates)
@@ -54,44 +53,12 @@ public class HistoryLibraryUseCase {
                 .build();
     }
 
-    private int calculateStreak(Long userId) {
-        List<java.sql.Date> rawDays = userQuizRepository.findDistinctDaysByUserId(userId);
-        if (rawDays.isEmpty())
-            return 0;
-
-        List<LocalDate> days = rawDays.stream()
-                .map(java.sql.Date::toLocalDate)
-                .toList();
-
-        LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
-
-        // 가장 최근 학습일이 오늘이나 어제가 아니면 스트릭 끊김
-        LocalDate lastStudyDate = days.get(0);
-        if (!lastStudyDate.isEqual(today) && !lastStudyDate.isEqual(yesterday)) {
-            return 0;
-        }
-
-        int streak = 0;
-        LocalDate checkDate = lastStudyDate;
-
-        for (LocalDate date : days) {
-            if (date.isEqual(checkDate)) {
-                streak++;
-                checkDate = checkDate.minusDays(1);
-            } else {
-                break;
-            }
-        }
-        return streak;
-    }
-
     @Transactional(readOnly = true)
     public List<DailyHistoryResponse> getDailyHistory(Long userId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        List<UserQuiz> quizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay);
+        List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
         // Document/CategoryDocument 단위로 그룹화
         // Set을 사용하여 중복 제거 (같은 문서를 여러 번 풀어도 한 번만 표시)
@@ -149,7 +116,7 @@ public class HistoryLibraryUseCase {
     @Transactional(readOnly = true)
     public List<TopicHistoryResponse> getTopicHistory(Long userId) {
         // 전체 기록 조회 (유저 학습 시작일 ~ 현재)
-        List<UserQuiz> allQuizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(
+        List<UserQuiz> allQuizzes = userQuizService.getQuizzesByDateRange(
                 userId, LocalDateTime.of(2023, 1, 1, 0, 0), LocalDateTime.now());
 
         Map<String, List<DailyHistoryResponse>> grouped = new HashMap<>();
@@ -217,7 +184,7 @@ public class HistoryLibraryUseCase {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        List<UserQuiz> quizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay);
+        List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
         // 필터링 및 첫 번째 항목 찾기
         UserQuiz targetQuiz = quizzes.stream()
@@ -256,7 +223,7 @@ public class HistoryLibraryUseCase {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        List<UserQuiz> quizzes = userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay);
+        List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
         List<QuizListResponse.QuizDto> quizDtos = quizzes
                 .stream()
