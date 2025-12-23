@@ -21,10 +21,10 @@ public class S3Service {
 
     private final S3Presigner s3Presigner;
 
-    @Value("${cloud.aws.s3.bucket}")
+    @Value("${infra.aws.s3.bucket}")
     private String bucketName;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${infra.aws.region.static}")
     private String region;
 
     public URL generatePresignedUrl(

@@ -1,10 +1,11 @@
 package im.swyp.teumteumeat.domains.quiz.domain.service;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,18 +20,27 @@ public class QuizService {
 
         private final QuizRepository quizRepository;
 
-        public List<Quiz> getQuizzesByDocumentId(Long documentId) {
-                return quizRepository.findByCategoryDocumentId(documentId);
+        public List<Quiz> getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
+                return quizRepository.findByCategoryDocumentId(categoryDocumentId);
         }
 
-        public List<Quiz> getUnsolvedQuizzes(Long documentId, Long userId, int limit) {
-                return quizRepository.findUnsolvedQuizzes(documentId, userId,
+        public List<Quiz> getQuizzesByDocumentId(Long documentId) {
+                return quizRepository.findByDocumentId(documentId);
+        }
+
+        public List<Quiz> getUnsolvedCategoryQuizzes(Long categoryDocumentId, Long userId, int limit) {
+                return quizRepository.findUnsolvedCategoryQuizzes(categoryDocumentId, userId,
+                                org.springframework.data.domain.PageRequest.of(0, limit));
+        }
+
+        public List<Quiz> getUnsolvedDocumentQuizzes(Long documentId, Long userId, int limit) {
+                return quizRepository.findUnsolvedDocumentQuizzes(documentId, userId,
                                 org.springframework.data.domain.PageRequest.of(0, limit));
         }
 
         public Quiz getQuizById(Long quizId) {
                 return quizRepository.findById(quizId)
-                                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                                .orElseThrow(() -> new BaseException(QuizResponseCode.NOT_FOUND_QUIZ));
         }
 
         @Transactional
@@ -39,21 +49,29 @@ public class QuizService {
         }
 
         @Transactional
-        public void createQuiz(
+        public void createQuizFromCategoryDocument(
                         CategoryDocument document,
-                        String question, String options, String answer, String type, String explanation) {
-                // QuizType 매핑 로직 필요 (String -> Enum)
-                QuizType quizType = "OX".equalsIgnoreCase(type)
-                                ? QuizType.OX
-                                : QuizType.MCQ;
+                        String question, String options, String answer, QuizType type, String explanation) {
+                saveQuiz(document, null, question, options, answer, type, explanation);
+        }
 
+        @Transactional
+        public void createQuizFromPdfDocument(
+                        Document document,
+                        String question, String options, String answer, QuizType type, String explanation) {
+                saveQuiz(null, document, question, options, answer, type, explanation);
+        }
+
+        private void saveQuiz(CategoryDocument categoryDocument, Document document,
+                        String question, String options, String answer, QuizType type, String explanation) {
                 Quiz quiz = Quiz.builder()
-                                .categoryDocument(document)
+                                .categoryDocument(categoryDocument)
+                                .document(document)
                                 .content(question)
                                 .options(options)
                                 .answer(answer)
                                 .description(explanation)
-                                .quizType(quizType)
+                                .quizType(type)
                                 .build();
 
                 quizRepository.save(quiz);

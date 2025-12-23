@@ -1,8 +1,8 @@
 package im.swyp.teumteumeat.domains.document.domain.service;
 
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepository;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +38,6 @@ public class DocumentService {
     /* HELPER METHOD */
     private Document getOrThrow(Long id) {
         return documentRepository.findById(id)
-                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
     }
 }

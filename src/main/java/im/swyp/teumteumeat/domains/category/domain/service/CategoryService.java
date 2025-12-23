@@ -1,9 +1,9 @@
 package im.swyp.teumteumeat.domains.category.domain.service;
 
 import im.swyp.teumteumeat.domains.category.application.dto.request.CategoryUpdateRequest;
+import im.swyp.teumteumeat.domains.category.domain.constant.CategoryResponseCode;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.category.persistence.repository.CategoryRepository;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,6 +44,6 @@ public class CategoryService {
     /* HELPER METHOD */
     private Category getOrThrow(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CategoryResponseCode.NOT_FOUND_CATEGORY));
     }
 }

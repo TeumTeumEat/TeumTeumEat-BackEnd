@@ -1,10 +1,10 @@
 package im.swyp.teumteumeat.domains.user.domain.service;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
+import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +38,6 @@ public class UserService {
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(UserResponseCode.NOT_FOUND_USER));
     }
 }
