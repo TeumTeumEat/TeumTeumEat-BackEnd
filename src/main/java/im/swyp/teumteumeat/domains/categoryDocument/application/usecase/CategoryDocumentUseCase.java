@@ -69,15 +69,12 @@ public class CategoryDocumentUseCase {
         // LLM을 통해 콘텐츠 생성 (Goal의 prompt 반영)
         String prompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
                 topicInstruction);
-        String content = llmService.generateContent(prompt);
+        String generatedContent = llmService.generateContent(prompt);
 
-        CategoryDocument document = CategoryDocument.builder()
-                .category(category)
-                .content(content)
-                .build();
+        // 제목 생성
+        String generatedTitle = llmService.generateTitle(generatedContent, topicInstruction);
 
-        categoryDocumentService.createDocument(document);
-        return document;
+        return categoryDocumentService.createDocument(category, generatedContent, generatedTitle);
     }
 
     @Transactional

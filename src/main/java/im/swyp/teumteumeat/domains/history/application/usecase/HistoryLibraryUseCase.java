@@ -77,7 +77,7 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.DOCUMENT)
-                            .title(doc.getFileName()) // PDF 파일명
+                            .title(doc.getTitle() != null ? doc.getTitle() : doc.getFileName()) // PDF 파일명 또는 요약 제목
                             .summarySnippet(getSnippet(doc.getSummary()))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
@@ -89,7 +89,8 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
-                            .title(doc.getCategory().getName()) // 카테고리명
+                            .title(doc.getTitle() != null ? doc.getTitle() : doc.getCategory().getName()) // 카테고리명 또는 요약
+                                                                                                          // 제목
                             .summarySnippet(getSnippet(doc.getContent()))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
@@ -140,7 +141,7 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.DOCUMENT)
-                            .title(doc.getFileName())
+                            .title(doc.getTitle() != null ? doc.getTitle() : doc.getFileName())
                             .summarySnippet(getSnippet(doc.getSummary()))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
@@ -155,7 +156,7 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
-                            .title(categoryName)
+                            .title(doc.getTitle() != null ? doc.getTitle() : categoryName)
                             .summarySnippet(getSnippet(doc.getContent()))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
@@ -204,10 +205,12 @@ public class HistoryLibraryUseCase {
         Quiz quiz = targetQuiz.getQuiz();
 
         if (type == GoalType.DOCUMENT) {
-            title = quiz.getDocument().getFileName();
+            title = quiz.getDocument().getTitle() != null ? quiz.getDocument().getTitle()
+                    : quiz.getDocument().getFileName();
             summary = quiz.getDocument().getSummary();
         } else {
-            title = quiz.getCategoryDocument().getCategory().getName();
+            title = quiz.getCategoryDocument().getTitle() != null ? quiz.getCategoryDocument().getTitle()
+                    : quiz.getCategoryDocument().getCategory().getName();
             summary = quiz.getCategoryDocument().getContent();
         }
 

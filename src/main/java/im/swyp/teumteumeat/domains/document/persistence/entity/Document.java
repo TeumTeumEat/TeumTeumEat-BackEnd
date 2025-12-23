@@ -38,6 +38,9 @@ public class Document extends BaseEntity {
 
     private long fileSize;
 
+    @Column(length = 255)
+    private String title;
+
     @Lob
     private String rawContent;
 
@@ -54,6 +57,7 @@ public class Document extends BaseEntity {
             String fileName,
             String fileKey,
             long fileSize,
+            String title,
             String rawContent,
             String summary,
             FileStatus status) {
@@ -62,6 +66,7 @@ public class Document extends BaseEntity {
         this.fileName = fileName;
         this.fileKey = fileKey;
         this.fileSize = fileSize;
+        this.title = title;
         this.rawContent = rawContent;
         this.summary = summary;
         this.status = status;
@@ -83,5 +88,9 @@ public class Document extends BaseEntity {
 
     public void updateSummary(String summary) {
         this.summary = summary;
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
     }
 }

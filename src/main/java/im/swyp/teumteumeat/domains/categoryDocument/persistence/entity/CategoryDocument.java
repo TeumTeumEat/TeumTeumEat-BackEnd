@@ -21,13 +21,17 @@ public class CategoryDocument extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(length = 255)
+    private String title;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @Builder
-    public CategoryDocument(String content, Category category) {
+    public CategoryDocument(String content, String title, Category category) {
         this.content = content;
+        this.title = title;
         this.category = category;
     }
 }
