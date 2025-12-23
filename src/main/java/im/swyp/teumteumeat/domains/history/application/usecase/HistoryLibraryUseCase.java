@@ -61,7 +61,7 @@ public class HistoryLibraryUseCase {
         List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
         // Document/CategoryDocument 단위로 그룹화
-        // Set을 사용하여 중복 제거 (같은 문서를 여러 번 풀어도 한 번만 표시)
+        // Set을 사용하여 중복 제거 (같은 문서를 여러 번 풀어도 당일에는 한 번만 표시)
         Set<String> processedKeys = new HashSet<>();
         List<DailyHistoryResponse> result = new ArrayList<>();
 
@@ -128,13 +128,14 @@ public class HistoryLibraryUseCase {
 
         for (UserQuiz uq : allQuizzes) {
             Quiz quiz = uq.getQuiz();
-            String categoryName = "기타";
+            String categoryName;
             DailyHistoryResponse item = null;
             String uniqueKey;
 
+            // Document(PDF)
             if (quiz.getDocument() != null) {
                 Document doc = quiz.getDocument();
-                categoryName = "PDF 자료"; // 카테고리 고려하기..
+                categoryName = doc.getFileName(); // PDF는 카테고리 미정, 파일명으로 대체
                 uniqueKey = "DOC_" + doc.getId();
 
                 if (!processedKeys.contains(uniqueKey)) {
@@ -147,7 +148,10 @@ public class HistoryLibraryUseCase {
                             .build();
                 }
 
-            } else if (quiz.getCategoryDocument() != null) {
+            }
+
+            // Category Document
+            else if (quiz.getCategoryDocument() != null) {
                 CategoryDocument doc = quiz.getCategoryDocument();
                 categoryName = doc.getCategory().getName();
                 uniqueKey = "CAT_" + doc.getId();
