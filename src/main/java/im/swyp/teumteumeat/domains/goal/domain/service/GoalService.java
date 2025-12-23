@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.domain.service;
 
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -58,6 +59,6 @@ public class GoalService {
     /* HELPER METHOD */
     private Goal getOrThrow(Long id) {
         return goalRepository.findById(id)
-                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(GoalResponseCode.NOT_FOUND_GOAL));
     }
 }

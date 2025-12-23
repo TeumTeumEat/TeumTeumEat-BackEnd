@@ -2,11 +2,11 @@ package im.swyp.teumteumeat.domains.quiz.domain.service;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class QuizService {
 
         public Quiz getQuizById(Long quizId) {
                 return quizRepository.findById(quizId)
-                                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                                .orElseThrow(() -> new BaseException(QuizResponseCode.NOT_FOUND_QUIZ));
         }
 
         @Transactional
