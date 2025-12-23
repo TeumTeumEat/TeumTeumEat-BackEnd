@@ -38,7 +38,7 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public void createDocument(CategoryDocument document) {
+    public void saveDocument(CategoryDocument document) {
         categoryDocumentRepository.save(document);
     }
 
