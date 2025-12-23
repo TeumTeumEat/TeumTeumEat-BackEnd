@@ -6,11 +6,11 @@ import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.Cat
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
-import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
-import im.swyp.teumteumeat.global.exception.BaseException;
+
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,17 +59,7 @@ public class CategoryDocumentUseCase {
     private CategoryDocument createDocumentInternal(Long categoryId, Long userId) {
         Category category = categoryService.getCategoryById(categoryId);
 
-        // Goal 정보 가져오기
-        Goal goal = null;
-        try {
-            goal = goalService.findLatestGoal(userId, categoryId);
-        } catch (BaseException e) {
-            // Goal이 없는 경우 허용 (null 처리)
-        }
-
-        String topicInstruction = (goal != null && goal.getPrompt() != null && !goal.getPrompt().isEmpty())
-                ? goal.getPrompt()
-                : "전반적인 내용";
+        String topicInstruction = goalService.getTopic(userId, categoryId);
 
         // LLM을 통해 콘텐츠 생성 (Goal의 prompt 반영)
         String prompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),

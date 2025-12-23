@@ -45,6 +45,16 @@ public class GoalService {
                 .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
     }
 
+    public String getTopic(Long userId, Long categoryId) {
+        Goal goal = goalRepository.findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElse(null);
+
+        if (goal == null || goal.getPrompt() == null || goal.getPrompt().isEmpty()) {
+            return "전반적인 내용";
+        }
+        return goal.getPrompt();
+    }
+
     /* HELPER METHOD */
     private Goal getOrThrow(Long id) {
         return goalRepository.findById(id)

@@ -17,6 +17,7 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
@@ -25,8 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
 import java.util.List;
-
-import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 @UseCase
 @RequiredArgsConstructor
@@ -79,7 +78,8 @@ public class QuizUseCase {
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
-        String topicInstruction = goal.getPrompt();
+        // Topic 조회
+        String topicInstruction = goalService.getTopic(userId, document.getCategory().getId());
 
         generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
                 questionCount);
@@ -88,7 +88,6 @@ public class QuizUseCase {
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
             Difficulty difficulty, String topic, int questionCount) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-        String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
@@ -96,13 +95,13 @@ public class QuizUseCase {
                 questionCount,
                 documentContent,
                 difficulty,
-                topicInstruction) // 주제 (없으면 전반적인 내용)
+                topic)
                 + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n" + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
         // Topic 저장 시 길이 제한 (30자)
-        String storedTopic = (topic != null && topic.length() > 30) ? topic.substring(0, 30) : topic;
+        String storedTopic = truncateTopic(topic);
 
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromCategoryDocument(
@@ -115,7 +114,6 @@ public class QuizUseCase {
                     storedTopic,
                     difficulty);
         });
-
     }
 
     @SneakyThrows
@@ -152,9 +150,7 @@ public class QuizUseCase {
         LLMResponse response = llmService.generateAnswer(prompt);
 
         // Topic 저장 시 길이 제한 (30자)
-        String storedTopic = (topicInstruction.length() > 30)
-                ? topicInstruction.substring(0, 30)
-                : topicInstruction;
+        String storedTopic = truncateTopic(topicInstruction);
 
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromPdfDocument(
@@ -205,5 +201,12 @@ public class QuizUseCase {
         } catch (Exception e) {
             return 10; // 유저 조회 실패 등 예외 시 기본값
         }
+    }
+
+    private String truncateTopic(String topic) {
+        if (topic != null && topic.length() > 30) {
+            return topic.substring(0, 30);
+        }
+        return topic;
     }
 }
