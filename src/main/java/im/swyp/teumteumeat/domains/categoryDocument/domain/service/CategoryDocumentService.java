@@ -1,8 +1,8 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
+import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class CategoryDocumentService {
 
     public CategoryDocument getDocumentById(Long documentId) {
         return categoryDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
     }
 
     @Transactional
