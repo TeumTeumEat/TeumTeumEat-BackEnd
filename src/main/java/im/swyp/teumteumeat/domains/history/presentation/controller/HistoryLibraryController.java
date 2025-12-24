@@ -27,8 +27,10 @@ public class HistoryLibraryController implements HistoryLibraryApi {
     @Override
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<CalendarResponse>> getCalendar(
+            Integer year,
+            Integer month,
             @AuthenticationPrincipal CustomUserDetails user) {
-        CalendarResponse response = historyLibraryUseCase.getCalendar(user.getUserId());
+        CalendarResponse response = historyLibraryUseCase.getCalendar(user.getUserId(), year, month);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

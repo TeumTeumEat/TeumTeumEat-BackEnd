@@ -29,11 +29,14 @@ public class HistoryLibraryUseCase {
     private final QuizMapper quizMapper;
 
     @Transactional(readOnly = true)
-    public CalendarResponse getCalendar(Long userId) {
-        // 이번 달 기준
+    public CalendarResponse getCalendar(Long userId, Integer year, Integer month) {
+        // 기준 날짜 설정 (파라미터가 없으면 현재 시간 기준)
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startOfMonth = now.withDayOfMonth(1).with(LocalTime.MIN);
-        LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth()).with(LocalTime.MAX);
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        LocalDateTime startOfMonth = LocalDateTime.of(targetYear, targetMonth, 1, 0, 0, 0);
+        LocalDateTime endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.toLocalDate().lengthOfMonth()).with(LocalTime.MAX);
 
         List<UserQuiz> monthlyQuizzes = userQuizService.getQuizzesByDateRange(userId, startOfMonth, endOfMonth);
 
