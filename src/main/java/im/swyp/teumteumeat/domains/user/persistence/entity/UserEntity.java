@@ -40,6 +40,7 @@ public class UserEntity extends BaseEntity {
     @JoinColumn(name = "commute_info_id")
     private CommuteInfo commuteInfo;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Goal> goals = new ArrayList<>();
 
