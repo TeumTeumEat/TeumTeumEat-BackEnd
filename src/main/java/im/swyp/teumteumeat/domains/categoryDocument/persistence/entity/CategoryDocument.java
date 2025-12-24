@@ -18,16 +18,20 @@ public class CategoryDocument extends BaseEntity {
     @Column(name = "category_document_id")
     private Long id;
 
-    @Column(nullable = false, length = 500)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @Column(length = 255)
+    private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @Builder
-    public CategoryDocument(String content, Category category) {
+    public CategoryDocument(String content, String title, Category category) {
         this.content = content;
+        this.title = title;
         this.category = category;
     }
 }

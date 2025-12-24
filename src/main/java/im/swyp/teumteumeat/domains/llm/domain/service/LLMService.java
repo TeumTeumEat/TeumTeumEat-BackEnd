@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.llm.domain.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,13 @@ public class LLMService {
     public String generateContent(String promptMessage) {
         // 공통 API 호출 (JSON 모드 비활성화)
         return callOpenAiApi(promptMessage, "당신은 교육 자료 생성 전문가입니다.", false);
+    }
+
+    public String generateTitle(String content, String userGoal) {
+        String prompt = String.format(
+                DocumentPrompt.GENERATE_TITLE.getTemplate(), userGoal,
+                content);
+        return callOpenAiApi(prompt, "당신은 요약 전문가입니다.", false);
     }
 
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {

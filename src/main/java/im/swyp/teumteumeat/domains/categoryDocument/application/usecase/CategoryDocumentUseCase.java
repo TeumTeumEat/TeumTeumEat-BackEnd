@@ -71,7 +71,7 @@ public class CategoryDocumentUseCase {
                 .content(content)
                 .build();
 
-        categoryDocumentService.createDocument(document);
+        categoryDocumentService.saveDocument(document);
         return document;
     }
 

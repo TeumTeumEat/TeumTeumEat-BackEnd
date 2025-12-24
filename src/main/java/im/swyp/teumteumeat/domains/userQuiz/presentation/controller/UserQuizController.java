@@ -34,7 +34,7 @@ public class UserQuizController implements UserQuizApi {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
-    // 퀴즈 10개 조회 (정답 미포함)
+    // 퀴즈 이동시간에 따른 개수만큼 조회 (정답 미포함)
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(

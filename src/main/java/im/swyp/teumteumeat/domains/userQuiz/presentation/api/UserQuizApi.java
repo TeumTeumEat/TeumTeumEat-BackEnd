@@ -29,7 +29,7 @@ public interface UserQuizApi {
                         @RequestBody @Valid QuizSubmissionRequest request,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "퀴즈 10개 조회 (정답 미포함)")
+        @Operation(summary = "퀴즈 사용자 이동시간에 해당하는 개수만큼 조회 (정답 미포함)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizSetResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(
                         @RequestParam Long documentId,

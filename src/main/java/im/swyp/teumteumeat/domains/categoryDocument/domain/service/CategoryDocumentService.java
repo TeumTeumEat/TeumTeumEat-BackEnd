@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
+import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
@@ -27,7 +28,17 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public void createDocument(CategoryDocument document) {
+    public CategoryDocument createDocument(Category category, String content, String title) {
+        CategoryDocument document = CategoryDocument.builder()
+                .category(category)
+                .content(content)
+                .title(title)
+                .build();
+        return categoryDocumentRepository.save(document);
+    }
+
+    @Transactional
+    public void saveDocument(CategoryDocument document) {
         categoryDocumentRepository.save(document);
     }
 

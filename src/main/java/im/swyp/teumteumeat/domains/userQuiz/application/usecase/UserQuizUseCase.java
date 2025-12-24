@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResp
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
+import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class UserQuizUseCase {
 
     private final QuizService quizService;
     private final UserQuizService userQuizService;
+    private final UserQuizRepository userQuizRepository;
     private final UserService userService;
     private final QuizMapper quizMapper;
 
@@ -37,13 +39,24 @@ public class UserQuizUseCase {
 
         boolean isCorrect = quiz.getAnswer().trim().equalsIgnoreCase(request.userAnswer().trim());
 
-        UserQuiz userQuiz = UserQuiz.builder()
-                .user(user)
-                .quiz(quiz)
-                .isCorrect(isCorrect)
-                .build();
+        // 오늘 날짜 범위 계산
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime startOfDay = today.atStartOfDay();
+        java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
 
-        userQuizService.saveUserQuiz(userQuiz);
+        // 오늘 이미 푼 기록이 있는지 확인 (Date-based Upsert)
+        userQuizRepository.findByUserAndQuizAndCreatedDateBetween(user, quiz, startOfDay, endOfDay)
+                .ifPresentOrElse(
+                        existingUserQuiz -> existingUserQuiz.updateResult(isCorrect), // 있으면 업데이트
+                        () -> {
+                            // 없으면 새로 생성
+                            UserQuiz newUserQuiz = UserQuiz.builder()
+                                    .user(user)
+                                    .quiz(quiz)
+                                    .isCorrect(isCorrect)
+                                    .build();
+                            userQuizService.saveUserQuiz(newUserQuiz);
+                        });
 
         return QuizSubmissionResponse.builder()
                 .isCorrect(isCorrect)
@@ -55,12 +68,15 @@ public class UserQuizUseCase {
     @Transactional
     public List<QuizSetResponse> getQuizzesForSolving(
             Long documentId, Long userId, GoalType documentType) {
+        // 이동시간 기반 문제 수 계산
+        int quizCount = quizUseCase.calculateQuestionCount(userId);
+
         // 사용자가 푼 적 없는 퀴즈만 제공
         List<Quiz> quizzesUnsolved;
         if (GoalType.DOCUMENT == documentType) {
-            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, 10);
+            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
         } else {
-            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
         }
 
         // 해당 카테고리 자료 퀴즈(모든 유저가 접근 가능)를 사용자가 다 풀었을 시 퀴즈 추가 생성
@@ -68,8 +84,8 @@ public class UserQuizUseCase {
             if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
-                quizUseCase.createQuizzesForDocument(documentId, userId);
-                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, 10);
+                quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
+                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
             }
         }
 

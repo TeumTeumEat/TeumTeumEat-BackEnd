@@ -37,4 +37,8 @@ public class UserQuiz extends BaseEntity {
         this.quiz = quiz;
         this.isCorrect = isCorrect;
     }
+
+    public void updateResult(boolean isCorrect) {
+        this.isCorrect = isCorrect;
+    }
 }
