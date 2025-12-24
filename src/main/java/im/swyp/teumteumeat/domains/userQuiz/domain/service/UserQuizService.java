@@ -25,6 +25,10 @@ public class UserQuizService {
         return userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, start, end);
     }
 
+    public List<UserQuiz> getAllQuizzes(Long userId) {
+        return userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId);
+    }
+
     public List<LocalDate> getDistinctStudyDays(Long userId) {
         return userQuizRepository.findDistinctDaysByUserId(userId).stream()
                 .map(java.sql.Date::toLocalDate)

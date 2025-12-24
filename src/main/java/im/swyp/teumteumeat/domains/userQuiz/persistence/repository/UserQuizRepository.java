@@ -20,6 +20,8 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
         List<UserQuiz> findAllByUserIdAndCreatedDateBetween(Long userId, java.time.LocalDateTime start,
                         java.time.LocalDateTime end);
 
+        List<UserQuiz> findAllByUserIdOrderByCreatedDateDesc(Long userId);
+
         Optional<UserQuiz> findByUserAndQuizAndCreatedDateBetween(
                         UserEntity user,
                         Quiz quiz,

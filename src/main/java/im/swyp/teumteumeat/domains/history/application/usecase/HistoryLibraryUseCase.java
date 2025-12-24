@@ -36,7 +36,8 @@ public class HistoryLibraryUseCase {
         int targetMonth = (month != null) ? month : now.getMonthValue();
 
         LocalDateTime startOfMonth = LocalDateTime.of(targetYear, targetMonth, 1, 0, 0, 0);
-        LocalDateTime endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.toLocalDate().lengthOfMonth()).with(LocalTime.MAX);
+        LocalDateTime endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.toLocalDate().lengthOfMonth())
+                .with(LocalTime.MAX);
 
         List<UserQuiz> monthlyQuizzes = userQuizService.getQuizzesByDateRange(userId, startOfMonth, endOfMonth);
 
@@ -70,7 +71,7 @@ public class HistoryLibraryUseCase {
 
         for (UserQuiz uq : quizzes) {
             Quiz quiz = uq.getQuiz();
-            String key;
+            String key = null;
             DailyHistoryResponse item = null;
 
             if (quiz.getDocument() != null) {
@@ -98,8 +99,6 @@ public class HistoryLibraryUseCase {
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
-            } else {
-                continue;
             }
 
             if (item != null) {
@@ -119,21 +118,19 @@ public class HistoryLibraryUseCase {
 
     @Transactional(readOnly = true)
     public List<TopicHistoryResponse> getTopicHistory(Long userId) {
-        // 전체 기록 조회 (유저 학습 시작일 ~ 현재)
-        List<UserQuiz> allQuizzes = userQuizService.getQuizzesByDateRange(
-                userId, LocalDateTime.of(2023, 1, 1, 0, 0), LocalDateTime.now());
+        // 전체 기록 조회
+        List<UserQuiz> allQuizzes = userQuizService.getAllQuizzes(userId);
 
         Map<String, List<DailyHistoryResponse>> grouped = new HashMap<>();
         Set<String> processedKeys = new HashSet<>();
 
-        // 최신순 정렬
-        allQuizzes.sort((a, b) -> b.getCreatedDate().compareTo(a.getCreatedDate()));
+
 
         for (UserQuiz uq : allQuizzes) {
             Quiz quiz = uq.getQuiz();
-            String categoryName;
+            String categoryName = null;
             DailyHistoryResponse item = null;
-            String uniqueKey;
+            String uniqueKey = null;
 
             // Document(PDF)
             if (quiz.getDocument() != null) {
@@ -168,8 +165,6 @@ public class HistoryLibraryUseCase {
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
-            } else {
-                continue;
             }
 
             if (item != null) {
