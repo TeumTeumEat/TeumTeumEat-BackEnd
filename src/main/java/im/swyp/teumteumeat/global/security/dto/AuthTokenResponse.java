@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record AuthTokenResponse(
-        @JsonProperty("access_token") String accessToken,
+        @JsonProperty("accessToken") String accessToken,
 
-        @JsonProperty("refresh_token") String refreshToken) {
+        @JsonProperty("refreshToken") String refreshToken) {
 }
