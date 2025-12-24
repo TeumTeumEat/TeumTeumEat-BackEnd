@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.userQuiz.domain.service;
 
+import java.util.List;
+
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,5 +18,9 @@ public class UserQuizService {
     @Transactional
     public void saveUserQuiz(UserQuiz userQuiz) {
         userQuizRepository.save(userQuiz);
+    }
+
+    public List<Long> getConsumedDocumentIds(Long userId) {
+        return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
     }
 }

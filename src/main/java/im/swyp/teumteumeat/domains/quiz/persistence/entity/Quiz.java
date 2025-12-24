@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.persistence.entity;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -23,17 +24,24 @@ public class Quiz extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private QuizType quizType;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 80)
     private String content;
 
     @Column(nullable = false)
     private String answer;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 120)
     private String description;
 
     @Column(columnDefinition = "TEXT")
     private String options; // 퀴즈 선지
+
+    @Column(length = 30)
+    private String topic;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Difficulty difficulty;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_document_id")
@@ -46,7 +54,7 @@ public class Quiz extends BaseEntity {
     @Builder
     public Quiz(CategoryDocument categoryDocument, Document document, String content, String options, String answer,
             String description,
-            QuizType quizType) {
+            QuizType quizType, String topic, Difficulty difficulty) {
         this.categoryDocument = categoryDocument;
         this.document = document;
         this.content = content;
@@ -54,5 +62,7 @@ public class Quiz extends BaseEntity {
         this.answer = answer;
         this.description = description;
         this.quizType = quizType;
+        this.topic = topic;
+        this.difficulty = difficulty;
     }
 }

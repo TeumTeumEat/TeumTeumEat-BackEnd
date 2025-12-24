@@ -11,6 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @Tag(name = "Quiz", description = "퀴즈 API")
 public interface QuizApi {
@@ -37,10 +40,17 @@ public interface QuizApi {
                         @PathVariable Long quizId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "관리자(ADMIN)만 생성할 수 있습니다.")
+        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,
+                        @PathVariable Long documentId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 생성(재생성)할 수 있습니다.")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
+        ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
+                        @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 

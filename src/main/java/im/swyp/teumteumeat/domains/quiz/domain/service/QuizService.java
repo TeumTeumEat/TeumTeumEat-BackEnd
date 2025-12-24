@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -51,19 +52,22 @@ public class QuizService {
         @Transactional
         public void createQuizFromCategoryDocument(
                         CategoryDocument document,
-                        String question, String options, String answer, QuizType type, String explanation) {
-                saveQuiz(document, null, question, options, answer, type, explanation);
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic, Difficulty difficulty) {
+                saveQuiz(document, null, question, options, answer, type, explanation, topic, difficulty);
         }
 
         @Transactional
         public void createQuizFromPdfDocument(
                         Document document,
-                        String question, String options, String answer, QuizType type, String explanation) {
-                saveQuiz(null, document, question, options, answer, type, explanation);
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic, Difficulty difficulty) {
+                saveQuiz(null, document, question, options, answer, type, explanation, topic, difficulty);
         }
 
         private void saveQuiz(CategoryDocument categoryDocument, Document document,
-                        String question, String options, String answer, QuizType type, String explanation) {
+                        String question, String options, String answer, QuizType type, String explanation,
+                        String topic, Difficulty difficulty) {
                 Quiz quiz = Quiz.builder()
                                 .categoryDocument(categoryDocument)
                                 .document(document)
@@ -72,6 +76,8 @@ public class QuizService {
                                 .answer(answer)
                                 .description(explanation)
                                 .quizType(type)
+                                .topic(topic)
+                                .difficulty(difficulty)
                                 .build();
 
                 quizRepository.save(quiz);
