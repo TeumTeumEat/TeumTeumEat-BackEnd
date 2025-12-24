@@ -1,10 +1,10 @@
 package im.swyp.teumteumeat.domains.userQuiz.domain.service;
 
+import java.util.List;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,5 +61,9 @@ public class UserQuizService {
             }
         }
         return streak;
+    }
+
+    public List<Long> getConsumedDocumentIds(Long userId) {
+        return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
     }
 }

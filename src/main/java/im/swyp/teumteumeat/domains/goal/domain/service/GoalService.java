@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,12 +34,26 @@ public class GoalService {
         goal.updateGoal(
                 request.endDate(),
                 request.difficulty(),
-                request.prompt()
-        );
+                request.prompt());
     }
 
     public void deleteGoal(Long goalId) {
         goalRepository.deleteById(goalId);
+    }
+
+    public Goal findLatestGoal(Long userId, Long categoryId) {
+        return goalRepository.findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+    }
+
+    public String getTopic(Long userId, Long categoryId) {
+        Goal goal = goalRepository.findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElse(null);
+
+        if (goal == null || goal.getPrompt() == null || goal.getPrompt().isEmpty()) {
+            return "전반적인 내용";
+        }
+        return goal.getPrompt();
     }
 
     /* HELPER METHOD */

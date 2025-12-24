@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.user.persistence.entity;
 
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
@@ -39,10 +40,13 @@ public class UserEntity extends BaseEntity {
     @JoinColumn(name = "commute_info_id")
     private CommuteInfo commuteInfo;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Goal> goals = new ArrayList<>();
 
     private boolean onboardingCompleted;
+
+    private boolean pushEnabled;
 
     public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
         return UserEntity.builder()
@@ -68,6 +72,12 @@ public class UserEntity extends BaseEntity {
 
     public void changeOnboardingCompleted(boolean onboardingCompleted) {
         this.onboardingCompleted = onboardingCompleted;
+    }
+
+    public void updateSettings(UserSettingsRequest request) {
+        if (request.pushEnabled() != null) {
+            this.pushEnabled = request.pushEnabled();
+        }
     }
 
     public void updateRole(Role role) {

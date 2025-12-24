@@ -46,3 +46,6 @@ test_output*.txt
 
 ### Apple Key ###
 *.p8
+
+### Firebase Key ###
+firebaseKey.json

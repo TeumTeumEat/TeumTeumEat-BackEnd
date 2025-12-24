@@ -24,9 +24,9 @@ public class ApiErrorResponseHandler {
 
     public void handleApiErrorResponse(
             Operation operation,
-            HandlerMethod handlerMethod
-    ) {
-        ApiResponseExplanations apiResponseExplanations = handlerMethod.getMethodAnnotation(ApiResponseExplanations.class);
+            HandlerMethod handlerMethod) {
+        ApiResponseExplanations apiResponseExplanations = handlerMethod
+                .getMethodAnnotation(ApiResponseExplanations.class);
 
         if (apiResponseExplanations != null) {
             generateResponseCodeResponseExample(operation, Arrays.asList(apiResponseExplanations.errors()));
@@ -35,8 +35,7 @@ public class ApiErrorResponseHandler {
 
     private void generateResponseCodeResponseExample(
             Operation operation,
-            List<ApiErrorResponseExplanation> apiErrorResponseExamples
-    ) {
+            List<ApiErrorResponseExplanation> apiErrorResponseExamples) {
         ApiResponses responses = operation.getResponses();
 
         Map<Integer, List<ExampleHolder>> statusWithExampleHolders = apiErrorResponseExamples.stream()
@@ -45,6 +44,7 @@ public class ApiErrorResponseHandler {
 
         addExamplesToResponses(responses, statusWithExampleHolders);
     }
+
     private ExampleHolder createExampleHolder(ApiErrorResponseExplanation apiErrorResponseExample) {
         // 1. 어노테이션에서 클래스 정보와 이름 정보를 가져옴
         Class<? extends BaseResponseCode> enumClass = apiErrorResponseExample.exceptionCode();
@@ -72,8 +72,8 @@ public class ApiErrorResponseHandler {
     }
 
     private Example createSwaggerExample(BaseResponseCode responseCode, String description) {
-        im.swyp.teumteumeat.global.common.ApiResponse<Object> apiResponse
-                = im.swyp.teumteumeat.global.common.ApiResponse.ofFail(responseCode);
+        im.swyp.teumteumeat.global.common.ApiResponse<Object> apiResponse = im.swyp.teumteumeat.global.common.ApiResponse
+                .ofFail(responseCode);
 
         Example example = new Example();
         example.setValue(apiResponse);
@@ -84,16 +84,14 @@ public class ApiErrorResponseHandler {
 
     private void addExamplesToResponses(
             ApiResponses responses,
-            Map<Integer, List<ExampleHolder>> statusWithExampleHolders
-    ) {
+            Map<Integer, List<ExampleHolder>> statusWithExampleHolders) {
         statusWithExampleHolders.forEach((status, exampleHolders) -> {
             Content content = new Content();
             MediaType mediaType = new MediaType();
             ApiResponse apiResponse = new ApiResponse();
 
             exampleHolders.forEach(
-                    exampleHolder -> mediaType.addExamples(exampleHolder.getName(), exampleHolder.getHolder())
-            );
+                    exampleHolder -> mediaType.addExamples(exampleHolder.getName(), exampleHolder.getHolder()));
 
             content.addMediaType("application/json", mediaType);
             apiResponse.setContent(content);

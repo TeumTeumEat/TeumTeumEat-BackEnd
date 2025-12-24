@@ -6,7 +6,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
+
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -17,8 +17,8 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
-import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +39,7 @@ public class QuizUseCase {
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
     private final UserService userService;
-    private final GoalRepository goalRepository;
+    private final GoalService goalService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -79,14 +79,12 @@ public class QuizUseCase {
         String documentContent = document.getContent();
 
         // Goal 조회 (해당 유저/카테고리의 최신 목표)
-        var goal = goalRepository
-                .findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, document.getCategory().getId())
-                .orElseThrow(() -> new BaseException(
-                        CommonResponseCode.NOT_FOUND)); // 적절한 예외 처리 필요
+        Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
-        String topicInstruction = goal.getPrompt();
+        // Topic 조회
+        String topicInstruction = goalService.getTopic(userId, document.getCategory().getId());
 
         generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
                 questionCount);
@@ -95,7 +93,6 @@ public class QuizUseCase {
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
             Difficulty difficulty, String topic, int questionCount) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-        String topicInstruction = (topic != null && !topic.isEmpty()) ? topic : "전반적인 내용";
 
         // 프롬프트 메시지 구성
         String promptMessage = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
@@ -103,13 +100,13 @@ public class QuizUseCase {
                 questionCount,
                 documentContent,
                 difficulty,
-                topicInstruction) // 주제 (없으면 전반적인 내용)
+                topic)
                 + "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n" + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(promptMessage);
 
         // Topic 저장 시 길이 제한 (30자)
-        String storedTopic = (topic != null && topic.length() > 30) ? topic.substring(0, 30) : topic;
+        String storedTopic = truncateTopic(topic);
 
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromCategoryDocument(
@@ -122,7 +119,6 @@ public class QuizUseCase {
                     storedTopic,
                     difficulty);
         });
-
     }
 
     @SneakyThrows
@@ -137,12 +133,12 @@ public class QuizUseCase {
     @Transactional
     public void createQuizzesForPdfDocument(Document document) {
         // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
-        int questionCount = calculateQuestionCount(document.getGoal().getUser().getId());
+        int questionCount = calculateQuestionCount(document.getUser().getId());
 
         String documentContent = document.getRawContent();
 
         // Goal 정보 가져오기
-        var goal = document.getGoal();
+        Goal goal = document.getGoal();
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : "전반적인 내용";
@@ -159,9 +155,7 @@ public class QuizUseCase {
         LLMResponse response = llmService.generateAnswer(prompt);
 
         // Topic 저장 시 길이 제한 (30자)
-        String storedTopic = (topicInstruction != null && topicInstruction.length() > 30)
-                ? topicInstruction.substring(0, 30)
-                : topicInstruction;
+        String storedTopic = truncateTopic(topicInstruction);
 
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromPdfDocument(
@@ -178,8 +172,9 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (PDF Document) - Document ID, 퀴즈 재생성
     @Transactional
-    public void createQuizzesForPdfDocumentById(Long documentId) {
+    public void createQuizzesForPdfDocumentById(Long documentId, Long userId) {
         Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
         createQuizzesForPdfDocument(document);
     }
 
@@ -194,7 +189,7 @@ public class QuizUseCase {
         }
 
         try {
-            var user = userService.getUserById(userId);
+            UserEntity user = userService.getUserById(userId);
             if (user.getCommuteInfo() == null) {
                 return 10;
             }
@@ -211,5 +206,12 @@ public class QuizUseCase {
         } catch (Exception e) {
             return 10; // 유저 조회 실패 등 예외 시 기본값
         }
+    }
+
+    private String truncateTopic(String topic) {
+        if (topic != null && topic.length() > 30) {
+            return topic.substring(0, 30);
+        }
+        return topic;
     }
 }
