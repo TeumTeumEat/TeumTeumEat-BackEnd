@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.user.domain.service;
 
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -28,6 +29,10 @@ public class UserService {
 
     public void updateCommuteInfo(UserEntity user, CommuteInfo commuteInfo) {
         user.updateCommuteInfo(commuteInfo);
+    }
+
+    public void updateSettings(UserEntity user, UserSettingsRequest request) {
+        user.updateSettings(request);
     }
 
     /* HELPER METHOD */

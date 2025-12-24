@@ -2,9 +2,11 @@ package im.swyp.teumteumeat.domains.user.presentation.api;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -93,6 +95,34 @@ public interface UserApi {
     );
 
     @Operation(
+            summary = "유저 설정 상태 전체 조회",
+            description = "요청 유저의 설정 상태 정보를 전체 조회합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = UserSettingsResponse.class,
+                    description = "조회 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<UserSettingsResponse>> getUserSettings(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "유저 설정 상태 업데이트",
+            description = "요청 유저의 설정 상태 정보를 업데이트합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "수정 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> updateUserSettings(
+            @RequestBody @Valid UserSettingsRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+    @Operation(
             summary = "토큰 재발급",
             description = "refreshToken을 이용해 accessToken을 재발급합니다."
     )
@@ -105,9 +135,4 @@ public interface UserApi {
     ResponseEntity<ApiResponse<String>> tokenReissue(
             @RequestBody ReissueRequest request
     );
-
-
-
-
-
 }

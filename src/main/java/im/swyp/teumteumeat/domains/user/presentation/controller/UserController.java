@@ -2,9 +2,11 @@ package im.swyp.teumteumeat.domains.user.presentation.controller;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.domains.user.presentation.api.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -72,6 +74,25 @@ public class UserController implements UserApi {
     ) {
         CompletedResponse onboardingCompleted = userUseCase.isOnboardingCompleted(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, onboardingCompleted));
+    }
+
+    @Override
+    @GetMapping("/settings")
+    public ResponseEntity<ApiResponse<UserSettingsResponse>> getUserSettings(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        UserSettingsResponse settingsResponse = userUseCase.getUserSettings(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, settingsResponse));
+    }
+
+    @Override
+    @PatchMapping("/settings")
+    public ResponseEntity<ApiResponse<Void>> updateUserSettings(
+            @RequestBody @Valid UserSettingsRequest request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        userUseCase.updateUserSettings(user.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
     @GetMapping("/auth/success")

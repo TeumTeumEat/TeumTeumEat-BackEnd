@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.config;
+package im.swyp.teumteumeat.global.config.security;
 
 import im.swyp.teumteumeat.global.security.AppleUtil;
 import im.swyp.teumteumeat.global.security.component.CustomOAuth2AuthorizationRequestResolver;
