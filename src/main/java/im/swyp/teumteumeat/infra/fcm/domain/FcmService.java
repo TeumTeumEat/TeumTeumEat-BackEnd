@@ -1,14 +1,11 @@
 package im.swyp.teumteumeat.infra.fcm.domain;
 
 import com.google.firebase.messaging.*;
-import groovy.util.logging.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-@lombok.extern.slf4j.Slf4j
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FcmService {
@@ -33,6 +30,5 @@ public class FcmService {
                 .build();
 
         FirebaseMessaging.getInstance().sendAsync(message);
-        log.info("알림 전송 완료");
     }
 }
