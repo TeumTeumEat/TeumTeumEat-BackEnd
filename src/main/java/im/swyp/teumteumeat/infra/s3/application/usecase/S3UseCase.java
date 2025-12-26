@@ -20,13 +20,12 @@ public class S3UseCase {
     private final S3Service s3Service;
 
     public PresignedUrlResponse generatePresignedUrl(
-            PresignedUrlRequest request,
-            Long userId
+            PresignedUrlRequest request
     ) {
         String fileName = request.fileName();
         validSupportedExtension(fileName);
 
-        String key = s3Service.createKey(fileName, userId);
+        String key = s3Service.createKey(fileName);
         URL presignedUrl = s3Service.generatePresignedUrl(key);
         String fileUrl = s3Service.generateFileUrl(key);
 

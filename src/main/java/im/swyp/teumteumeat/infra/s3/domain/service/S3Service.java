@@ -18,6 +18,7 @@ public class S3Service {
 
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 2;
     private static final String PATH_DELIMITER = "/";
+    private static final String PATH_PREFIX = "origin";
 
     private final S3Presigner s3Presigner;
 
@@ -33,8 +34,8 @@ public class S3Service {
         return generatePresignedUrlInternal(key);
     }
 
-    public String createKey(String fileName, Long userId) {
-        return String.join(PATH_DELIMITER, userId.toString(), createUniqueFileName(fileName));
+    public String createKey(String fileName) {
+        return String.join(PATH_DELIMITER, PATH_PREFIX, createUniqueFileName(fileName));
     }
 
     public String generateFileUrl(String key) {
