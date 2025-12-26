@@ -28,5 +28,6 @@ public abstract class Constants {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/api/v1/test/**",
+            "/api/v1/webhooks/**",
     };
 }

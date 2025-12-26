@@ -2,6 +2,8 @@ package im.swyp.teumteumeat.domains.document.domain.service;
 
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
+import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentPartRepository;
 import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepository;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +16,15 @@ import java.util.List;
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final DocumentPartRepository documentPartRepository;
 
     public Document getDocumentById(Long documentId) {
         return getOrThrow(documentId);
+    }
+
+    public Document getDocumentByFileKey(String fileKey) {
+        return documentRepository.findByFileKey(fileKey)
+                .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
     }
 
     public List<Document> getDocumentsByGoalId(Long goalId) {
@@ -25,6 +33,10 @@ public class DocumentService {
 
     public void createDocument(Document document) {
         documentRepository.save(document);
+    }
+
+    public void createDocumentPart(DocumentPart documentPart) {
+        documentPartRepository.save(documentPart);
     }
 
     public void deleteDocumentsByGoalId(Long goalId) {
