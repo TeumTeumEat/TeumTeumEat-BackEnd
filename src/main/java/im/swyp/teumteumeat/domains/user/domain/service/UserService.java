@@ -9,6 +9,10 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -17,6 +21,13 @@ public class UserService {
 
     public UserEntity getUserById(Long userId) {
         return getOrThrow(userId);
+    }
+
+    public List<UserEntity> getAllByCommuteInfo(LocalTime now, LocalTime minuteEnd) {
+        List<UserEntity> targets = new ArrayList<>();
+        targets.addAll(userRepository.findAllByStartTimeBetween(now, minuteEnd));
+        targets.addAll(userRepository.findAllByEndTimeBetween(now, minuteEnd));
+        return targets;
     }
 
     public void updateName(UserEntity user, String name) {

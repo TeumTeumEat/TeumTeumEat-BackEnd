@@ -3,8 +3,11 @@ package im.swyp.teumteumeat.domains.notification.domain.service;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.notification.domain.constant.DeviceType;
 import im.swyp.teumteumeat.domains.notification.persistence.repository.DeviceTokenRepository;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +24,11 @@ public class DeviceTokenService {
         }
     }
 
-    public void unregisterDeviceToken(DeviceToken deviceToken) {
-        String token = deviceToken.getToken();
-        DeviceType deviceType = deviceToken.getDeviceType();
+    public void unregisterDeviceToken(UserEntity user, String token) {
+        deviceTokenRepository.deleteByUserAndToken(user, token);
+    }
 
-        deviceTokenRepository.deleteByTokenAndDeviceType(token, deviceType);
+    public List<DeviceToken> getAllTokenByUserId(Long userId) {
+        return deviceTokenRepository.findAllByUserId(userId);
     }
 }
