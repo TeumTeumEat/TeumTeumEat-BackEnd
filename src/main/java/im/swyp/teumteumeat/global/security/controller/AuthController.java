@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.security.dto.AuthTokenResponse;
 import im.swyp.teumteumeat.global.security.dto.GoogleLoginRequest;
+import im.swyp.teumteumeat.global.security.service.AppleAuthService;
 import im.swyp.teumteumeat.global.security.service.GoogleAuthService;
 import im.swyp.teumteumeat.global.security.service.KakaoAuthService;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
@@ -29,10 +30,36 @@ import java.util.Map;
 @Tag(name = "Auth", description = "인증 관련 API")
 public class AuthController {
 
-    private final KakaoAuthService kakaoAuthService;
     private final GoogleAuthService googleAuthService;
+    private final KakaoAuthService kakaoAuthService;
+    private final AppleAuthService appleAuthService;
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
+
+    @Operation(summary = "애플 소셜 로그인 (id_token 직접 검증)", description = "Android 등에서 발급받은 id_token을 전송하면 서버에서 검증 후 액세스/리프레시 토큰을 발급합니다.")
+    @PostMapping("/apple")
+    public ApiResponse<AuthTokenResponse> appleLogin(@RequestBody GoogleLoginRequest request) {
+        // 1. 애플 ID Token 검증
+        Map<String, Object> payload = appleAuthService.verifyIdToken(request.idToken());
+
+        String socialId = (String) payload.get("sub");
+        String email = (String) payload.get("email");
+        String name = (String) payload.getOrDefault("name", "Apple User");
+        log.info("Apple Login Success - socialId: {}, email: {}", socialId, email);
+
+        // 2. 가입 여부 확인 및 회원가입/로그인 처리
+        UserEntity user = userRepository.findBySocialProviderAndSocialId(SocialProvider.APPLE, socialId)
+                .orElseGet(() -> userRepository
+                        .save(UserEntity.socialSignup(name, email, SocialProvider.APPLE, socialId)));
+
+        // 3. 토큰 발급
+        Token token = jwtProvider.issueToken(user);
+
+        return ApiResponse.ofSuccess(CommonResponseCode.OK, AuthTokenResponse.builder()
+                .accessToken(token.accessToken())
+                .refreshToken(token.refreshToken())
+                .build());
+    }
 
     @SuppressWarnings("unchecked")
     @Operation(summary = "카카오 소셜 로그인 (id_token 직접 검증)", description = "Android 등에서 발급받은 id_token을 전송하면 서버에서 검증 후 액세스/리프레시 토큰을 발급합니다.")

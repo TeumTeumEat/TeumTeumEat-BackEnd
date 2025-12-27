@@ -20,6 +20,7 @@ public abstract class Constants {
             "/api/v1/users/auth/success",
             "/api/v1/auth/google",
             "/api/v1/auth/kakao",
+            "/api/v1/auth/apple",
             "/login/**",
             "/login",
             "/*.css",
