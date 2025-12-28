@@ -38,6 +38,10 @@ public class UserService {
         user.updateSettings(request);
     }
 
+    public void deleteUser(UserEntity user) {
+        userRepository.delete(user);
+    }
+
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)
