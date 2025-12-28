@@ -30,7 +30,7 @@ public class UserWithdrawalUseCase {
 
     private final UserRepository userRepository;
     private final AppleUtil appleUtil;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${spring.security.oauth2.client.registration.kakao.admin-key:}")
     private String kakaoAdminKey;
@@ -128,7 +128,8 @@ public class UserWithdrawalUseCase {
             tokenBody.add("grant_type", "authorization_code");
 
             HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenBody, headers);
-            ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
+            ResponseEntity<Map<String, Object>> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class);
 
             if (tokenResponse.getBody() == null) {
                 log.error("Apple token response is null");
