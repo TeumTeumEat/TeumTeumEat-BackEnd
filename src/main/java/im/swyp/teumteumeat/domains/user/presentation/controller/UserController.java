@@ -3,10 +3,7 @@ package im.swyp.teumteumeat.domains.user.presentation.controller;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.*;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.domains.user.presentation.api.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -95,6 +92,16 @@ public class UserController implements UserApi {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
+    @GetMapping("/account-info")
+    public ResponseEntity<ApiResponse<AccountInfoResponse>> getAccountInfo(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        AccountInfoResponse response = userUseCase.getAccountInfo(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Deprecated
     @GetMapping("/auth/success")
     public ResponseEntity<ApiResponse<TokenResponse>> loginSuccess(TokenResponse tokenResponse) {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, tokenResponse));

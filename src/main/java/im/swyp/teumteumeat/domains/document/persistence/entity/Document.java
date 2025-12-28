@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
+
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
 @Entity
@@ -58,6 +60,9 @@ public class Document extends BaseEntity {
 
     @Column(length = 500)
     private String summary;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Quiz> quizzes = new ArrayList<>();
 
     @Builder
     private Document(

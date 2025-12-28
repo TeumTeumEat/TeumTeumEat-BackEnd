@@ -9,6 +9,7 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class GoalMapper {
@@ -28,11 +29,16 @@ public class GoalMapper {
     }
 
     public static GoalResponse fromGoal(Goal goal) {
+        LocalDate startDate = LocalDate.from(goal.getCreatedDate());
+        LocalDate endDate = goal.getEndDate();
+        String studyPeriod = ChronoUnit.WEEKS.between(startDate, endDate) + "주";
+
         return GoalResponse.builder()
                 .goalId(goal.getId())
                 .type(goal.getType())
-                .startDate(LocalDate.from(goal.getCreatedDate()))
-                .endDate(goal.getEndDate())
+                .startDate(startDate)
+                .endDate(endDate)
+                .studyPeriod(studyPeriod)
                 .difficulty(goal.getDifficulty())
                 .prompt(goal.getPrompt())
                 .category(goal.getCategory() != null

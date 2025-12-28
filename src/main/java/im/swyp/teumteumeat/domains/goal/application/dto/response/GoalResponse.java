@@ -23,6 +23,9 @@ public record GoalResponse(
         @Schema(description = "목표 종료일")
         LocalDate endDate,
 
+        @Schema(description = "공부 기간", example = "1주")
+        String studyPeriod,
+
         @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
         Difficulty difficulty,
 
