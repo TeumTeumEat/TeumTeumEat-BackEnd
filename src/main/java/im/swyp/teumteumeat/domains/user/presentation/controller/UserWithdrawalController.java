@@ -31,6 +31,6 @@ public class UserWithdrawalController implements UserWithdrawalApi {
         }
 
         userWithdrawalUseCase.withdraw(userDetails.getUserId(), request);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

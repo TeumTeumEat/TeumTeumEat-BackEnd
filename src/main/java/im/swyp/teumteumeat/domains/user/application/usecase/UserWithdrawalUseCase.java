@@ -1,10 +1,9 @@
 package im.swyp.teumteumeat.domains.user.application.usecase;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserWithdrawalRequest;
-import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
+
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
-import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.AppleUtil;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 @RequiredArgsConstructor
 public class UserWithdrawalUseCase {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final AppleUtil appleUtil;
     private final RestTemplate restTemplate;
 
@@ -40,8 +39,7 @@ public class UserWithdrawalUseCase {
 
     @Transactional
     public void withdraw(Long userId, UserWithdrawalRequest request) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new BaseException(UserResponseCode.NOT_FOUND_USER));
+        UserEntity user = userService.getUserById(userId);
 
         SocialProvider provider = user.getSocialProvider();
         String socialId = user.getSocialId();
@@ -62,8 +60,8 @@ public class UserWithdrawalUseCase {
                 log.warn("Unknown provider for withdrawal: {}", provider);
         }
 
-        userRepository.delete(user);
-        log.info("User {} deleted from database.", userId);
+        userService.deleteUser(user);
+        log.info("User {} deleted.", userId);
     }
 
     private void unlinkKakao(String socialId) {
