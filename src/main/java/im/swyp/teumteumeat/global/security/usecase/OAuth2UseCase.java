@@ -13,6 +13,7 @@ import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.Token;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @UseCase
 @RequiredArgsConstructor
@@ -27,7 +28,13 @@ public class OAuth2UseCase {
 
         String socialId = payload.sub();
         String email = payload.email();
-        String name = "User";
+        String name;
+
+        if (provider.equals(SocialProvider.APPLE)) {
+            name = StringUtils.hasText(request.name()) ? request.name() : "Apple User";
+        } else {
+            name = payload.name();
+        }
 
         UserEntity user = userService.findBySocialProviderAndSocialId(provider, socialId)
                 .orElseGet(() -> {

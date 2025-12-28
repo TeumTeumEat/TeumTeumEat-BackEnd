@@ -12,7 +12,10 @@ public class SignUpRequest {
             @NotBlank(message = "OIDC 토큰은 필수 입력값입니다.")
             String idToken,
 
-            boolean termsAgreed
+            boolean termsAgreed,
+
+            @Schema(description = "유저 이름", example = "홍길동(애플 로그인 전용)")
+            String name
     ) {
     }
 }

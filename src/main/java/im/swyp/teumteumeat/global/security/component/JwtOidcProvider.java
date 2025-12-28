@@ -43,12 +43,20 @@ public class JwtOidcProvider {
 	public OidcPayload getOidcTokenBody(String token, String modulus, String exponent) {
 		Claims body = getOidcTokenJws(token, modulus, exponent).getPayload();
 		String aud = body.getAudience().iterator().next(); // aud가 여러개일 경우 첫 번째 aud를 사용
+        String name = "User";
+        if (body.containsKey("name")) {
+            name = body.get("name").toString();
+        } else if (body.containsKey("nickname")) {
+            name = body.get("nickname").toString();
+        }
 
 		return new OidcPayload(
 			body.getIssuer(),
 			aud,
 			body.getSubject(),
-			body.get("email", String.class));
+			body.get("email", String.class),
+            name
+        );
 	}
 
 	/**

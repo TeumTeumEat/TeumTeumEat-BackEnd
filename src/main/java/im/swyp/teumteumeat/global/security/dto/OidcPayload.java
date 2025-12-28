@@ -7,6 +7,7 @@ public record OidcPayload(
 	String aud,
 	/* aouth provider account unique id */
 	String sub,
-	String email
+	String email,
+    String name
 ) {
 }
