@@ -49,8 +49,17 @@ public class DocumentUseCase {
     @Transactional
     public void setParts(OcrInitRequest request) {
         Document document = documentService.getDocumentByFileKey(request.fileKey());
-        document.updateTotalParts(request.totalParts());
-        document.updateStatus(FileStatus.PROCESSING);
+
+        // OCR 처리가 필요한 경우
+        if (request.needOcr()) {
+            document.updateTotalParts(request.totalParts());
+            document.updateStatus(FileStatus.PROCESSING);
+        }
+        // PDF에서 텍스트 추출이 완료된 경우
+        else {
+            document.updateRawContent(request.rawContent());
+            document.updateStatus(FileStatus.COMPLETED);
+        }
     }
 
     @Transactional
