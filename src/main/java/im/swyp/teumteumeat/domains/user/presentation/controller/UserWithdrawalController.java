@@ -1,7 +1,7 @@
 package im.swyp.teumteumeat.domains.user.presentation.controller;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserWithdrawalRequest;
-import im.swyp.teumteumeat.domains.user.domain.service.UserWithdrawalService;
+import im.swyp.teumteumeat.domains.user.application.usecase.UserWithdrawalUseCase;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserWithdrawalController {
 
-    private final UserWithdrawalService userWithdrawalService;
+    private final UserWithdrawalUseCase userWithdrawalUseCase;
 
     @Operation(summary = "회원 탈퇴", description = "애플리케이션에서 회원을 탈퇴시키고 소셜 로그인 연결을 해제합니다.")
     @DeleteMapping("/withdrawal")
@@ -32,7 +32,7 @@ public class UserWithdrawalController {
             request = new UserWithdrawalRequest(null, null);
         }
 
-        userWithdrawalService.withdraw(userDetails.getUserId(), request);
+        userWithdrawalUseCase.withdraw(userDetails.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
     }
 }
