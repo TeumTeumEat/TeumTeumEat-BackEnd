@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.user.persistence.entity;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import jakarta.persistence.*;
@@ -43,6 +44,10 @@ public class UserEntity extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Goal> goals = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserQuiz> userQuizzes = new ArrayList<>();
 
     private boolean onboardingCompleted;
 
