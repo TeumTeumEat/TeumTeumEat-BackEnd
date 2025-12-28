@@ -4,20 +4,22 @@ import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.api.AuthApi;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
-import im.swyp.teumteumeat.global.security.dto.AuthTokenResponse;
+import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.GoogleLoginRequest;
+import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.service.GoogleAuthService;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.Token;
-import io.swagger.v3.oas.annotations.Operation;
+import im.swyp.teumteumeat.global.security.usecase.OAuth2UseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -26,15 +28,27 @@ import java.util.Map;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "인증 관련 API")
-public class AuthController {
+public class AuthController implements AuthApi {
 
+    private final OAuth2UseCase oAuth2UseCase;
     private final GoogleAuthService googleAuthService;
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
 
-    @Operation(summary = "구글 소셜 로그인 (id_token 직접 검증)", description = "Android 등에서 발급받은 id_token을 전송하면 서버에서 검증 후 액세스/리프레시 토큰을 발급합니다.")
+    @Override
+    @PostMapping("/oauth/register")
+    @PreAuthorize("isAnonymous()")
+    public ResponseEntity<ApiResponse<LoginResponse>> oauthRegister(
+            @RequestParam SocialProvider provider,
+            @RequestBody @Valid SignUpRequest.Oidc request) {
+        LoginResponse response = oAuth2UseCase.signUp(provider, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @Deprecated
     @PostMapping("/google")
-    public ApiResponse<AuthTokenResponse> googleLogin(@RequestBody GoogleLoginRequest request) {
+    public ApiResponse<LoginResponse> googleLogin(@RequestBody GoogleLoginRequest request) {
         // 1. 구글 ID Token 검증
         Map<String, Object> payload = googleAuthService.verifyIdToken(request.idToken());
 
@@ -52,7 +66,7 @@ public class AuthController {
         // 3. 토큰 발급
         Token token = jwtProvider.issueToken(user);
 
-        return ApiResponse.ofSuccess(CommonResponseCode.OK, AuthTokenResponse.builder()
+        return ApiResponse.ofSuccess(CommonResponseCode.OK, LoginResponse.builder()
                 .accessToken(token.accessToken())
                 .refreshToken(token.refreshToken())
                 .build());
