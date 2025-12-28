@@ -3,10 +3,7 @@ package im.swyp.teumteumeat.domains.user.presentation.api;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.*;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -120,6 +117,21 @@ public interface UserApi {
     ResponseEntity<ApiResponse<Void>> updateUserSettings(
             @RequestBody @Valid UserSettingsRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+    );
+
+
+    @Operation(
+            summary = "유저 계정 정보 조회",
+            description = "소셜로그인 제공자/이메일 정보를 조회합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = AccountInfoResponse.class,
+                    description = "조회 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<AccountInfoResponse>> getAccountInfo(
+            @AuthenticationPrincipal CustomUserDetails user
     );
 
     @Operation(

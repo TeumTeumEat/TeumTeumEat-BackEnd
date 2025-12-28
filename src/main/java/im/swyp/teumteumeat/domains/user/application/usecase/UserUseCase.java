@@ -4,10 +4,7 @@ import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
-import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.*;
 import im.swyp.teumteumeat.domains.user.application.mapper.CommuteInfoMapper;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -15,6 +12,7 @@ import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,5 +85,17 @@ public class UserUseCase {
     public void updateUserSettings(Long userId, UserSettingsRequest request) {
         UserEntity user = userService.getUserById(userId);
         userService.updateSettings(user, request);
+    }
+
+    public AccountInfoResponse getAccountInfo(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+
+        SocialProvider socialProvider = user.getSocialProvider();
+        String email = user.getEmail();
+
+        return AccountInfoResponse.builder()
+                .socialProvider(socialProvider)
+                .email(email)
+                .build();
     }
 }
