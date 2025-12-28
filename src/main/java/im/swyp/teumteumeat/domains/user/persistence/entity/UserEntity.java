@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.user.persistence.entity;
 
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
@@ -48,6 +49,10 @@ public class UserEntity extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserQuiz> userQuizzes = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DeviceToken> deviceTokens = new ArrayList<>();
 
     private boolean onboardingCompleted;
 
