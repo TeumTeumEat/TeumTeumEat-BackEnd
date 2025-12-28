@@ -1,8 +1,10 @@
 package im.swyp.teumteumeat.global.security.api;
 
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.security.dto.GoogleLoginRequest;
 import im.swyp.teumteumeat.global.security.dto.LoginResponse;
@@ -23,7 +25,12 @@ public interface AuthApi {
             success = @ApiSuccessResponseExplanation(
                     responseClass = LoginResponse.class,
                     description = "회원가입(로그인) 성공"
-            )
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = AuthResponseCode.class, name = "NEED_REGISTER"),
+                    @ApiErrorResponseExplanation(exceptionCode = AuthResponseCode.class, name = "EXPIRED_JWT_TOKEN"),
+                    @ApiErrorResponseExplanation(exceptionCode = AuthResponseCode.class, name = "INVALID_JWT_TOKEN")
+            }
     )
     ResponseEntity<ApiResponse<LoginResponse>> oauthRegister(
             @RequestParam SocialProvider provider,
