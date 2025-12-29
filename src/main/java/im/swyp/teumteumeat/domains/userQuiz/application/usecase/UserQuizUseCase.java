@@ -11,7 +11,6 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResp
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
-import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
@@ -32,7 +31,6 @@ public class UserQuizUseCase {
 
     private final QuizService quizService;
     private final UserQuizService userQuizService;
-    private final UserQuizRepository userQuizRepository;
     private final UserService userService;
     private final QuizMapper quizMapper;
 
@@ -53,7 +51,7 @@ public class UserQuizUseCase {
         java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
 
         // 오늘 이미 푼 기록이 있는지 확인 (Date-based Upsert)
-        userQuizRepository.findByUserAndQuizAndCreatedDateBetween(user, quiz, startOfDay, endOfDay)
+        userQuizService.getQuizByDate(user, quiz, startOfDay, endOfDay)
                 .ifPresentOrElse(
                         existingUserQuiz -> existingUserQuiz.updateResult(isCorrect), // 있으면 업데이트
                         () -> {

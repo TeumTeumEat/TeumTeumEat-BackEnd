@@ -25,6 +25,13 @@ public class UserQuizService {
         return userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, start, end);
     }
 
+    public java.util.Optional<UserQuiz> getQuizByDate(
+            im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity user,
+            im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz quiz,
+            LocalDateTime start, LocalDateTime end) {
+        return userQuizRepository.findByUserAndQuizAndCreatedDateBetween(user, quiz, start, end);
+    }
+
     public List<UserQuiz> getAllQuizzes(Long userId) {
         return userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId);
     }
