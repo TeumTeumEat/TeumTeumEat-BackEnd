@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -23,11 +24,12 @@ public class UserService {
         return getOrThrow(userId);
     }
 
-    public List<UserEntity> getAllByCommuteInfo(LocalTime now, LocalTime minuteEnd) {
-        List<UserEntity> targets = new ArrayList<>();
-        targets.addAll(userRepository.findAllByStartTimeBetween(now, minuteEnd));
-        targets.addAll(userRepository.findAllByEndTimeBetween(now, minuteEnd));
-        return targets;
+    @Transactional(readOnly = true)
+    public List<UserEntity> getAllWithTokensByCommuteTime(LocalTime now, LocalTime minuteEnd) {
+        List<UserEntity> users = new ArrayList<>();
+        users.addAll(userRepository.findAllWithTokensByStartTimeBetween(now, minuteEnd));
+        users.addAll(userRepository.findAllWithTokensByEndTimeBetween(now, minuteEnd));
+        return users;
     }
 
     public void updateName(UserEntity user, String name) {

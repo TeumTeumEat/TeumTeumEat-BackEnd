@@ -13,9 +13,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
 
-    @Query("SELECT u FROM UserEntity u WHERE u.commuteInfo.startTime BETWEEN :start AND :end")
-    List<UserEntity> findAllByStartTimeBetween(LocalTime start, LocalTime end);
+    @Query("select distinct u from UserEntity u join fetch u.deviceTokens where u.commuteInfo.startTime between :start and :end and u.pushEnabled = true")
+    List<UserEntity> findAllWithTokensByStartTimeBetween(LocalTime start, LocalTime end);
 
-    @Query("SELECT u FROM UserEntity u WHERE u.commuteInfo.endTime BETWEEN :start AND :end")
-    List<UserEntity> findAllByEndTimeBetween(LocalTime start, LocalTime end);
+    @Query("select distinct u from UserEntity u join fetch u.deviceTokens where u.commuteInfo.endTime between :start and :end and u.pushEnabled = true")
+    List<UserEntity> findAllWithTokensByEndTimeBetween(LocalTime start, LocalTime end);
 }

@@ -28,6 +28,7 @@ public class DeviceTokenService {
         deviceTokenRepository.deleteByUserAndToken(user, token);
     }
 
+    // Test Method
     public List<DeviceToken> getAllTokenByUserId(Long userId) {
         return deviceTokenRepository.findAllByUserId(userId);
     }
