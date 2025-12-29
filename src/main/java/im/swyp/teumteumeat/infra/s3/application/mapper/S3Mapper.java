@@ -6,10 +6,9 @@ import java.net.URL;
 
 public class S3Mapper {
 
-    public static PresignedUrlResponse toPresignedUrlResponse(URL presignedUrl, String fileUrl, String key) {
+    public static PresignedUrlResponse toPresignedUrlResponse(URL presignedUrl, String key) {
         return PresignedUrlResponse.builder()
                 .presignedUrl(presignedUrl)
-                .fileUrl(fileUrl)
                 .key(key)
                 .build();
     }

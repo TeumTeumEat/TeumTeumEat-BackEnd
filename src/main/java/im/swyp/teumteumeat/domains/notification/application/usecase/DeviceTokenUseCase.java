@@ -30,8 +30,8 @@ public class DeviceTokenUseCase {
     @Transactional
     public void unregisterDeviceToken(Long userId, @Valid DeviceTokenRequest request) {
         UserEntity user = userService.getUserById(userId);
+        String token = request.token();
 
-        DeviceToken deviceToken = DeviceTokenMapper.toDeviceToken(user, request);
-        deviceTokenService.unregisterDeviceToken(deviceToken);
+        deviceTokenService.unregisterDeviceToken(user, token);
     }
 }
