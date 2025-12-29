@@ -11,10 +11,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AppleOidcProperties implements OidcClientProperties {
 	private final String jwksUri;
 	private final String secret;
-
-	@Override
-	public String getIssuer() {
-		return jwksUri;
-	}
+	private final String issuer;
 }
-
