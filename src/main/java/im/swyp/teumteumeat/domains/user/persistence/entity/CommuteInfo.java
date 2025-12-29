@@ -8,7 +8,10 @@ import java.time.LocalTime;
 
 @Entity
 @Getter
-@Table(name = "commute_info")
+@Table(name = "commute_info", indexes = {
+        @Index(name = "idx_commute_start", columnList = "start_Time"),
+        @Index(name = "idx_commute_end", columnList = "end_Time")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CommuteInfo extends BaseEntity {
 
