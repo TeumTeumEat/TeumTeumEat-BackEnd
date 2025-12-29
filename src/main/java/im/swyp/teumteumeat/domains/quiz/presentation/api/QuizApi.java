@@ -11,9 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 
 @Tag(name = "Quiz", description = "퀴즈 API")
 public interface QuizApi {
