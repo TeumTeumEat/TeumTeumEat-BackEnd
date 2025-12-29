@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 @RequiredArgsConstructor
 public class AppleAuthClient {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
 
     public AppleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType,
             String redirectUri) {
