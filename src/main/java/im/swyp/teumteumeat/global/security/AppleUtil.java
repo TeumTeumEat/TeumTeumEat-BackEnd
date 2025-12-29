@@ -67,7 +67,11 @@ public class AppleUtil {
     }
 
     private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        InputStream inputStream = resourceLoader.getResource(keyPath).getInputStream();
+        String resourcePath = keyPath;
+        if (!resourcePath.startsWith("classpath:") && !resourcePath.contains(":")) {
+            resourcePath = "classpath:" + resourcePath;
+        }
+        InputStream inputStream = resourceLoader.getResource(resourcePath).getInputStream();
         byte[] bdata = FileCopyUtils.copyToByteArray(inputStream);
         String privateKeyString = new String(bdata, StandardCharsets.UTF_8);
 
