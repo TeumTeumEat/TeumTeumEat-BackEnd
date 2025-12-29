@@ -8,7 +8,9 @@ import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -40,6 +42,11 @@ public class UserService {
 
     public void deleteUser(UserEntity user) {
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public void updateSocialRefreshToken(UserEntity user, String token) {
+        user.updateSocialRefreshToken(token);
     }
 
     /* HELPER METHOD */

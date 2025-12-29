@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.user.application.usecase;
 
+import im.swyp.teumteumeat.domains.user.application.dto.request.UserWithdrawalRequest;
+
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.security.AppleUtil;
@@ -10,11 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 
@@ -34,7 +38,7 @@ public class UserWithdrawalUseCase {
     private String appleClientId;
 
     @Transactional
-    public void withdraw(Long userId) {
+    public void withdraw(Long userId, UserWithdrawalRequest request) {
         UserEntity user = userService.getUserById(userId);
 
         SocialProvider provider = user.getSocialProvider();
@@ -47,10 +51,10 @@ public class UserWithdrawalUseCase {
                 unlinkKakao(socialId);
                 break;
             case GOOGLE:
-                revokeGoogle(user.getSocialRefreshToken());
+                revokeGoogle(request.googleAccessToken());
                 break;
             case APPLE:
-                revokeApple(user.getSocialRefreshToken());
+                revokeApple(request.appleAuthorizationCode());
                 break;
             default:
                 log.warn("Unknown provider for withdrawal: {}", provider);
@@ -86,14 +90,14 @@ public class UserWithdrawalUseCase {
         }
     }
 
-    private void revokeGoogle(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()) {
-            log.warn("Google refresh token not provided. Skipping Google revocation.");
+    private void revokeGoogle(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            log.warn("Google access token not provided. Skipping Google revocation.");
             return;
         }
 
         try {
-            String url = "https://oauth2.googleapis.com/revoke?token=" + refreshToken;
+            String url = "https://oauth2.googleapis.com/revoke?token=" + accessToken;
             restTemplate.postForLocation(url, null);
             log.info("Google revoke success.");
         } catch (Exception e) {
@@ -101,16 +105,40 @@ public class UserWithdrawalUseCase {
         }
     }
 
-    private void revokeApple(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()) {
-            log.warn("Apple refresh token not provided. Skipping Apple revocation.");
+    private void revokeApple(String authorizationCode) {
+        if (authorizationCode == null || authorizationCode.isBlank()) {
+            log.warn("Apple authorization code not provided. Skipping Apple revocation.");
             return;
         }
 
         try {
             String clientSecret = appleUtil.createClientSecret();
+
+            // 1. 액세스 토큰 및 리프레시 토큰 발급
+            String tokenUrl = "https://appleid.apple.com/auth/token";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> tokenBody = new LinkedMultiValueMap<>();
+            tokenBody.add("client_id", appleClientId);
+            tokenBody.add("client_secret", clientSecret);
+            tokenBody.add("code", authorizationCode);
+            tokenBody.add("grant_type", "authorization_code");
+
+            HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenBody, headers);
+            ResponseEntity<Map<String, Object>> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest,
+                    (Class<Map<String, Object>>) (Class<?>) Map.class);
+
+            if (tokenResponse.getBody() == null) {
+                log.error("Apple token response is null");
+                return;
+            }
+
+            String refreshToken = (String) tokenResponse.getBody().get("refresh_token");
+            if (refreshToken == null) {
+                log.error("Failed to retrieve Apple refresh token.");
+                return;
+            }
 
             // 2. 토큰 철회 (Revoke)
             String revokeUrl = "https://appleid.apple.com/auth/revoke";
