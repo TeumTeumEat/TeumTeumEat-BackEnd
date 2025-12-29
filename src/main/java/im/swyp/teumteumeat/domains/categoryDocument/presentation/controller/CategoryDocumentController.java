@@ -32,7 +32,6 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     @Override
     @PostMapping("/{categoryId}/documents")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createDocument(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
