@@ -17,13 +17,12 @@ import im.swyp.teumteumeat.global.security.client.apple.AppleAuthClient;
 import im.swyp.teumteumeat.global.security.client.google.GoogleAuthClient;
 import im.swyp.teumteumeat.global.security.dto.AppleTokenResponse;
 import im.swyp.teumteumeat.global.security.dto.GoogleTokenResponse;
-import im.swyp.teumteumeat.global.security.properties.apple.AppleOidcProperties;
 import im.swyp.teumteumeat.global.security.properties.google.GoogleOidcProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @UseCase
@@ -36,8 +35,10 @@ public class OAuth2UseCase {
     private final AppleAuthClient appleAuthClient;
     private final GoogleAuthClient googleAuthClient;
     private final AppleUtil appleUtil;
-    private final AppleOidcProperties appleOidcProperties; // Using OidcProperties for client-id/secret
     private final GoogleOidcProperties googleOidcProperties;
+
+    @Value("${frontend.base-url}")
+    private String baseUrl;
 
     public LoginResponse signUp(SocialProvider provider, SignUpRequest.Oidc request) {
         OidcPayload payload = oauthOidcHelper.getPayload(provider, request.idToken());
@@ -60,29 +61,26 @@ public class OAuth2UseCase {
                     throw new BaseException(AuthResponseCode.NEED_REGISTER);
                 });
 
-        // [NEW] Refresh Token Exchange & Save
         if (StringUtils.hasText(request.authCode())) {
             String refreshToken = null;
             try {
                 if (provider == SocialProvider.APPLE) {
+                    String redirectUri = baseUrl + "/login/oauth2/code/apple";
                     AppleTokenResponse response = appleAuthClient.getToken(
                             appleUtil.getClientId(),
                             appleUtil.createClientSecret(),
                             request.authCode(),
                             "authorization_code",
-                            null // redirect_uri might be needed or can be null for some flows
-                    );
+                            redirectUri);
                     refreshToken = response.refreshToken();
                 } else if (provider == SocialProvider.GOOGLE) {
+                    String redirectUri = baseUrl + "/login/oauth2/code/google";
                     GoogleTokenResponse response = googleAuthClient.getToken(
-                            googleOidcProperties.getSecret(), // Confusing mapping: GoogleOidcProperties uses 'secret'
-                                                              // for Client ID (aud)
-                            googleOidcProperties.getClientSecret(), // Real Client Secret
+                            googleOidcProperties.getSecret(),
+                            googleOidcProperties.getClientSecret(),
                             request.authCode(),
                             "authorization_code",
-                            "" // Redirect URI is required for Google usually, strictly for 'postmessage' or
-                               // configured URI
-                    );
+                            redirectUri);
                     refreshToken = response.refreshToken();
                 }
 
@@ -91,7 +89,6 @@ public class OAuth2UseCase {
                 }
             } catch (Exception e) {
                 log.error("Failed to exchange auth code for refresh token", e);
-                // Don't fail login, just log error? Or throw? For now log.
             }
         }
 

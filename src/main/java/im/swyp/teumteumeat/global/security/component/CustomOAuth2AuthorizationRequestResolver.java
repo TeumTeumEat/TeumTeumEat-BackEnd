@@ -67,6 +67,18 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
                     .build();
         }
 
+        // Google 로그인인 경우 offline access 요청 (Refresh Token 발급용)
+        if ("google".equalsIgnoreCase(authorizationRequest.getAttribute("registration_id"))) {
+            Map<String, Object> additionalParameters = new LinkedHashMap<>(
+                    authorizationRequest.getAdditionalParameters());
+            additionalParameters.put("access_type", "offline");
+            additionalParameters.put("prompt", "consent");
+
+            return OAuth2AuthorizationRequest.from(authorizationRequest)
+                    .additionalParameters(additionalParameters)
+                    .build();
+        }
+
         return authorizationRequest;
     }
 }

@@ -28,6 +28,7 @@ repositories {
 
 ext {
 	set('springAiVersion', '1.0.0-M6')
+	set('springCloudVersion', '2024.0.0')
 }
 
 dependencies {
@@ -38,13 +39,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	compileOnly 'org.projectlombok:lombok:1.18.36'
+	annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
 	// Database
 	runtimeOnly 'com.mysql:mysql-connector-j'

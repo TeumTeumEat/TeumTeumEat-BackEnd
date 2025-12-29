@@ -1,18 +1,33 @@
 package im.swyp.teumteumeat.global.security.client.google;
 
 import im.swyp.teumteumeat.global.security.dto.GoogleTokenResponse;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.http.MediaType;
 
-@FeignClient(name = "googleAuthClient", url = "https://oauth2.googleapis.com")
-public interface GoogleAuthClient {
+@Component
+@RequiredArgsConstructor
+public class GoogleAuthClient {
 
-    @PostMapping(value = "/token", consumes = "application/x-www-form-urlencoded")
-    GoogleTokenResponse getToken(
-            @RequestParam("client_id") String clientId,
-            @RequestParam("client_secret") String clientSecret,
-            @RequestParam("code") String code,
-            @RequestParam("grant_type") String grantType,
-            @RequestParam("redirect_uri") String redirectUri);
+    private final RestClient restClient = RestClient.create();
+
+    public GoogleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType,
+            String redirectUri) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("client_id", clientId);
+        formData.add("client_secret", clientSecret);
+        formData.add("code", code);
+        formData.add("grant_type", grantType);
+        formData.add("redirect_uri", redirectUri);
+
+        return restClient.post()
+                .uri("https://oauth2.googleapis.com/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .body(GoogleTokenResponse.class);
+    }
 }

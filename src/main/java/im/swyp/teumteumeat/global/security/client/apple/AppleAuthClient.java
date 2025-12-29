@@ -1,19 +1,33 @@
 package im.swyp.teumteumeat.global.security.client.apple;
 
-import feign.Headers;
 import im.swyp.teumteumeat.global.security.dto.AppleTokenResponse;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.http.MediaType;
 
-@FeignClient(name = "appleAuthClient", url = "https://appleid.apple.com/auth")
-public interface AppleAuthClient {
+@Component
+@RequiredArgsConstructor
+public class AppleAuthClient {
 
-    @PostMapping(value = "/token", consumes = "application/x-www-form-urlencoded")
-    AppleTokenResponse getToken(
-            @RequestParam("client_id") String clientId,
-            @RequestParam("client_secret") String clientSecret,
-            @RequestParam("code") String code,
-            @RequestParam("grant_type") String grantType,
-            @RequestParam("redirect_uri") String redirectUri);
+    private final RestClient restClient = RestClient.create();
+
+    public AppleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType,
+            String redirectUri) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("client_id", clientId);
+        formData.add("client_secret", clientSecret);
+        formData.add("code", code);
+        formData.add("grant_type", grantType);
+        formData.add("redirect_uri", redirectUri);
+
+        return restClient.post()
+                .uri("https://appleid.apple.com/auth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .body(AppleTokenResponse.class);
+    }
 }
