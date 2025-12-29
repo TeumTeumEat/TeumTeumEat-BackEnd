@@ -47,8 +47,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else {
             // Kakao, Google 등은 기존 방식대로 UserInfo Endpoint 호출
             OAuth2User oAuth2User = super.loadUser(userRequest);
-            if (userRequest.getAdditionalParameters().containsKey("id_token")) {
-                log.info("{} ID Token: {}", registrationId, userRequest.getAdditionalParameters().get("id_token"));}
             attributes = oAuth2User.getAttributes();
             userNameAttributeName = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
                     .getUserNameAttributeName();
