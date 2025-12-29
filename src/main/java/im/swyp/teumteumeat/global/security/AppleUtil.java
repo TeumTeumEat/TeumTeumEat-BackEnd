@@ -43,6 +43,10 @@ public class AppleUtil {
     @Value("${spring.apple.key-path}")
     private String keyPath;
 
+    public String getClientId() {
+        return clientId;
+    }
+
     public String createClientSecret() {
         Date expirationDate = Date.from(LocalDateTime.now().plusDays(30).atZone(ZoneId.systemDefault()).toInstant());
 

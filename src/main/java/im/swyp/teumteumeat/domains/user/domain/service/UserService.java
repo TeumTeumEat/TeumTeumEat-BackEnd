@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.Optional;
 
 @Service
@@ -53,6 +52,12 @@ public class UserService {
 
     public void deleteUser(UserEntity user) {
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public void updateSocialRefreshToken(UserEntity user, String token) {
+        user.updateSocialRefreshToken(token);
+        userRepository.save(user); // Force update to ensure persistence
     }
 
     /* HELPER METHOD */
