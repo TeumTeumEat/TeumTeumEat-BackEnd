@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 @RequiredArgsConstructor
 public class GoogleAuthClient {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
 
     public GoogleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType,
             String redirectUri) {
