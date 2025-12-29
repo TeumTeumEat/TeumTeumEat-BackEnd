@@ -38,6 +38,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if ("apple".equalsIgnoreCase(registrationId)) {
             // Apple은 UserInfo Endpoint를 호출하지 않고 id_token을 디코딩하여 정보를 가져옴
             String idToken = userRequest.getAdditionalParameters().get("id_token").toString();
+            log.info("Apple ID Token: {}", idToken);
             attributes = decodeJwtTokenPayload(idToken);
             attributes.put("id_token", idToken);
             attributes.put("sub", attributes.get("sub")); // Apple의 식별자는 sub
