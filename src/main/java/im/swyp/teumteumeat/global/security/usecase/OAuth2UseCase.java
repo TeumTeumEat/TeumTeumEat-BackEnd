@@ -12,9 +12,19 @@ import im.swyp.teumteumeat.global.security.dto.OidcPayload;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.Token;
+import im.swyp.teumteumeat.global.security.AppleUtil;
+import im.swyp.teumteumeat.global.security.client.apple.AppleAuthClient;
+import im.swyp.teumteumeat.global.security.client.google.GoogleAuthClient;
+import im.swyp.teumteumeat.global.security.dto.AppleTokenResponse;
+import im.swyp.teumteumeat.global.security.dto.GoogleTokenResponse;
+import im.swyp.teumteumeat.global.security.properties.google.GoogleOidcProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import org.springframework.beans.factory.annotation.Value;
+
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 public class OAuth2UseCase {
@@ -22,6 +32,13 @@ public class OAuth2UseCase {
     private final OAuthOidcHelper oauthOidcHelper;
     private final UserService userService;
     private final JwtProvider jwtProvider;
+    private final AppleAuthClient appleAuthClient;
+    private final GoogleAuthClient googleAuthClient;
+    private final AppleUtil appleUtil;
+    private final GoogleOidcProperties googleOidcProperties;
+
+    @Value("${frontend.base-url}")
+    private String baseUrl;
 
     public LoginResponse signUp(SocialProvider provider, SignUpRequest.Oidc request) {
         OidcPayload payload = oauthOidcHelper.getPayload(provider, request.idToken());
@@ -43,6 +60,37 @@ public class OAuth2UseCase {
                     }
                     throw new BaseException(AuthResponseCode.NEED_REGISTER);
                 });
+
+        if (StringUtils.hasText(request.authCode())) {
+            String refreshToken = null;
+            try {
+                if (provider == SocialProvider.APPLE) {
+                    String redirectUri = baseUrl + "/login/oauth2/code/apple";
+                    AppleTokenResponse response = appleAuthClient.getToken(
+                            appleUtil.getClientId(),
+                            appleUtil.createClientSecret(),
+                            request.authCode(),
+                            "authorization_code",
+                            redirectUri);
+                    refreshToken = response.refreshToken();
+                } else if (provider == SocialProvider.GOOGLE) {
+                    String redirectUri = baseUrl + "/login/oauth2/code/google";
+                    GoogleTokenResponse response = googleAuthClient.getToken(
+                            googleOidcProperties.getSecret(),
+                            googleOidcProperties.getClientSecret(),
+                            request.authCode(),
+                            "authorization_code",
+                            redirectUri);
+                    refreshToken = response.refreshToken();
+                }
+
+                if (refreshToken != null) {
+                    userService.updateSocialRefreshToken(user, refreshToken);
+                }
+            } catch (Exception e) {
+                log.error("Failed to exchange auth code for refresh token", e);
+            }
+        }
 
         Token token = jwtProvider.issueToken(user);
 

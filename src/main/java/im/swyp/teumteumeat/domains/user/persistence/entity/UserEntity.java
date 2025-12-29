@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
+import im.swyp.teumteumeat.global.util.DatabaseEncryptionConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,9 @@ public class UserEntity extends BaseEntity {
     private SocialProvider socialProvider;
 
     private String socialId;
+
+    @Convert(converter = DatabaseEncryptionConverter.class)
+    private String socialRefreshToken;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -92,5 +96,9 @@ public class UserEntity extends BaseEntity {
 
     public void updateRole(Role role) {
         this.role = role;
+    }
+
+    public void updateSocialRefreshToken(String socialRefreshToken) {
+        this.socialRefreshToken = socialRefreshToken;
     }
 }

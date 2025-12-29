@@ -11,10 +11,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
@@ -41,7 +41,16 @@ public class Document extends BaseEntity {
 
     private String fileKey;
 
+    @Deprecated
     private long fileSize;
+
+    @Enumerated(EnumType.STRING)
+    private FileStatus status;
+
+    private Integer totalParts;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentPart> parts = new ArrayList<>();
 
     @Column(length = 255)
     private String title;
@@ -51,9 +60,6 @@ public class Document extends BaseEntity {
 
     @Column(length = 500)
     private String summary;
-
-    @Enumerated(EnumType.STRING)
-    private FileStatus status;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Quiz> quizzes = new ArrayList<>();
@@ -100,5 +106,13 @@ public class Document extends BaseEntity {
 
     public void updateTitle(String title) {
         this.title = title;
+    }
+
+    public void updateTotalParts(Integer totalParts) {
+        this.totalParts = totalParts;
+    }
+
+    public boolean isAllPartsCollected() {
+        return parts.size() == totalParts;
     }
 }

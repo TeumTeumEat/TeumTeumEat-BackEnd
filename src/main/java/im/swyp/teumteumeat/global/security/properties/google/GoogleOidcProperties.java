@@ -11,5 +11,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class GoogleOidcProperties implements OidcClientProperties {
 	private final String jwksUri;
 	private final String secret;
+	private final String clientSecret;
 	private final String issuer;
 }
