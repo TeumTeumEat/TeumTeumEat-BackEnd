@@ -4,10 +4,9 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.history.application.dto.response.*;
-import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
-import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 
+import im.swyp.teumteumeat.domains.history.application.mapper.HistoryMapper;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.annotation.UseCase;
@@ -26,7 +25,7 @@ import java.util.*;
 public class HistoryLibraryUseCase {
 
     private final UserQuizService userQuizService;
-    private final QuizMapper quizMapper;
+    private final HistoryMapper historyMapper;
 
     @Transactional(readOnly = true)
     public CalendarResponse getCalendar(Long userId, Integer year, Integer month) {
@@ -238,19 +237,7 @@ public class HistoryLibraryUseCase {
                                 && uq.getQuiz().getCategoryDocument().getId().equals(id);
                     return false;
                 })
-                .map(uq -> {
-                    Quiz quiz = uq.getQuiz();
-                    QuizListResponse.QuizDto baseDto = quizMapper.toDto(quiz);
-                    return HistoryQuizListResponse.HistoryQuizDto.builder()
-                            .quizId(baseDto.quizId())
-                            .question(baseDto.question())
-                            .options(baseDto.options())
-                            .answer(baseDto.answer())
-                            .type(baseDto.type())
-                            .explanation(baseDto.explanation())
-                            .isCorrect(uq.isCorrect())
-                            .build();
-                })
+                .map(historyMapper::toDto)
                 .toList();
 
         if (quizDtos.isEmpty()) {
