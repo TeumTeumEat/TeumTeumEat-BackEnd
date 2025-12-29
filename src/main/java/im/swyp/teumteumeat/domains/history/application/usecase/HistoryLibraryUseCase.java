@@ -124,8 +124,6 @@ public class HistoryLibraryUseCase {
         Map<String, List<DailyHistoryResponse>> grouped = new HashMap<>();
         Set<String> processedKeys = new HashSet<>();
 
-
-
         for (UserQuiz uq : allQuizzes) {
             Quiz quiz = uq.getQuiz();
             String categoryName = null;
@@ -230,7 +228,7 @@ public class HistoryLibraryUseCase {
 
         List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
-        List<QuizListResponse.QuizDto> quizDtos = quizzes
+        List<HistoryQuizListResponse.HistoryQuizDto> quizDtos = quizzes
                 .stream()
                 .filter(uq -> {
                     if (type == GoalType.DOCUMENT)
@@ -240,7 +238,19 @@ public class HistoryLibraryUseCase {
                                 && uq.getQuiz().getCategoryDocument().getId().equals(id);
                     return false;
                 })
-                .map(uq -> quizMapper.toDto(uq.getQuiz()))
+                .map(uq -> {
+                    Quiz quiz = uq.getQuiz();
+                    QuizListResponse.QuizDto baseDto = quizMapper.toDto(quiz);
+                    return HistoryQuizListResponse.HistoryQuizDto.builder()
+                            .quizId(baseDto.quizId())
+                            .question(baseDto.question())
+                            .options(baseDto.options())
+                            .answer(baseDto.answer())
+                            .type(baseDto.type())
+                            .explanation(baseDto.explanation())
+                            .isCorrect(uq.isCorrect())
+                            .build();
+                })
                 .toList();
 
         if (quizDtos.isEmpty()) {
