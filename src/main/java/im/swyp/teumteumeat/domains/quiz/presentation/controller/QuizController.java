@@ -60,6 +60,7 @@ public class QuizController implements QuizApi {
     // 해당 카테고리 자료에 대한 퀴즈 생성
     @Override
     @PostMapping("categories/{categoryId}/documents/{documentId}/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createQuizzes(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
@@ -71,6 +72,7 @@ public class QuizController implements QuizApi {
     // PDF 문서에 대한 퀴즈 생성
     @Override
     @PostMapping("goals/{goalId}/documents/{documentId}/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
