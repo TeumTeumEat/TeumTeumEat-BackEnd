@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,7 +71,7 @@ public class UserQuizService {
     @Transactional(readOnly = true)
     public boolean hasSolvedQuizToday(Long userId, Long categoryId) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(java.time.LocalTime.MAX);
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         return userQuizRepository.existsByUserIdAndQuiz_CategoryDocument_Category_IdAndCreatedDateBetween(
                 userId, categoryId, startOfDay, endOfDay);
     }

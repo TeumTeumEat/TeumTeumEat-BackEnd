@@ -29,10 +29,6 @@ public enum CommonResponseCode implements BaseResponseCode {
     // 500 Internal Server Error
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-007", "서버 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
-
-    // Business Logic Errors
-    GOAL_EXPIRED(HttpStatus.BAD_REQUEST, "GOAL-001", "목표 학습 기간이 종료되었습니다."),
-    TODAY_QUOTA_EXCEEDED(HttpStatus.BAD_REQUEST, "QUIZ-001", "오늘의 학습량을 모두 달성했습니다."),
     ;
 
     private final HttpStatus status;

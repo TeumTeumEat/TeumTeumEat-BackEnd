@@ -25,6 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
+import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+
 import java.util.List;
 
 @UseCase
@@ -83,13 +87,11 @@ public class QuizUseCase {
         Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
 
         if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
-            throw new im.swyp.teumteumeat.global.exception.BaseException(
-                    im.swyp.teumteumeat.global.common.CommonResponseCode.GOAL_EXPIRED);
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         if (userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
-            throw new im.swyp.teumteumeat.global.exception.BaseException(
-                    im.swyp.teumteumeat.global.common.CommonResponseCode.TODAY_QUOTA_EXCEEDED);
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
