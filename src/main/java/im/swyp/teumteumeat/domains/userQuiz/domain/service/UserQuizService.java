@@ -75,4 +75,12 @@ public class UserQuizService {
         return userQuizRepository.existsByUserIdAndQuiz_CategoryDocument_Category_IdAndCreatedDateBetween(
                 userId, categoryId, startOfDay, endOfDay);
     }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedQuizTodayByGoal(Long userId, Long goalId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return userQuizRepository.existsByUserIdAndQuiz_Document_Goal_IdAndCreatedDateBetween(
+                userId, goalId, startOfDay, endOfDay);
+    }
 }
