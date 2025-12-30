@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
@@ -30,6 +31,18 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
+        // 0. Goal 및 일일 퀴즈 풀이 여부 확인
+        Goal goal = goalService.findLatestGoal(userId, categoryId);
+        if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
+            throw new im.swyp.teumteumeat.global.exception.BaseException(
+                    im.swyp.teumteumeat.global.common.CommonResponseCode.GOAL_EXPIRED);
+        }
+
+        if (userQuizService.hasSolvedQuizToday(userId, categoryId)) {
+            throw new im.swyp.teumteumeat.global.exception.BaseException(
+                    im.swyp.teumteumeat.global.common.CommonResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByCategoryId(categoryId);
         // 1. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
         List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);

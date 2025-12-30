@@ -40,6 +40,7 @@ public class QuizUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
+    private final im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService userQuizService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -80,6 +81,16 @@ public class QuizUseCase {
 
         // Goal 조회 (해당 유저/카테고리의 최신 목표)
         Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+
+        if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
+            throw new im.swyp.teumteumeat.global.exception.BaseException(
+                    im.swyp.teumteumeat.global.common.CommonResponseCode.GOAL_EXPIRED);
+        }
+
+        if (userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
+            throw new im.swyp.teumteumeat.global.exception.BaseException(
+                    im.swyp.teumteumeat.global.common.CommonResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();

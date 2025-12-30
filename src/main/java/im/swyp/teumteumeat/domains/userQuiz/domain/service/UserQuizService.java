@@ -66,4 +66,12 @@ public class UserQuizService {
     public List<Long> getConsumedDocumentIds(Long userId) {
         return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
     }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedQuizToday(Long userId, Long categoryId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(java.time.LocalTime.MAX);
+        return userQuizRepository.existsByUserIdAndQuiz_CategoryDocument_Category_IdAndCreatedDateBetween(
+                userId, categoryId, startOfDay, endOfDay);
+    }
 }
