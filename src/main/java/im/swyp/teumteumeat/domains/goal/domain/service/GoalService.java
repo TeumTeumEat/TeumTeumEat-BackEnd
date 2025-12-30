@@ -10,6 +10,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -31,8 +32,12 @@ public class GoalService {
     }
 
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
+        String studyPeriod = request.studyPeriod();
+        int weeks = Integer.parseInt(studyPeriod.replace("주", ""));
+        LocalDate endDate = LocalDate.now().plusWeeks(weeks);
+
         goal.updateGoal(
-                request.endDate(),
+                endDate,
                 request.difficulty(),
                 request.prompt());
     }

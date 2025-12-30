@@ -2,14 +2,14 @@ package im.swyp.teumteumeat.domains.goal.application.dto.request;
 
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import java.time.LocalDate;
 
 public record GoalUpdateRequest(
 
-        @Schema(description = "목표 종료일")
-        LocalDate endDate,
+        @NotNull(message = "공부 기간은 비어있을 수 없습니다.")
+        @Schema(description = "공부 기간", example = "1주")
+        String studyPeriod,
 
         @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
         Difficulty difficulty,

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 public class GoalController implements GoalApi {
 
     private final GoalUseCase goalUseCase;
-
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<GoalListResponse>> getGoals(

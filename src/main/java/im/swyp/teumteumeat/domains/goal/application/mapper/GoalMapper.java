@@ -18,10 +18,14 @@ public class GoalMapper {
             GoalCreateRequest request,
             Category category
     ) {
+        String studyPeriod = request.studyPeriod();
+        int weeks = Integer.parseInt(studyPeriod.replace("주", ""));
+        LocalDate endDate = LocalDate.now().plusWeeks(weeks);
+
         return Goal.builder()
                 .user(user)
                 .type(request.type())
-                .endDate(request.endDate())
+                .endDate(endDate)
                 .difficulty(request.difficulty())
                 .prompt(request.prompt())
                 .category(category)
