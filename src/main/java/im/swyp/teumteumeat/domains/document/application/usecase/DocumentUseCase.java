@@ -41,8 +41,17 @@ public class DocumentUseCase {
         UserEntity user = userService.getUserById(userId);
         Goal goal = goalService.getGoalById(goalId);
 
-        Document document = DocumentMapper.toDocument(user, goal, request);
-        documentService.createDocument(document);
+        // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
+        Document existDocument = documentService.getDocumentByFileKey(request.fileKey());
+        if (existDocument != null) {
+            existDocument.updateUser(user);
+            existDocument.updateGoal(goal);
+        }
+        // 아직 생성이 안된 경우 문서 생성
+        else {
+            Document document = DocumentMapper.toDocument(user, goal, request);
+            documentService.createDocument(document);
+        }
     }
 
     // fileKey로 문서 parts 설정
