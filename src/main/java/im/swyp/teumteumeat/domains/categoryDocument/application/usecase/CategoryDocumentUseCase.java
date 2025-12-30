@@ -20,6 +20,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @UseCase
@@ -37,7 +38,7 @@ public class CategoryDocumentUseCase {
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
         // 0. Goal 및 일일 퀴즈 풀이 여부 확인
         Goal goal = goalService.findLatestGoal(userId, categoryId);
-        if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
