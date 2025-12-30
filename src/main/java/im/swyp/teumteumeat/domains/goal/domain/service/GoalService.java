@@ -33,7 +33,10 @@ public class GoalService {
     }
 
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
-        LocalDate endDate = DateParser.calculateEndDate(goal.getCreatedDate().toLocalDate(), request.studyPeriod());
+        LocalDate endDate = null;
+        if (request.studyPeriod() != null) {
+            endDate = DateParser.calculateEndDate(goal.getCreatedDate().toLocalDate(), request.studyPeriod());
+        }
 
         goal.updateGoal(
                 endDate,
