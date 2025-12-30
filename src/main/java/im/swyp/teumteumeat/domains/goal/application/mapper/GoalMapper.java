@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
+import im.swyp.teumteumeat.domains.goal.domain.util.DateParser;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 
@@ -16,11 +17,10 @@ public class GoalMapper {
     public static Goal toGoal(
             UserEntity user,
             GoalCreateRequest request,
-            Category category
+            Category category,
+            LocalDate startDate
     ) {
-        String studyPeriod = request.studyPeriod();
-        int weeks = Integer.parseInt(studyPeriod.replace("주", ""));
-        LocalDate endDate = LocalDate.now().plusWeeks(weeks);
+        LocalDate endDate = DateParser.calculateEndDate(startDate, request.studyPeriod());
 
         return Goal.builder()
                 .user(user)

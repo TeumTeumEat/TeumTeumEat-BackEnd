@@ -15,6 +15,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @UseCase
@@ -41,7 +42,7 @@ public class GoalUseCase {
         if (request.categoryId() != null) {
             category = categoryService.getCategoryById(request.categoryId());
         }
-        Goal goal = GoalMapper.toGoal(user, request, category);
+        Goal goal = GoalMapper.toGoal(user, request, category, LocalDate.now());
         goalService.createGoal(goal);
     }
 

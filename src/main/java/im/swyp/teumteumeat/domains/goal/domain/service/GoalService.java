@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.goal.domain.service;
 
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.goal.domain.util.DateParser;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -32,9 +33,7 @@ public class GoalService {
     }
 
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
-        String studyPeriod = request.studyPeriod();
-        int weeks = Integer.parseInt(studyPeriod.replace("주", ""));
-        LocalDate endDate = goal.getCreatedDate().toLocalDate().plusWeeks(weeks);
+        LocalDate endDate = DateParser.calculateEndDate(goal.getCreatedDate().toLocalDate(), request.studyPeriod());
 
         goal.updateGoal(
                 endDate,
