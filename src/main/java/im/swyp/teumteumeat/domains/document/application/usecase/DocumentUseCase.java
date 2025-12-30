@@ -48,7 +48,8 @@ public class DocumentUseCase {
     // fileKey로 문서 parts 설정
     @Transactional
     public void setParts(OcrInitRequest request) {
-        Document document = documentService.getDocumentByFileKey(request.fileKey());
+        // 이미 문서 Entity가 생성되어 있으면 가져오고, 없으면 임시 문서 생성
+        Document document = documentService.getOrSaveDocument(request.fileKey(), request.fileName());
 
         // OCR 처리가 필요한 경우
         if (request.needOcr()) {
@@ -59,6 +60,7 @@ public class DocumentUseCase {
         else {
             document.updateRawContent(request.rawContent());
             document.updateStatus(FileStatus.COMPLETED);
+            //todo 여기서 summary랑 퀴즈생성까지 진행?(문서 업로드처럼)
         }
     }
 
