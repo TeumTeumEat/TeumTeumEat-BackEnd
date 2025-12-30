@@ -21,7 +21,6 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @UseCase
@@ -126,7 +125,6 @@ public class UserQuizUseCase {
                     .limit(remainingCount)
                     .toList();
 
-            priorityQuizzes = new ArrayList<>(priorityQuizzes);
             priorityQuizzes.addAll(additionalQuizzes);
         }
         return priorityQuizzes;
