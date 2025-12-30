@@ -60,7 +60,12 @@ public class DocumentUseCase {
         else {
             document.updateRawContent(request.rawContent());
             document.updateStatus(FileStatus.COMPLETED);
-            //todo 여기서 summary랑 퀴즈생성까지 진행?(문서 업로드처럼)
+
+            // Summary (요약)
+            documentSummaryService.generateSummary(document);
+
+            // 퀴즈 생성
+            quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
