@@ -17,45 +17,21 @@ import java.util.List;
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-    @Operation(
-            summary = "전체 카테고리 자료(요약글) 목록 조회"
-    )
-    @ApiResponseExplanations(
-            success = @ApiSuccessResponseExplanation(
-                    responseClass = CategoryDocumentResponse.class,
-                    description = "조회 성공"
-            )
-    )
-    ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
-            @PathVariable Long categoryId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
-    );
+        @Operation(summary = "유저 맞춤 카테고리 자료(요약글) 목록 조회")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "조회 성공"))
+        ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-    @Operation(
-            summary = "전체 카테고리 자료(요약글) 생성",
-            description = "관리자(ADMIN)만 생성할 수 있습니다."
-    )
-    @ApiResponseExplanations(
-            success = @ApiSuccessResponseExplanation(
-                    description = "생성 성공"
-            )
-    )
-    ResponseEntity<ApiResponse<Void>> createDocument(
-            @PathVariable Long categoryId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
-    );
+        @Operation(summary = "유저 맞춤 카테고리 자료(요약글) 생성", description = "유저의 Goal 프롬프트에 기반하여 자료를 생성합니다.")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
+        ResponseEntity<ApiResponse<Void>> createDocument(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-    @Operation(
-            summary = "전체 카테고리 자료(요약글) 삭제",
-            description = "관리자(ADMIN)만 삭제할 수 있습니다."
-    )
-    @ApiResponseExplanations(
-            success = @ApiSuccessResponseExplanation(
-                    description = "삭제 성공"
-            )
-    )
-    ResponseEntity<ApiResponse<Void>> deleteDocument(
-            @PathVariable Long documentId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
-    );
+        @Operation(summary = "전체 카테고리 자료(요약글) 삭제", description = "관리자(ADMIN)만 삭제할 수 있습니다.")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "삭제 성공"))
+        ResponseEntity<ApiResponse<Void>> deleteDocument(
+                        @PathVariable Long documentId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 }

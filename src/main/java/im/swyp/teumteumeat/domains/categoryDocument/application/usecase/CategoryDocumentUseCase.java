@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+
 import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
@@ -30,19 +32,41 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByCategoryId(categoryId);
-        // 1. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
+        // 유저의 현재 Goal 조회
+        Goal goal = goalService.findLatestGoal(userId, categoryId);
+
+        // 1. Goal에 해당하는 개인화된 문서 조회
+        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+
+        // 2. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
         List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
 
-        // 유저가 해당 카테고리에서 본 적 없는 카테고리 자료들을 조회
+        // 3. 미소비 문서 필터링 (개인화 문서 중)
         List<CategoryDocument> unconsumedDocuments = documents.stream()
                 .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
                 .toList();
 
-        // 유저가 해당 카테고리에서 카테고리 자료를 모두 소비했을 때
+        // 4. 개인화 문서가 없을 때 + Prompt가 없는(기본) 경우 -> 카테고리 내 다른 문서 재사용 시도
+        if (unconsumedDocuments.isEmpty() && (goal.getPrompt() == null || goal.getPrompt().isBlank())) {
+            List<CategoryDocument> allCategoryDocs = categoryDocumentService.getDocumentsByCategoryId(categoryId);
+            unconsumedDocuments = allCategoryDocs.stream()
+                    .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                    .filter(doc -> {
+                        Goal docGoal = doc.getGoal();
+                        // 1. Goal이 없는(공용) 문서
+                        if (docGoal == null) {
+                            return true;
+                        }
+                        // 2. Goal이 있지만 Prompt가 없는(기본) 문서
+                        return docGoal.getPrompt() == null || docGoal.getPrompt().isBlank();
+                    })
+                    .limit(1)
+                    .toList();
+        }
+
+        // 5. 여전히 없으면, 새로 생성 (내 Goal에 맞춰서)
         if (unconsumedDocuments.isEmpty()) {
-            // 카테고리 자료 생성
-            CategoryDocument createdDocument = createDocumentInternal(categoryId, userId);
+            CategoryDocument createdDocument = createDocumentInternal(categoryId, userId, goal);
             unconsumedDocuments = List.of(createdDocument);
         }
 
@@ -53,10 +77,11 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public void createDocument(Long categoryId, Long userId) {
-        createDocumentInternal(categoryId, userId);
+        Goal goal = goalService.findLatestGoal(userId, categoryId);
+        createDocumentInternal(categoryId, userId, goal);
     }
 
-    private CategoryDocument createDocumentInternal(Long categoryId, Long userId) {
+    private CategoryDocument createDocumentInternal(Long categoryId, Long userId, Goal goal) {
         Category category = categoryService.getCategoryById(categoryId);
 
         String topicInstruction = goalService.getTopic(userId, categoryId);
@@ -69,6 +94,8 @@ public class CategoryDocumentUseCase {
         CategoryDocument document = CategoryDocument.builder()
                 .category(category)
                 .content(content)
+                .title(topicInstruction.length() > 20 ? topicInstruction.substring(0, 20) : topicInstruction)
+                .goal(goal)
                 .build();
 
         categoryDocumentService.saveDocument(document);

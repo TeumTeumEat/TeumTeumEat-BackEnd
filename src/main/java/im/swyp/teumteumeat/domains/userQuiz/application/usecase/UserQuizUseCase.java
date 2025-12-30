@@ -11,8 +11,12 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResp
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
-import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
+import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +30,11 @@ public class UserQuizUseCase {
 
     private final QuizService quizService;
     private final UserQuizService userQuizService;
-    private final UserQuizRepository userQuizRepository;
     private final UserService userService;
     private final QuizMapper quizMapper;
 
+    private final GoalService goalService;
+    private final CategoryDocumentService categoryDocumentService;
     private final QuizUseCase quizUseCase;
 
     @Transactional
@@ -45,7 +50,7 @@ public class UserQuizUseCase {
         java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
 
         // 오늘 이미 푼 기록이 있는지 확인 (Date-based Upsert)
-        userQuizRepository.findByUserAndQuizAndCreatedDateBetween(user, quiz, startOfDay, endOfDay)
+        userQuizService.getQuizByDate(user, quiz, startOfDay, endOfDay)
                 .ifPresentOrElse(
                         existingUserQuiz -> existingUserQuiz.updateResult(isCorrect), // 있으면 업데이트
                         () -> {
@@ -76,22 +81,60 @@ public class UserQuizUseCase {
         if (GoalType.DOCUMENT == documentType) {
             quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
         } else {
-            quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
+            quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
         }
 
-        // 해당 카테고리 자료 퀴즈(모든 유저가 접근 가능)를 사용자가 다 풀었을 시 퀴즈 추가 생성
+        // 퀴즈 수가 여전히 부족하면(아예 없거나) -> 생성 로직
         if (quizzesUnsolved.isEmpty()) {
             if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
                 quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
-                quizzesUnsolved = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
+                quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
             }
         }
 
         return quizzesUnsolved.stream()
                 .map(quizMapper::toQuestionResponse)
                 .toList();
+    }
+
+    private List<Quiz> getPrioritizedQuizzes(Long documentId, Long userId, int quizCount) {
+        // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
+        CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+        Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+
+        Difficulty targetDifficulty = goal.getDifficulty();
+        String targetTopic = truncateTopic(goal.getPrompt());
+        if (targetTopic == null || targetTopic.isBlank()) {
+            targetTopic = "전반적인 내용"; // Generic topic fallback
+        }
+
+        // 1단계: 유저의 Goal과 일치하는 퀴즈 조회
+        List<Quiz> priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                targetDifficulty, targetTopic, quizCount);
+
+        // 2단계: 부족하면 조건 없이 나머지 조회 (Random)
+        if (priorityQuizzes.size() < quizCount) {
+            int remainingCount = quizCount - priorityQuizzes.size();
+            List<Quiz> fallbackQuizzes = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
+            List<Long> priorityIds = priorityQuizzes.stream().map(Quiz::getId).toList();
+
+            List<Quiz> additionalQuizzes = fallbackQuizzes.stream()
+                    .filter(q -> !priorityIds.contains(q.getId()))
+                    .limit(remainingCount)
+                    .toList();
+
+            priorityQuizzes.addAll(additionalQuizzes);
+        }
+        return priorityQuizzes;
+    }
+
+    private String truncateTopic(String topic) {
+        if (topic != null && topic.length() > 30) {
+            return topic.substring(0, 30);
+        }
+        return topic;
     }
 
     public QuizSetResponse getQuizForSolving(

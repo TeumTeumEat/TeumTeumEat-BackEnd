@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,17 +24,22 @@ public class CategoryDocumentService {
         return categoryDocumentRepository.findAllByCategoryId(categoryId);
     }
 
+    public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
+        return categoryDocumentRepository.findAllByGoalId(goalId);
+    }
+
     public CategoryDocument getDocumentById(Long documentId) {
         return categoryDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
     }
 
     @Transactional
-    public CategoryDocument createDocument(Category category, String content, String title) {
+    public CategoryDocument createDocument(Category category, String content, String title, Goal goal) {
         CategoryDocument document = CategoryDocument.builder()
                 .category(category)
                 .content(content)
                 .title(title)
+                .goal(goal)
                 .build();
         return categoryDocumentRepository.save(document);
     }
