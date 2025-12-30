@@ -23,6 +23,7 @@ public class QuizController implements QuizApi {
     // 해당 카테고리 자료의 모든 퀴즈 조회
     @Override
     @GetMapping("categories/{categoryId}/documents/{documentId}/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzes(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
@@ -34,6 +35,7 @@ public class QuizController implements QuizApi {
     // PDF 문서에 대한 퀴즈 목록 조회
     @Override
     @GetMapping("goals/{goalId}/document/{documentId}/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzesOfDocument(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
@@ -45,6 +47,7 @@ public class QuizController implements QuizApi {
     // 해당 퀴즈 한 개 조회
     @Override
     @GetMapping("categories/{categoryId}/documents/{documentId}/quizzes/{quizId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<QuizListResponse.QuizDto>> getQuiz(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
