@@ -122,6 +122,7 @@ public class DocumentUseCase {
     }
 
     // 문서 요약 및 상세 조회 (학습 시작 - 일일 제한 적용)
+    @Transactional
     public DocumentDetailResponse getSummary(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
@@ -131,13 +132,17 @@ public class DocumentUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        // 2. 요약글 생성 1회 제한 확인
+        // 2. 요약글 생성 1회 제한 확인 (오늘 이미 학습했는지)
         if (userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+
+        // 3. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성
+        documentSummaryService.generateSummary(document);
+        quizUseCase.createQuizzesForPdfDocument(document);
 
         return DocumentMapper.toDocumentDetailResponse(document);
     }

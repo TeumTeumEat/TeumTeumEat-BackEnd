@@ -52,8 +52,8 @@ public class DocumentController implements DocumentApi {
     }
 
     @Override
-    @GetMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
+    @PostMapping("/{documentId}/summary")
+    public ResponseEntity<ApiResponse<DocumentDetailResponse>> generateSummary(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {

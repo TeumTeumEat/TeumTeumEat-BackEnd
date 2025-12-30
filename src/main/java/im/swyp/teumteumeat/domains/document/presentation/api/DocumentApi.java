@@ -40,9 +40,9 @@ public interface DocumentApi {
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "문서 요약 조회", description = "특정 문서의 요약을 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
-        ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
+        @Operation(summary = "문서 요약 조회 (생성)", description = "특정 문서의 요약을 생성하고 조회합니다. (1일 1회 제한)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 및 조회 성공"))
+        ResponseEntity<ApiResponse<DocumentDetailResponse>> generateSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
