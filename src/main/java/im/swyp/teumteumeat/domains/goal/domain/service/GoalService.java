@@ -34,7 +34,7 @@ public class GoalService {
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
         String studyPeriod = request.studyPeriod();
         int weeks = Integer.parseInt(studyPeriod.replace("주", ""));
-        LocalDate endDate = LocalDate.now().plusWeeks(weeks);
+        LocalDate endDate = goal.getCreatedDate().toLocalDate().plusWeeks(weeks);
 
         goal.updateGoal(
                 endDate,
