@@ -92,6 +92,14 @@ public class Document extends BaseEntity {
         }
     }
 
+    public void updateUser(UserEntity user) {
+        this.user = user;
+    }
+
+    public void updateGoal(Goal goal) {
+        this.goal = goal;
+    }
+
     public void updateStatus(FileStatus status) {
         this.status = status;
     }
