@@ -6,17 +6,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
-
 public record GoalCreateRequest(
 
         @NotNull(message = "종류는 비어있을 수 없습니다.")
         @Schema(description = "목표 타입", example = "CATEGORY/DOCUMENT (Schema에서 ENUM 타입 확인)")
         GoalType type,
 
-        @NotNull(message = "날짜는 비어있을 수 없습니다.")
-        @Schema(description = "목표 종료일")
-        LocalDate endDate,
+        @NotNull(message = "공부 기간은 비어있을 수 없습니다.")
+        @Schema(description = "공부 기간", example = "1주")
+        String studyPeriod,
 
         @NotNull(message = "난이도는 비어있을 수 없습니다.")
         @Schema(description = "난이도", example = "EASY/MEDIUM/HARD (Schema에서 ENUM 타입 확인)")
