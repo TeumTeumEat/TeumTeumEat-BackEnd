@@ -4,10 +4,9 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.history.application.dto.response.*;
-import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
-import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 
+import im.swyp.teumteumeat.domains.history.application.mapper.HistoryMapper;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.annotation.UseCase;
@@ -26,7 +25,7 @@ import java.util.*;
 public class HistoryLibraryUseCase {
 
     private final UserQuizService userQuizService;
-    private final QuizMapper quizMapper;
+    private final HistoryMapper historyMapper;
 
     @Transactional(readOnly = true)
     public CalendarResponse getCalendar(Long userId, Integer year, Integer month) {
@@ -123,8 +122,6 @@ public class HistoryLibraryUseCase {
 
         Map<String, List<DailyHistoryResponse>> grouped = new HashMap<>();
         Set<String> processedKeys = new HashSet<>();
-
-
 
         for (UserQuiz uq : allQuizzes) {
             Quiz quiz = uq.getQuiz();
@@ -230,7 +227,7 @@ public class HistoryLibraryUseCase {
 
         List<UserQuiz> quizzes = userQuizService.getQuizzesByDateRange(userId, startOfDay, endOfDay);
 
-        List<QuizListResponse.QuizDto> quizDtos = quizzes
+        List<HistoryQuizListResponse.HistoryQuizDto> quizDtos = quizzes
                 .stream()
                 .filter(uq -> {
                     if (type == GoalType.DOCUMENT)
@@ -240,7 +237,7 @@ public class HistoryLibraryUseCase {
                                 && uq.getQuiz().getCategoryDocument().getId().equals(id);
                     return false;
                 })
-                .map(uq -> quizMapper.toDto(uq.getQuiz()))
+                .map(historyMapper::toDto)
                 .toList();
 
         if (quizDtos.isEmpty()) {
