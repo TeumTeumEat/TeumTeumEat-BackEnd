@@ -1,6 +1,9 @@
 package im.swyp.teumteumeat.domains.userQuiz.domain.service;
 
 import java.util.List;
+
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import java.time.LocalDate;
@@ -26,8 +29,8 @@ public class UserQuizService {
     }
 
     public java.util.Optional<UserQuiz> getQuizByDate(
-            im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity user,
-            im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz quiz,
+            UserEntity user,
+            Quiz quiz,
             LocalDateTime start, LocalDateTime end) {
         return userQuizRepository.findByUserAndQuizAndCreatedDateBetween(user, quiz, start, end);
     }
