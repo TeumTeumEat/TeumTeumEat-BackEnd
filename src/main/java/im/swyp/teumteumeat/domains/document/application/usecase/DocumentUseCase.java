@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @UseCase
@@ -42,10 +43,11 @@ public class DocumentUseCase {
         Goal goal = goalService.getGoalById(goalId);
 
         // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
-        Document existDocument = documentService.getDocumentByFileKey(request.fileKey());
-        if (existDocument != null) {
-            existDocument.updateUser(user);
-            existDocument.updateGoal(goal);
+        Optional<Document> existDocument = documentService.getDocumnetByFileKeyOptional(request.fileKey());
+        if (existDocument.isPresent()) {
+            Document document = existDocument.get();
+            document.updateUser(user);
+            document.updateGoal(goal);
         }
         // 아직 생성이 안된 경우 문서 생성
         else {

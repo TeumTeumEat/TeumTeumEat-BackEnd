@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,10 @@ public class DocumentService {
     public Document getDocumentByFileKey(String fileKey) {
         return documentRepository.findByFileKey(fileKey)
                 .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
+    }
+
+    public Optional<Document> getDocumnetByFileKeyOptional(String fileKey) {
+        return documentRepository.findByFileKey(fileKey);
     }
 
     public List<Document> getDocumentsByGoalId(Long goalId) {
