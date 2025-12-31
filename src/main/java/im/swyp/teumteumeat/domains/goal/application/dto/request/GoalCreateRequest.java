@@ -25,6 +25,12 @@ public record GoalCreateRequest(
         String prompt,
 
         @Schema(description = "카테고리 ID", example = "1")
-        Long categoryId
+        Long categoryId,
+
+        @Schema(description = "파일 이름", example = "1강.pdf")
+        String fileName,
+
+        @Schema(description = "파일 Key", example = "b151f_1강.pdf")
+        String fileKey
 ) {
 }

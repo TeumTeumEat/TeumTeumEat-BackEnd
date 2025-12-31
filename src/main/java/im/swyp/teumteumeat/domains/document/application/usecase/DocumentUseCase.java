@@ -41,14 +41,24 @@ public class DocumentUseCase {
         UserEntity user = userService.getUserById(userId);
         Goal goal = goalService.getGoalById(goalId);
 
-        Document document = DocumentMapper.toDocument(user, goal, request);
-        documentService.createDocument(document);
+        // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
+        Document existDocument = documentService.getDocumentByFileKey(request.fileKey());
+        if (existDocument != null) {
+            existDocument.updateUser(user);
+            existDocument.updateGoal(goal);
+        }
+        // 아직 생성이 안된 경우 문서 생성
+        else {
+            Document document = DocumentMapper.toDocument(user, goal, request);
+            documentService.createDocument(document);
+        }
     }
 
     // fileKey로 문서 parts 설정
     @Transactional
     public void setParts(OcrInitRequest request) {
-        Document document = documentService.getDocumentByFileKey(request.fileKey());
+        // 이미 문서 Entity가 생성되어 있으면 가져오고, 없으면 임시 문서 생성
+        Document document = documentService.getOrSaveDocument(request.fileKey(), request.fileName());
 
         // OCR 처리가 필요한 경우
         if (request.needOcr()) {
@@ -59,6 +69,12 @@ public class DocumentUseCase {
         else {
             document.updateRawContent(request.rawContent());
             document.updateStatus(FileStatus.COMPLETED);
+
+            // Summary (요약)
+            documentSummaryService.generateSummary(document);
+
+            // 퀴즈 생성
+            quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 

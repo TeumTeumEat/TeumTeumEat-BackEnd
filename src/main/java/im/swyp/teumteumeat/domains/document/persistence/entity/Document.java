@@ -30,19 +30,16 @@ public class Document extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "goal_id", nullable = false)
+    @JoinColumn(name = "goal_id", nullable = true)
     private Goal goal;
 
     private String fileName;
 
     private String fileKey;
-
-    @Deprecated
-    private long fileSize;
 
     @Enumerated(EnumType.STRING)
     private FileStatus status;
@@ -70,7 +67,6 @@ public class Document extends BaseEntity {
             Goal goal,
             String fileName,
             String fileKey,
-            long fileSize,
             String title,
             String rawContent,
             String summary,
@@ -79,7 +75,6 @@ public class Document extends BaseEntity {
         this.goal = goal;
         this.fileName = fileName;
         this.fileKey = fileKey;
-        this.fileSize = fileSize;
         this.title = title;
         this.rawContent = rawContent;
         this.summary = summary;
@@ -90,6 +85,14 @@ public class Document extends BaseEntity {
         if (!this.user.getId().equals(userId)) {
             throw new BaseException(FORBIDDEN);
         }
+    }
+
+    public void updateUser(UserEntity user) {
+        this.user = user;
+    }
+
+    public void updateGoal(Goal goal) {
+        this.goal = goal;
     }
 
     public void updateStatus(FileStatus status) {
