@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.categoryDocument.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -28,10 +29,15 @@ public class CategoryDocument extends BaseEntity {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "goal_id", nullable = false)
+    private Goal goal;
+
     @Builder
-    public CategoryDocument(String content, String title, Category category) {
+    public CategoryDocument(String content, String title, Category category, Goal goal) {
         this.content = content;
         this.title = title;
         this.category = category;
+        this.goal = goal;
     }
 }

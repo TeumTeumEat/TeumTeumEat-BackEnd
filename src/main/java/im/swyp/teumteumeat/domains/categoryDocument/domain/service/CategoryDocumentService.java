@@ -1,8 +1,8 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
-import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,8 @@ public class CategoryDocumentService {
 
     private final CategoryDocumentRepository categoryDocumentRepository;
 
-    public List<CategoryDocument> getDocumentsByCategoryId(Long categoryId) {
-        return categoryDocumentRepository.findAllByCategoryId(categoryId);
+    public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
+        return categoryDocumentRepository.findAllByGoalId(goalId);
     }
 
     public CategoryDocument getDocumentById(Long documentId) {
@@ -28,9 +28,10 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public CategoryDocument createDocument(Category category, String content, String title) {
+    public CategoryDocument createDocument(Goal goal, String content, String title) {
         CategoryDocument document = CategoryDocument.builder()
-                .category(category)
+                .category(goal.getCategory())
+                .goal(goal)
                 .content(content)
                 .title(title)
                 .build();

@@ -12,8 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
@@ -22,12 +20,12 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     private final CategoryDocumentUseCase categoryDocumentUseCase;
 
     @Override
-    @GetMapping("/{categoryId}/documents")
-    public ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
+    @PostMapping("/{categoryId}/documents/daily")
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        List<CategoryDocumentResponse> responses = categoryDocumentUseCase.getDocuments(categoryId, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, responses));
+        CategoryDocumentResponse response = categoryDocumentUseCase.generateDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override

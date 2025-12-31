@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface CategoryDocumentRepository extends JpaRepository<CategoryDocument, Long> {
-    List<CategoryDocument> findAllByCategoryId(Long categoryId);
+    List<CategoryDocument> findAllByGoalId(Long goalId);
 }
