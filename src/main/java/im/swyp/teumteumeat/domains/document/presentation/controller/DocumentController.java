@@ -62,6 +62,16 @@ public class DocumentController implements DocumentApi {
     }
 
     @Override
+    @GetMapping("/{documentId}/summary")
+    public ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        DocumentDetailResponse response = documentUseCase.getSummaryForView(user.getUserId(), goalId, documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteDocuments(
             @PathVariable Long goalId,

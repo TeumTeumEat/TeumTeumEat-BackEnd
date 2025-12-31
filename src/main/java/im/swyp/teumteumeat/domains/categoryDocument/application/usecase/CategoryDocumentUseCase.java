@@ -9,8 +9,8 @@ import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
-import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +30,10 @@ import java.util.List;
 public class CategoryDocumentUseCase {
 
     private final CategoryDocumentService categoryDocumentService;
-    private final CategoryService categoryService;
-    private final LLMService llmService;
+    private final UserService userService;
     private final UserQuizService userQuizService;
     private final GoalService goalService;
+    private final LLMService llmService;
 
     @Transactional
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {

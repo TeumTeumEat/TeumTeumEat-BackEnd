@@ -121,6 +121,28 @@ public class DocumentUseCase {
         return DocumentMapper.fromDocument(document);
     }
 
+    // 문서 요약 및 상세 조회 (단순 조회 - 퀴즈 풀기 전)
+    @Transactional(readOnly = true)
+    public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        // 1. Goal 만료 확인
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        // 2. 이미 학습했는지 확인 (이미 했으면 히스토리로 가야 함)
+        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        return DocumentMapper.toDocumentDetailResponse(document);
+    }
+
     // 문서 요약 및 상세 조회 (학습 시작 - 일일 제한 적용)
     @Transactional
     public DocumentDetailResponse getSummary(Long userId, Long goalId, Long documentId) {

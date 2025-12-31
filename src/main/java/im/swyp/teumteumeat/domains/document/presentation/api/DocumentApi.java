@@ -40,9 +40,16 @@ public interface DocumentApi {
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "문서 요약 조회 (생성)", description = "특정 문서의 요약을 생성하고 조회합니다. (1일 1회 제한)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 및 조회 성공"))
+        @Operation(summary = "문서 요약 조회 (학습 시작)", description = "문서의 요약본을 조회합니다. 이 시점부터 학습이 시작된 것으로 간주됩니다. (일일 제한 적용)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<DocumentDetailResponse>> generateSummary(
+                        @PathVariable Long goalId,
+                        @PathVariable Long documentId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "문서 요약 재조회 (단순 조회)", description = "학습 중인 문서의 요약본을 다시 조회합니다. (퀴즈 풀이 전용)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
+        ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);

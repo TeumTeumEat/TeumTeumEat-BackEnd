@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.global.security.handler;
 
 import im.swyp.teumteumeat.global.config.properties.FrontendProperties;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
