@@ -41,9 +41,6 @@ public class Document extends BaseEntity {
 
     private String fileKey;
 
-    @Deprecated
-    private long fileSize;
-
     @Enumerated(EnumType.STRING)
     private FileStatus status;
 
@@ -70,7 +67,6 @@ public class Document extends BaseEntity {
             Goal goal,
             String fileName,
             String fileKey,
-            long fileSize,
             String title,
             String rawContent,
             String summary,
@@ -79,7 +75,6 @@ public class Document extends BaseEntity {
         this.goal = goal;
         this.fileName = fileName;
         this.fileKey = fileKey;
-        this.fileSize = fileSize;
         this.title = title;
         this.rawContent = rawContent;
         this.summary = summary;
