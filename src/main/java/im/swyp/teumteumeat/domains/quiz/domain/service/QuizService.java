@@ -34,6 +34,12 @@ public class QuizService {
                                 org.springframework.data.domain.PageRequest.of(0, limit));
         }
 
+        public List<Quiz> getUnsolvedQuizzesByAttributes(Long categoryDocumentId, Long userId, Difficulty difficulty,
+                        String topic, int limit) {
+                return quizRepository.findUnsolvedQuizzesByAttributes(categoryDocumentId, userId, difficulty, topic,
+                                org.springframework.data.domain.PageRequest.of(0, limit));
+        }
+
         public List<Quiz> getUnsolvedDocumentQuizzes(Long documentId, Long userId, int limit) {
                 return quizRepository.findUnsolvedDocumentQuizzes(documentId, userId,
                                 org.springframework.data.domain.PageRequest.of(0, limit));

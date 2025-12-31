@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Tag(name = "Quiz", description = "퀴즈 API")
 public interface QuizApi {
 
-        @Operation(summary = "해당 카테고리 자료의 전체 퀴즈 목록 조회")
+        @Operation(summary = "해당 카테고리 자료의 전체 퀴즈 목록 조회 (Goal 기반 필터링 포함 가능)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizListResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<QuizListResponse>> getQuizzes(
                         @PathVariable Long categoryId,
@@ -37,7 +37,7 @@ public interface QuizApi {
                         @PathVariable Long quizId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다.")
+        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다. (유저 Goal의 Prompt/Difficulty 반영)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,

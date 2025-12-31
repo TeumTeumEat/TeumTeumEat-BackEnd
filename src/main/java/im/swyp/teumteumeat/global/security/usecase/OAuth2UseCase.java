@@ -65,7 +65,7 @@ public class OAuth2UseCase {
             String refreshToken = null;
             try {
                 if (provider == SocialProvider.APPLE) {
-                    String redirectUri = baseUrl + "/login/oauth2/code/apple";
+                    String redirectUri = "";
                     AppleTokenResponse response = appleAuthClient.getToken(
                             appleUtil.getClientId(),
                             appleUtil.createClientSecret(),
@@ -74,7 +74,7 @@ public class OAuth2UseCase {
                             redirectUri);
                     refreshToken = response.refreshToken();
                 } else if (provider == SocialProvider.GOOGLE) {
-                    String redirectUri = baseUrl + "/login/oauth2/code/google";
+                    String redirectUri = "";
                     GoogleTokenResponse response = googleAuthClient.getToken(
                             googleOidcProperties.getSecret(),
                             googleOidcProperties.getClientSecret(),

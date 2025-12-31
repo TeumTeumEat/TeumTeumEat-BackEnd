@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.domain.service;
 
+import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +29,20 @@ public class DocumentService {
                 .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
     }
 
+    public Optional<Document> getDocumnetByFileKeyOptional(String fileKey) {
+        return documentRepository.findByFileKey(fileKey);
+    }
+
     public List<Document> getDocumentsByGoalId(Long goalId) {
         return documentRepository.findAllByGoalId(goalId);
+    }
+
+    public Document getOrSaveDocument(String fileKey, String fileName) {
+        return documentRepository.findByFileKey(fileKey)
+                .orElseGet(() -> {
+                    Document tempDocument = DocumentMapper.toTempDocument(fileKey, fileName);
+                    return documentRepository.save(tempDocument);
+                });
     }
 
     public void createDocument(Document document) {

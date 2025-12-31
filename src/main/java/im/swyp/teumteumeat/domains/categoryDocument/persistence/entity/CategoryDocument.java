@@ -30,7 +30,7 @@ public class CategoryDocument extends BaseEntity {
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "goal_id", nullable = false)
+    @JoinColumn(name = "goal_id")
     private Goal goal;
 
     @Builder

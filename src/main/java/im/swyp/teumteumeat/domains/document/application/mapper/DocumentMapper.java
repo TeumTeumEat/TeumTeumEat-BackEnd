@@ -26,6 +26,16 @@ public class DocumentMapper {
                 .build();
     }
 
+    public static Document toTempDocument(
+            String fileKey,
+            String fileName
+    ) {
+        return Document.builder()
+                .fileKey(fileKey)
+                .fileName(fileName)
+                .build();
+    }
+
     public static DocumentResponse fromDocument(Document document) {
         return DocumentResponse.builder()
                 .documentId(document.getId())

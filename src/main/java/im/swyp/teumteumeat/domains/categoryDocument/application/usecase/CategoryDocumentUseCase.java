@@ -1,5 +1,8 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+
+import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
@@ -91,6 +94,19 @@ public class CategoryDocumentUseCase {
                 .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
+        Goal goal = goalService.findLatestGoal(userId, categoryId);
+        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+
+        boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return documents.stream()
+                .map(doc -> CategoryDocumentResponse.from(doc, hasSolvedToday, isFirstTime))
+                .toList();
     }
 
     @Transactional

@@ -85,8 +85,12 @@ public class QuizUseCase {
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
-        // Goal 조회 (해당 유저/카테고리의 최신 목표)
-        Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+        // Goal 조회
+        Goal goal = document.getGoal();
+        if (goal == null) {
+            // 문서에 Goal이 없으면(재사용된 공용 문서 등), 해당 유저의 최신 Goal을 조회하여 난이도 등을 결정
+            goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+        }
 
         if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
