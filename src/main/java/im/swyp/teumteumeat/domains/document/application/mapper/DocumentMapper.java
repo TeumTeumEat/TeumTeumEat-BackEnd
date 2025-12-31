@@ -33,6 +33,7 @@ public class DocumentMapper {
         return Document.builder()
                 .fileKey(fileKey)
                 .fileName(fileName)
+                .status(PENDING)
                 .build();
     }
 
