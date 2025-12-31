@@ -102,4 +102,12 @@ public class UserQuizUseCase {
         Quiz quiz = quizService.getQuizById(quizId);
         return quizMapper.toQuestionResponse(quiz);
     }
+
+    public boolean hasSolvedAnyQuizToday(Long userId) {
+        return userQuizService.hasSolvedAnyQuizToday(userId);
+    }
+
+    public boolean hasSolvedAnyQuizEver(Long userId) {
+        return userQuizService.hasSolvedAnyQuizEver(userId);
+    }
 }
