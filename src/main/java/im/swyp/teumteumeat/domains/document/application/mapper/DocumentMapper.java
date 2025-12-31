@@ -39,13 +39,16 @@ public class DocumentMapper {
         return DocumentListResponse.toDocumentListResponse(documents);
     }
 
-    public static DocumentDetailResponse toDocumentDetailResponse(Document document) {
+    public static DocumentDetailResponse toDocumentDetailResponse(Document document, boolean hasSolvedToday,
+            boolean isFirstTime) {
         return DocumentDetailResponse.builder()
                 .documentId(document.getId())
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
                 .summary(document.getSummary())
                 .status(document.getStatus())
+                .hasSolvedToday(hasSolvedToday)
+                .isFirstTime(isFirstTime)
                 .build();
     }
 }

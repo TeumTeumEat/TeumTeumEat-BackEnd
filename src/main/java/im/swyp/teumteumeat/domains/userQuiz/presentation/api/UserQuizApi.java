@@ -3,7 +3,6 @@ package im.swyp.teumteumeat.domains.userQuiz.presentation.api;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
-import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
@@ -23,11 +22,6 @@ import java.util.List;
 
 @Tag(name = "UserQuiz", description = "유저 퀴즈 API")
 public interface UserQuizApi {
-
-        @Operation(summary = "유저 퀴즈 상태 조회", description = "오늘 퀴즈 풀이 여부 및 최초 풀이 여부를 반환합니다. (홈/인트로 화면용)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = UserQuizStatusResponse.class, description = "조회 성공"))
-        ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "퀴즈 풀이 결과 제출", description = "사용자가 푼 퀴즈의 정답 여부를 제출하고 결과를 저장합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizSubmissionResponse.class, description = "제출 성공"))

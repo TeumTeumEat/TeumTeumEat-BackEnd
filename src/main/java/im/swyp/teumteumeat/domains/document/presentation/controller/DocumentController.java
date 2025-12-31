@@ -53,11 +53,11 @@ public class DocumentController implements DocumentApi {
 
     @Override
     @PostMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> generateSummary(
+    public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentUseCase.getSummary(user.getUserId(), goalId, documentId);
+        DocumentDetailResponse response = documentUseCase.createSummary(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

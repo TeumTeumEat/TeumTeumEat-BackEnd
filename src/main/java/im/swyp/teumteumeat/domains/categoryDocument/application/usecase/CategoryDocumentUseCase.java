@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
-import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
@@ -11,6 +10,7 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +67,9 @@ public class CategoryDocumentUseCase {
             targetDocument = unconsumedDocuments.get(0);
         }
 
-        return CategoryDocumentResponse.from(targetDocument);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
     @Transactional(readOnly = true)
@@ -77,10 +79,8 @@ public class CategoryDocumentUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        if (userQuizService.hasSolvedQuizToday(userId, categoryId)) {
-            // 이미 풀었다면 히스토리 이용 유도
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
+        boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
         List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
@@ -90,7 +90,7 @@ public class CategoryDocumentUseCase {
                 .findFirst()
                 .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
-        return CategoryDocumentResponse.from(targetDocument);
+        return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
     }
 
     @Transactional

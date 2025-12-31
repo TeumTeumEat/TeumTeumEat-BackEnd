@@ -7,13 +7,17 @@ import lombok.Builder;
 @Builder
 public record DocumentDetailResponse(
 
-        @Schema(description = "문서 ID", example = "1") Long documentId,
+                @Schema(description = "문서 ID", example = "1") Long documentId,
 
-        @Schema(description = "파일명", example = "1강.pdf") String fileName,
+                @Schema(description = "파일명", example = "1강.pdf") String fileName,
 
-        @Schema(description = "파일 Key", example = "1/sfwsw_1강.pdf") String fileKey,
+                @Schema(description = "파일 Key", example = "1/sfwsw_1강.pdf") String fileKey,
 
-        @Schema(description = "요약글", example = "이 문서는...") String summary,
+                @Schema(description = "요약글", example = "이 문서는...") String summary,
 
-        @Schema(description = "OCR 처리 상태", example = "COMPLETED") FileStatus status) {
+                @Schema(description = "OCR 처리 상태", example = "COMPLETED") FileStatus status,
+
+                @Schema(description = "오늘 퀴즈 풀이 여부", example = "true") boolean hasSolvedToday,
+
+                @Schema(description = "최초 퀴즈 풀이 여부", example = "false") boolean isFirstTime) {
 }

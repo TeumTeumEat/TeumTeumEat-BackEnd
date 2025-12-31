@@ -132,20 +132,18 @@ public class DocumentUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        // 2. 이미 학습했는지 확인 (이미 했으면 히스토리로 가야 함)
-        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
+        boolean hasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        return DocumentMapper.toDocumentDetailResponse(document);
+        return DocumentMapper.toDocumentDetailResponse(document, hasSolvedToday, isFirstTime);
     }
 
-    // 문서 요약 및 상세 조회 (학습 시작 - 일일 제한 적용)
+    // 문서 요약 및 상세 조회 (학습 시 사용 되는 메서드)
     @Transactional
-    public DocumentDetailResponse getSummary(Long userId, Long goalId, Long documentId) {
+    public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
@@ -166,7 +164,9 @@ public class DocumentUseCase {
         documentSummaryService.generateSummary(document);
         quizUseCase.createQuizzesForPdfDocument(document);
 
-        return DocumentMapper.toDocumentDetailResponse(document);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return DocumentMapper.toDocumentDetailResponse(document, false, isFirstTime);
     }
 
     // 해당 목표의 모든 문서 삭제
