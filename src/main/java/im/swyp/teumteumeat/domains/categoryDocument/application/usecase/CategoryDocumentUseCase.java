@@ -85,11 +85,14 @@ public class CategoryDocumentUseCase {
                 topicInstruction);
         String content = llmService.generateContent(llmPrompt);
 
+        // 제목 생성
+        String generatedTitle = llmService.generateTitle(content, topicInstruction);
+
         CategoryDocument document = CategoryDocument.builder()
                 .category(category)
                 .goal(goal)
                 .content(content)
-                .title(topicInstruction) // 제목을 프롬프트(주제)로 설정
+                .title(generatedTitle)
                 .build();
 
         categoryDocumentService.saveDocument(document);
