@@ -2,13 +2,17 @@ package im.swyp.teumteumeat.domains.llm.domain.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -88,9 +92,22 @@ public class LLMService {
 
             return content;
 
+        } catch (HttpClientErrorException e) {
+            log.error("AI 요청 클라이언트 에러: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            if (e.getStatusCode().value() == 429) {
+                throw new BaseException(LLMResponseCode.AI_QUOTA_EXCEEDED);
+            } else if (e.getStatusCode().value() >= 400 && e.getStatusCode().value() < 500) {
+                throw new BaseException(LLMResponseCode.AI_INVALID_REQUEST);
+            }
+            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED);
+
+        } catch (HttpServerErrorException e) {
+            log.error("AI 요청 서버 에러: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new BaseException(LLMResponseCode.AI_SERVER_ERROR);
+
         } catch (Exception e) {
-            log.error("AI 요청 중 에러 발생", e);
-            throw new RuntimeException("AI 요청 실패: " + e.getMessage());
+            log.error("AI 요청 중 알 수 없는 에러 발생", e);
+            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED);
         }
     }
 
