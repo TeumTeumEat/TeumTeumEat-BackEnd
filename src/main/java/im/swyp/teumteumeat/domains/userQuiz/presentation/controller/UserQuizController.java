@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.userQuiz.presentation.controller;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -23,6 +24,22 @@ import java.util.List;
 public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
+
+    // 유저 퀴즈 상태 조회
+    @Override
+    @GetMapping("/status")
+    public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        boolean hasSolvedToday = userQuizUseCase.hasSolvedAnyQuizToday(user.getUserId());
+        boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
+
+        UserQuizStatusResponse response = UserQuizStatusResponse.builder()
+                .hasSolvedToday(hasSolvedToday)
+                .isFirstTime(!hasSolvedEver)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
 
     // 유저가 퀴즈를 푸는 기능
     @Override

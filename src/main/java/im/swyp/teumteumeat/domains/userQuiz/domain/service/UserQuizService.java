@@ -83,4 +83,16 @@ public class UserQuizService {
         return userQuizRepository.existsByUserIdAndQuiz_Document_Goal_IdAndCreatedDateBetween(
                 userId, goalId, startOfDay, endOfDay);
     }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedAnyQuizToday(Long userId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return !userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay).isEmpty();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedAnyQuizEver(Long userId) {
+        return !userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId).isEmpty();
+    }
 }
