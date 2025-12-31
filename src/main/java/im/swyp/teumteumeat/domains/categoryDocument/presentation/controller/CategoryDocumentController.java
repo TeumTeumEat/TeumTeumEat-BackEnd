@@ -29,6 +29,15 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     }
 
     @Override
+    @GetMapping("/{categoryId}/documents/daily")
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> getDailyDocument(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        CategoryDocumentResponse response = categoryDocumentUseCase.getDailyDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
     @PostMapping("/{categoryId}/documents")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createDocument(

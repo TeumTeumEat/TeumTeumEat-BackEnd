@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -65,6 +66,29 @@ public class CategoryDocumentUseCase {
             // 안 본 것 중 하나 선택 (첫 번째)
             targetDocument = unconsumedDocuments.get(0);
         }
+
+        return CategoryDocumentResponse.from(targetDocument);
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
+        Goal goal = goalService.findLatestGoal(userId, categoryId);
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        if (userQuizService.hasSolvedQuizToday(userId, categoryId)) {
+            // 이미 풀었다면 히스토리 이용 유도
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
+
+        CategoryDocument targetDocument = documents.stream()
+                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                .findFirst()
+                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
         return CategoryDocumentResponse.from(targetDocument);
     }
