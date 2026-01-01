@@ -29,7 +29,7 @@ public class NotificationUseCase {
         String body = "지금 바로 학습해보세요!";
 
         users.forEach(user -> {
-            if (userQuizService.hasSolvedAnyQuizToday(user.getId())) {
+            if (!userQuizService.hasSolvedAnyQuizToday(user.getId())) {
                 // 유저의 등록된 토큰을 모두 불러옴
                 List<DeviceToken> tokens = user.getDeviceTokens();
                 tokens.forEach(token -> {
