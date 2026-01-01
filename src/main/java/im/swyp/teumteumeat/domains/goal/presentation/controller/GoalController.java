@@ -57,7 +57,7 @@ public class GoalController implements GoalApi {
             @NotNull Long goalId,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        goalUseCase.deleteGoal(goalId, user.getUserId());
+        goalUseCase.deleteGoal(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

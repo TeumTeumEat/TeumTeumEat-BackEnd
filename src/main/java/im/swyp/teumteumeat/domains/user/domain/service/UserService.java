@@ -60,6 +60,12 @@ public class UserService {
         userRepository.save(user); // Force update to ensure persistence
     }
 
+    @Transactional
+    public boolean updateAndGetOnboardingCompleted(Long userId) {
+        UserEntity user = getOrThrow(userId);
+        return user.updateAndGetOnboardingCompleted();
+    }
+
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)

@@ -18,7 +18,7 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setMaxPoolSize(60);
         executor.setQueueCapacity(10000);
         executor.setKeepAliveSeconds(60);
-        executor.setThreadNamePrefix("FCM-Async-");
+        executor.setThreadNamePrefix("Async-");
         executor.initialize();
         executor.setRejectedExecutionHandler((r, exec) -> {
             throw new IllegalArgumentException("더 이상 요청을 처리할 수 없습니다.");

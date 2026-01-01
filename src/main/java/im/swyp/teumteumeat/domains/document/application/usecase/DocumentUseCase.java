@@ -78,13 +78,13 @@ public class DocumentUseCase {
         // PDF에서 텍스트 추출이 완료된 경우
         else {
             document.updateRawContent(request.rawContent());
-            document.updateStatus(FileStatus.COMPLETED);
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+            documentSummaryService.generateSummary(document.getId());
+            document.updateStatus(FileStatus.COMPLETED);
 
             // 퀴즈 생성
-            quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
@@ -95,7 +95,8 @@ public class DocumentUseCase {
         DocumentPart documentPart = DocumentPartMapper.toDocumentPart(
                 document,
                 request.partIndex(),
-                request.ocrText());
+                request.ocrText()
+        );
         documentService.createDocumentPart(documentPart);
 
         if (document.isAllPartsCollected()) {
@@ -108,10 +109,10 @@ public class DocumentUseCase {
             document.updateRawContent(combinedText);
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+            documentSummaryService.generateSummary(document.getId());
 
             // 퀴즈 생성
-            quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
@@ -179,7 +180,7 @@ public class DocumentUseCase {
         document.validateOwner(userId);
 
         // 3. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성
-        documentSummaryService.generateSummary(document);
+        documentSummaryService.generateSummary(document.getId());
         quizUseCase.createQuizzesForPdfDocument(document);
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);

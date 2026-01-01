@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "DeviceToken", description = "디바이스 토큰(푸쉬 알림) API")
+@Tag(name = "Notification", description = "푸쉬 알림 API")
 public interface DeviceTokenApi {
 
     @Operation(
