@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.user.application.usecase;
 
-import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserUseCase {
 
     private final UserService userService;
-    private final GoalUseCase goalUseCase;
 
     public NameResponse getName(Long userId) {
         UserEntity user = userService.getUserById(userId);
@@ -60,17 +58,9 @@ public class UserUseCase {
     @Transactional
     public CompletedResponse isOnboardingCompleted(Long userId) {
         UserEntity user = userService.getUserById(userId);
-        if (
-            user.isOnboardingCompleted() ||
-            user.getName() != null &&
-            userService.getCommuteInfo(user) != null &&
-            !goalUseCase.getGoals(userId).goalResponses().isEmpty()
-        ) {
-            user.changeOnboardingCompleted(true);
-            return CompletedResponse.builder().completed(true).build();
-        } else {
-            return CompletedResponse.builder().completed(false).build();
-        }
+        boolean onboardingCompleted = userService.updateAndGetOnboardingCompleted(user);
+
+        return CompletedResponse.builder().completed(onboardingCompleted).build();
     }
 
     public UserSettingsResponse getUserSettings(Long userId) {

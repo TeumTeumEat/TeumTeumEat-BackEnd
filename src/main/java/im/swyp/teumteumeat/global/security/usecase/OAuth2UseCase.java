@@ -97,7 +97,7 @@ public class OAuth2UseCase {
         return LoginResponse.builder()
                 .accessToken(token.accessToken())
                 .refreshToken(token.refreshToken())
-                .isOnboardingCompleted(user.isOnboardingCompleted())
+                .isOnboardingCompleted(userService.updateAndGetOnboardingCompleted(user))
                 .build();
     }
 }

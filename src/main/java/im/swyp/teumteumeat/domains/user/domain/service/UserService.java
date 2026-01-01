@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.user.domain.service;
 
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
@@ -58,6 +59,18 @@ public class UserService {
     public void updateSocialRefreshToken(UserEntity user, String token) {
         user.updateSocialRefreshToken(token);
         userRepository.save(user); // Force update to ensure persistence
+    }
+
+    public boolean updateAndGetOnboardingCompleted(UserEntity user) {
+        boolean onboardingCompleted =
+                user.isOnboardingCompleted() ||
+                        user.getName() != null &&
+                                user.getCommuteInfo() != null &&
+                                !user.getGoals().isEmpty();
+
+        user.changeOnboardingCompleted(onboardingCompleted);
+
+        return onboardingCompleted;
     }
 
     /* HELPER METHOD */
