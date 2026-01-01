@@ -56,8 +56,7 @@ public class UserUseCase {
     }
 
     public CompletedResponse isOnboardingCompleted(Long userId) {
-        UserEntity user = userService.getUserById(userId);
-        boolean onboardingCompleted = userService.updateAndGetOnboardingCompleted(user);
+        boolean onboardingCompleted = userService.updateAndGetOnboardingCompleted(userId);
 
         return CompletedResponse.builder().completed(onboardingCompleted).build();
     }

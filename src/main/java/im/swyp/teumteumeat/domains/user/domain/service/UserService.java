@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.user.domain.service;
 
-import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
@@ -62,7 +61,8 @@ public class UserService {
     }
 
     @Transactional
-    public boolean updateAndGetOnboardingCompleted(UserEntity user) {
+    public boolean updateAndGetOnboardingCompleted(Long userId) {
+        UserEntity user = getOrThrow(userId);
         return user.updateAndGetOnboardingCompleted();
     }
 
