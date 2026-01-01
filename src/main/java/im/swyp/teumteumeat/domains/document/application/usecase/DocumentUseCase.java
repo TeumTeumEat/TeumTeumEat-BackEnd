@@ -14,7 +14,6 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
@@ -37,7 +36,6 @@ public class DocumentUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final DocumentSummaryService documentSummaryService;
-    private final QuizUseCase quizUseCase;
 
     @Transactional
     public void uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -74,7 +72,7 @@ public class DocumentUseCase {
             document.updateRawContent(request.rawContent());
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+            documentSummaryService.generateSummary(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
 
             // 퀴즈 생성
@@ -103,7 +101,7 @@ public class DocumentUseCase {
             document.updateRawContent(combinedText);
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+            documentSummaryService.generateSummary(document.getId());
 
             // 퀴즈 생성
             //quizUseCase.createQuizzesForPdfDocument(document);

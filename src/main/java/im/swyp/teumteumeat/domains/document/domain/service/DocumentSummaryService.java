@@ -13,10 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class DocumentSummaryService {
 
     private final LLMService llmService;
+    private final DocumentService documentService;
 
     @Async
     @Transactional
-    public void generateSummary(Document document) {
+    public void generateSummary(Long documentId) {
+        Document document = documentService.getDocumentById(documentId);
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
         String summary = llmService.generateContent(prompt);
