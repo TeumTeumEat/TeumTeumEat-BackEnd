@@ -19,6 +19,7 @@ import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -70,13 +72,13 @@ public class DocumentUseCase {
         // PDF에서 텍스트 추출이 완료된 경우
         else {
             document.updateRawContent(request.rawContent());
-            document.updateStatus(FileStatus.COMPLETED);
 
             // Summary (요약)
             documentSummaryService.generateSummary(document);
+            document.updateStatus(FileStatus.COMPLETED);
 
             // 퀴즈 생성
-            quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
@@ -104,7 +106,7 @@ public class DocumentUseCase {
             documentSummaryService.generateSummary(document);
 
             // 퀴즈 생성
-            quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
