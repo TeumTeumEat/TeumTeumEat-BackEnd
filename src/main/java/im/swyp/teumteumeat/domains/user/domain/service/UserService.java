@@ -61,6 +61,7 @@ public class UserService {
         userRepository.save(user); // Force update to ensure persistence
     }
 
+    @Transactional
     public boolean updateAndGetOnboardingCompleted(UserEntity user) {
         boolean onboardingCompleted =
                 user.isOnboardingCompleted() ||

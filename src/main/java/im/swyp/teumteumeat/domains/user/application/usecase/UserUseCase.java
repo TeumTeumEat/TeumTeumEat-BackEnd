@@ -55,7 +55,6 @@ public class UserUseCase {
         userService.updateCommuteInfo(user, commuteInfo);
     }
 
-    @Transactional
     public CompletedResponse isOnboardingCompleted(Long userId) {
         UserEntity user = userService.getUserById(userId);
         boolean onboardingCompleted = userService.updateAndGetOnboardingCompleted(user);
