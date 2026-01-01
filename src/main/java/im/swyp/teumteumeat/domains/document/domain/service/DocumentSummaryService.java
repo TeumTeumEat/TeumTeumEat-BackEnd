@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ public class DocumentSummaryService {
 
     private final LLMService llmService;
 
+    @Async
     @Transactional
     public void generateSummary(Document document) {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
