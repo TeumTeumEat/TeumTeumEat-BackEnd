@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -24,6 +26,7 @@ public class DocumentSummaryService {
 
     // TransactionalEventListener가 커밋을 확인한 후 비동기로 이 메서드를 호출
     @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void processSummary(DocumentSummaryEvent event) {
         Document document = documentService.getDocumentById(event.documentId());
