@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Notification(Test)", description = "푸쉬 알림 TEST API")
+@Tag(name = "Notification")
 public interface NotificationTestApi {
 
     @Operation(
