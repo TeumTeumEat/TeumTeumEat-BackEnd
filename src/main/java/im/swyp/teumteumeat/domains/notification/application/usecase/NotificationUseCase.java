@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.notification.domain.service.DeviceTokenServic
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 public class NotificationUseCase {
 
     private final DeviceTokenService deviceTokenService;
+    private final UserQuizService userQuizService;
     private final FcmService fcmService;
     private final UserService userService;
 
@@ -27,7 +29,7 @@ public class NotificationUseCase {
         String body = "지금 바로 학습해보세요!";
 
         users.forEach(user -> {
-            if (user.isPushEnabled()) {
+            if (user.isPushEnabled() && userQuizService.hasSolvedAnyQuizToday(user.getId())) {
                 // 유저의 등록된 토큰을 모두 불러옴
                 List<DeviceToken> tokens = user.getDeviceTokens();
                 tokens.forEach(token -> {
