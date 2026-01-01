@@ -3,7 +3,6 @@ package im.swyp.teumteumeat.global.security.exception;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.utils.ResponseUtil;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
      * 인증되었지만 해당 리소스에 접근 권한이 없는 경우 (403 Forbidden) 처리
      */
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
+    public void handle(HttpServletRequest request, HttpServletResponse response,
+            AccessDeniedException accessDeniedException) throws IOException {
         log.warn("AccessDeniedHandler: ", accessDeniedException);
         ResponseUtil.responseError(response, objectMapper, CommonResponseCode.FORBIDDEN);
     }

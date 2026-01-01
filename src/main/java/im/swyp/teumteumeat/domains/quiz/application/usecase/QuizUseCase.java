@@ -16,6 +16,7 @@ import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
@@ -25,6 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
+import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @UseCase
@@ -40,6 +46,7 @@ public class QuizUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
+    private final UserQuizService userQuizService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -83,6 +90,14 @@ public class QuizUseCase {
         if (goal == null) {
             // 문서에 Goal이 없으면(재사용된 공용 문서 등), 해당 유저의 최신 Goal을 조회하여 난이도 등을 결정
             goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+        }
+
+        if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        if (userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
@@ -179,6 +194,17 @@ public class QuizUseCase {
     public void createQuizzesForPdfDocumentById(Long documentId, Long userId) {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+
+        Goal goal = document.getGoal();
+
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goal.getId())) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
         createQuizzesForPdfDocument(document);
     }
 

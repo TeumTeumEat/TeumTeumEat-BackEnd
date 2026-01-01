@@ -23,5 +23,12 @@ public class DocumentSummaryService {
                 document.getRawContent());
         String summary = llmService.generateContent(prompt);
         document.updateSummary(summary);
+
+        // 제목 생성
+        String userGoal = document.getGoal().getPrompt();
+        String topicInstruction = (userGoal != null && !userGoal.isEmpty()) ? userGoal : "전반적인 내용";
+
+        String generatedTitle = llmService.generateTitle(summary, topicInstruction);
+        document.updateTitle(generatedTitle);
     }
 }
