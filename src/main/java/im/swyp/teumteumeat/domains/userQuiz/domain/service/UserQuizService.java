@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,5 +76,33 @@ public class UserQuizService {
 
     public List<Long> getConsumedDocumentIds(Long userId) {
         return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedQuizToday(Long userId, Long categoryId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return userQuizRepository.existsByUserIdAndQuiz_CategoryDocument_Category_IdAndCreatedDateBetween(
+                userId, categoryId, startOfDay, endOfDay);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedQuizTodayByGoal(Long userId, Long goalId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return userQuizRepository.existsByUserIdAndQuiz_Document_Goal_IdAndCreatedDateBetween(
+                userId, goalId, startOfDay, endOfDay);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedAnyQuizToday(Long userId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+        return !userQuizRepository.findAllByUserIdAndCreatedDateBetween(userId, startOfDay, endOfDay).isEmpty();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasSolvedAnyQuizEver(Long userId) {
+        return !userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId).isEmpty();
     }
 }

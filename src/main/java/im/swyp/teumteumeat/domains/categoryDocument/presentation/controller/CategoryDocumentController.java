@@ -22,12 +22,21 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     private final CategoryDocumentUseCase categoryDocumentUseCase;
 
     @Override
-    @GetMapping("/{categoryId}/documents")
-    public ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
+    @PostMapping("/{categoryId}/documents/daily")
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        List<CategoryDocumentResponse> responses = categoryDocumentUseCase.getDocuments(categoryId, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, responses));
+        CategoryDocumentResponse response = categoryDocumentUseCase.generateDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/{categoryId}/documents/daily")
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> getDailyDocument(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        CategoryDocumentResponse response = categoryDocumentUseCase.getDailyDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override

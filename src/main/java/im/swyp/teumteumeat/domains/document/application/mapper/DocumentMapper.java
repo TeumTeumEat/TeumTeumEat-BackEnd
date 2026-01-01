@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.document.application.mapper;
 
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
+import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
@@ -15,8 +16,7 @@ public class DocumentMapper {
     public static Document toDocument(
             UserEntity user,
             Goal goal,
-            DocumentCreateRequest request
-    ) {
+            DocumentCreateRequest request) {
         return Document.builder()
                 .user(user)
                 .goal(goal)
@@ -47,5 +47,18 @@ public class DocumentMapper {
 
     public static DocumentListResponse toDocumentListResponse(List<DocumentResponse> documents) {
         return DocumentListResponse.toDocumentListResponse(documents);
+    }
+
+    public static DocumentDetailResponse toDocumentDetailResponse(Document document, boolean hasSolvedToday,
+            boolean isFirstTime) {
+        return DocumentDetailResponse.builder()
+                .documentId(document.getId())
+                .fileName(document.getFileName())
+                .fileKey(document.getFileKey())
+                .summary(document.getSummary())
+                .status(document.getStatus())
+                .hasSolvedToday(hasSolvedToday)
+                .isFirstTime(isFirstTime)
+                .build();
     }
 }

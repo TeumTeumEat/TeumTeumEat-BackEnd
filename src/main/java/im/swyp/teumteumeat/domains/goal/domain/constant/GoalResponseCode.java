@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum GoalResponseCode implements BaseResponseCode {
     NOT_FOUND_GOAL(HttpStatus.NOT_FOUND, "GOAL-001", "존재하지 않는 목표입니다."),
+    GOAL_EXPIRED(HttpStatus.BAD_REQUEST, "GOAL-002", "목표 학습 기간이 종료되었습니다."),
     ;
 
     private final HttpStatus status;

@@ -21,6 +21,9 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @UseCase
@@ -45,9 +48,9 @@ public class UserQuizUseCase {
         boolean isCorrect = quiz.getAnswer().trim().equalsIgnoreCase(request.userAnswer().trim());
 
         // 오늘 날짜 범위 계산
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.time.LocalDateTime startOfDay = today.atStartOfDay();
-        java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
         // 오늘 이미 푼 기록이 있는지 확인 (Date-based Upsert)
         userQuizService.getQuizByDate(user, quiz, startOfDay, endOfDay)
@@ -141,5 +144,13 @@ public class UserQuizUseCase {
             Long quizId) {
         Quiz quiz = quizService.getQuizById(quizId);
         return quizMapper.toQuestionResponse(quiz);
+    }
+
+    public boolean hasSolvedAnyQuizToday(Long userId) {
+        return userQuizService.hasSolvedAnyQuizToday(userId);
+    }
+
+    public boolean hasSolvedAnyQuizEver(Long userId) {
+        return userQuizService.hasSolvedAnyQuizEver(userId);
     }
 }

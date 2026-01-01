@@ -27,6 +27,7 @@ public enum CommonResponseCode implements BaseResponseCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON-006", "요청 메소드를 지원하지 않습니다."),
 
     // 500 Internal Server Error
+    // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-007", "서버 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
     ;
 

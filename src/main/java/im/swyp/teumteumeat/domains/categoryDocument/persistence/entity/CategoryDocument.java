@@ -1,8 +1,8 @@
 package im.swyp.teumteumeat.domains.categoryDocument.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
-import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

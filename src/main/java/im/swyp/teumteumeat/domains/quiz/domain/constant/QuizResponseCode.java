@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum QuizResponseCode implements BaseResponseCode {
     NOT_FOUND_QUIZ(HttpStatus.NOT_FOUND, "QUIZ-001", "존재하지 않는 퀴즈입니다."),
+    TODAY_QUOTA_EXCEEDED(HttpStatus.BAD_REQUEST, "QUIZ-002", "오늘의 학습량을 모두 달성했습니다."),
     ;
 
     private final HttpStatus status;

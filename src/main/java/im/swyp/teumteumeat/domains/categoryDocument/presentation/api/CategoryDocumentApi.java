@@ -17,9 +17,15 @@ import java.util.List;
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-        @Operation(summary = "유저 맞춤 카테고리 자료(요약글) 목록 조회")
+        @Operation(summary = "오늘의 카테고리 요약글 생성 및 조회", description = "오늘 학습할 카테고리 요약글을 생성하거나 조회합니다. (1일 1회 제한)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 및 조회 성공"))
+        ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "일일 카테고리 자료 상세 조회", description = "오늘 부여된 카테고리 자료를 조회합니다. (퀴즈 풀이 전용)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "조회 성공"))
-        ResponseEntity<ApiResponse<List<CategoryDocumentResponse>>> getDocuments(
+        ResponseEntity<ApiResponse<CategoryDocumentResponse>> getDailyDocument(
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 

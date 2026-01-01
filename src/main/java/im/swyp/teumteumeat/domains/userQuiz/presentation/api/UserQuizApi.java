@@ -23,7 +23,7 @@ import java.util.List;
 @Tag(name = "UserQuiz", description = "유저 퀴즈 API")
 public interface UserQuizApi {
 
-        @Operation(summary = "퀴즈 풀기 제출")
+        @Operation(summary = "퀴즈 풀이 결과 제출", description = "사용자가 푼 퀴즈의 정답 여부를 제출하고 결과를 저장합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizSubmissionResponse.class, description = "제출 성공"))
         ResponseEntity<ApiResponse<QuizSubmissionResponse>> submitQuiz(
                         @RequestBody @Valid QuizSubmissionRequest request,
