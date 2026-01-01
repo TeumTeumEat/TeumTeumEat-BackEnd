@@ -33,7 +33,8 @@ public class DocumentSummaryService {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
         String summary = llmService.generateContent(prompt);
-        document.updateSummary(summary);
+        //todo 임시로 500자 이내로 잘라 넣음 (Data too long 문제)
+        document.updateSummary(summary.substring(0, Math.min(summary.length(), 500)));
 
         // 제목 생성
         String userGoal = document.getGoal().getPrompt();
