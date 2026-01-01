@@ -63,15 +63,7 @@ public class UserService {
 
     @Transactional
     public boolean updateAndGetOnboardingCompleted(UserEntity user) {
-        boolean onboardingCompleted =
-                user.isOnboardingCompleted() ||
-                        user.getName() != null &&
-                                user.getCommuteInfo() != null &&
-                                !user.getGoals().isEmpty();
-
-        user.changeOnboardingCompleted(onboardingCompleted);
-
-        return onboardingCompleted;
+        return user.updateAndGetOnboardingCompleted();
     }
 
     /* HELPER METHOD */

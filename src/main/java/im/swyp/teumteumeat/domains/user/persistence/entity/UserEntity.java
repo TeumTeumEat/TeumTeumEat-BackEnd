@@ -84,8 +84,14 @@ public class UserEntity extends BaseEntity {
         }
     }
 
-    public void changeOnboardingCompleted(boolean onboardingCompleted) {
+    public boolean updateAndGetOnboardingCompleted() {
+        boolean onboardingCompleted = isOnboardingCompleted() ||
+                                        name != null &&
+                                        commuteInfo != null &&
+                                        !goals.isEmpty();
         this.onboardingCompleted = onboardingCompleted;
+
+        return onboardingCompleted;
     }
 
     public void updateSettings(UserSettingsRequest request) {
