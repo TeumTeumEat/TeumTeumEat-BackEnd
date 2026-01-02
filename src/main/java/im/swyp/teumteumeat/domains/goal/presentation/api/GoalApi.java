@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListRespons
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,10 +43,11 @@ public interface GoalApi {
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
+                    responseClass = CreatedResponse.class,
                     description = "생성 성공"
             )
     )
-    ResponseEntity<ApiResponse<Void>> createGoal(
+    ResponseEntity<ApiResponse<CreatedResponse>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
     );

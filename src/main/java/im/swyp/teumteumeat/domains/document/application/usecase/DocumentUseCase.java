@@ -47,13 +47,14 @@ public class DocumentUseCase {
     private final UserQuizService userQuizService;
 
     @Transactional
-    public DocumentIdResponse uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
+    public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
         Goal goal = goalService.getGoalById(goalId);
 
-        Document document;
         // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
         Optional<Document> existDocument = documentService.getDocumnetByFileKeyOptional(request.fileKey());
+
+        Document document;
         if (existDocument.isPresent()) {
             document = existDocument.get();
             document.updateUser(user);
@@ -65,9 +66,7 @@ public class DocumentUseCase {
             documentService.createDocument(document);
         }
 
-        return DocumentIdResponse.builder()
-                .documentId(document.getId())
-                .build();
+        return document.getId();
     }
 
     // fileKey로 문서 parts 설정
@@ -90,7 +89,7 @@ public class DocumentUseCase {
             document.updateStatus(FileStatus.COMPLETED);
 
             // 퀴즈 생성
-            // quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
@@ -101,7 +100,8 @@ public class DocumentUseCase {
         DocumentPart documentPart = DocumentPartMapper.toDocumentPart(
                 document,
                 request.partIndex(),
-                request.ocrText());
+                request.ocrText()
+        );
         documentService.createDocumentPart(documentPart);
 
         if (document.isAllPartsCollected()) {
@@ -117,7 +117,7 @@ public class DocumentUseCase {
             documentSummaryService.generateSummary(document.getId());
 
             // 퀴즈 생성
-            // quizUseCase.createQuizzesForPdfDocument(document);
+            //quizUseCase.createQuizzesForPdfDocument(document);
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();

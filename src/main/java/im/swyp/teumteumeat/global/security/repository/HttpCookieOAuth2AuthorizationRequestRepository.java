@@ -1,7 +1,7 @@
 package im.swyp.teumteumeat.global.security.repository;
 
 import com.nimbusds.oauth2.sdk.util.StringUtils;
-import im.swyp.teumteumeat.global.common.util.CookieUtils;
+import im.swyp.teumteumeat.global.utils.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
