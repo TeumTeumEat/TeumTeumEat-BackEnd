@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentRes
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface DocumentApi {
 
         @Operation(summary = "문서 등록", description = "해당 목표에 문서를 등록합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "등록 성공"))
-        ResponseEntity<ApiResponse<Void>> uploadDocument(
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CreatedResponse.class, description = "등록 성공"))
+        ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
                         @PathVariable Long goalId,
                         @RequestBody @Valid DocumentCreateRequest request,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);

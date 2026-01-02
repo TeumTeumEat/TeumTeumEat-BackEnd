@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
 import im.swyp.teumteumeat.domains.document.presentation.api.DocumentApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +25,12 @@ public class DocumentController implements DocumentApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> uploadDocument(
+    public ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
             @PathVariable Long goalId,
             @RequestBody @Valid DocumentCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user) {
-        documentUseCase.uploadDocument(user.getUserId(), goalId, request);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        Long savedId = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
     }
 
     @Override
