@@ -40,36 +40,13 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
-        // 0. Goal 및 일일 퀴즈 풀이 여부 확인
-        Goal goal = goalService.findLatestGoal(userId, categoryId);
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
+        Goal goal = getValidGoal(userId, categoryId);
 
         if (userQuizService.hasSolvedQuizToday(userId, categoryId)) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        // 1. 유저가 이미 학습(퀴즈 풀이)한 문서 ID 목록 조회
-        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
-
-        // 유저가 해당 카테고리에서 본 적 없는 카테고리 자료들을 조회
-        List<CategoryDocument> unconsumedDocuments = documents.stream()
-                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
-                .toList();
-
-        CategoryDocument targetDocument;
-
-        // 유저가 해당 카테고리에서 카테고리 자료를 모두 소비했을 때 (또는 없을 때)
-        if (unconsumedDocuments.isEmpty()) {
-            // 카테고리 자료 생성
-            targetDocument = createDocumentInternal(goal);
-        } else {
-            // 안 본 것 중 하나 선택 (첫 번째)
-            targetDocument = unconsumedDocuments.get(0);
-        }
-
+        CategoryDocument targetDocument = getNextDocumentOrCreate(goal, userId);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
@@ -77,33 +54,23 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
-        Goal goal = goalService.findLatestGoal(userId, categoryId);
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
+        Goal goal = getValidGoal(userId, categoryId);
 
         boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
+        CategoryDocument targetDocument = getNextDocument(goal, userId);
 
-        // 1. 안 푼 문서가 있는지 확인
-        CategoryDocument targetDocument = documents.stream()
-                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
-                .findFirst()
-                .orElse(null);
-
-        // 2. 안 푼 문서가 없다면? (Smart GET)
         if (targetDocument == null) {
-            // 오늘 푼 적이 없고, 아직 안 푼 문서도 없다면 -> 새로 생성해야 함
+            // 아직 오늘의 요약글이 없고, 오늘 퀴즈도 푼 적 없다면 -> 새로 생성
             if (!hasSolvedToday) {
-                targetDocument = createDocumentInternal(goal);
+                targetDocument = createNewDailyDocument(goal);
             } else {
-                // 오늘 이미 풀었는데 더 이상 안 푼 문서가 없다 -> 예외 처리 or 마지막 문서 반환?
-                // 보통 '오늘 퀴즈 다 풀었습니다' 에러가 맞지만, 여기서는 조회이므로 404가 나을 수도 있음.
-                // 하지만 기존 로직(NOT_FOUND) 유지
-                throw new BaseException(CommonResponseCode.NOT_FOUND);
+                // 이미 오늘 문제를 풀었으면, 오늘 생성된 문서를 반환 (단순 조회용)
+                targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                        .findFirst()
+                        .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
             }
         }
 
@@ -112,22 +79,21 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
-        Goal goal = goalService.findLatestGoal(userId, categoryId);
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+        Goal goal = getValidGoal(userId, categoryId);
 
+        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
         boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        // 오늘 생성된 자료가 없고, 오늘 퀴즈도 안 풀었다면 -> 생성 (Smart GET)
-        // 리스트의 마지막 요소가 최신이라고 가정 (ID순)
         boolean hasTodayDocument = !documents.isEmpty() &&
                 documents.get(documents.size() - 1).getCreatedDate().toLocalDate().isEqual(LocalDate.now());
 
+        // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
         if (!hasSolvedToday && !hasTodayDocument) {
-            // 새 문서 생성
-            CategoryDocument newDoc = createDocumentInternal(goal);
-            // 리스트 다시 조회 (추가된 것 포함)
-            documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+            if (!categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                createDocumentInternal(goal);
+                documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+            }
         }
 
         return documents.stream()
@@ -137,8 +103,44 @@ public class CategoryDocumentUseCase {
 
     @Transactional
     public void createDocument(Long categoryId, Long userId) {
-        Goal goal = goalService.findLatestGoal(userId, categoryId);
+        Goal goal = getValidGoal(userId, categoryId);
         createDocumentInternal(goal);
+    }
+
+    private Goal getValidGoal(Long userId, Long categoryId) {
+        Goal goal = userService.getUserById(userId).getCurrentGoal();
+        if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+        return goal;
+    }
+
+    private CategoryDocument getNextDocumentOrCreate(Goal goal, Long userId) {
+        CategoryDocument targetDocument = getNextDocument(goal, userId);
+        if (targetDocument == null) {
+            targetDocument = createNewDailyDocument(goal);
+        }
+        return targetDocument;
+    }
+
+    private CategoryDocument getNextDocument(Goal goal, Long userId) {
+        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
+
+        return documents.stream()
+                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private CategoryDocument createNewDailyDocument(Goal goal) {
+        if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
+        }
+        return createDocumentInternal(goal);
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {

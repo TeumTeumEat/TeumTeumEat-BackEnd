@@ -29,7 +29,7 @@ public interface CategoryDocumentApi {
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "유저 맞춤 카테고리 자료(요약글) 생성", description = "유저의 Goal 프롬프트에 기반하여 자료를 생성합니다.")
+        @Operation(summary = "유저 맞춤 카테고리 자료(요약글) 생성", description = "관리자용(ADMIN), 유저의 Goal 프롬프트에 기반하여 자료를 생성합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createDocument(
                         @PathVariable Long categoryId,
