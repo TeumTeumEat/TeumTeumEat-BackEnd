@@ -65,9 +65,30 @@ services:
     volumes:
       - redis-data:/data
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prom_data:/prometheus
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+#    user: "$UID:$GID"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - backend
+
 volumes:
   redis-data:
-    driver: local
+  grafana-data:
+  prom_data:
 
 networks:
   backend:
