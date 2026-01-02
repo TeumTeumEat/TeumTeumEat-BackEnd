@@ -9,6 +9,8 @@ import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserUseCase {
 
     private final UserService userService;
+    private final GoalService goalService;
 
     public NameResponse getName(Long userId) {
         UserEntity user = userService.getUserById(userId);
@@ -85,5 +88,13 @@ public class UserUseCase {
                 .socialProvider(socialProvider)
                 .email(email)
                 .build();
+    }
+
+    @Transactional
+    public void updateCurrentGoal(Long userId, Long goalId) {
+        UserEntity user = userService.getUserById(userId);
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+        user.updateCurrentGoal(goal);
     }
 }
