@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.document.presentation.controller;
 
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
+import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentIdResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
@@ -24,12 +25,12 @@ public class DocumentController implements DocumentApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> uploadDocument(
+    public ResponseEntity<ApiResponse<DocumentIdResponse>> uploadDocument(
             @PathVariable Long goalId,
             @RequestBody @Valid DocumentCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user) {
-        documentUseCase.uploadDocument(user.getUserId(), goalId, request);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        DocumentIdResponse response = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override

@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.document.application.usecase;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
+import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentIdResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
@@ -46,22 +47,27 @@ public class DocumentUseCase {
     private final UserQuizService userQuizService;
 
     @Transactional
-    public void uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
+    public DocumentIdResponse uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
         Goal goal = goalService.getGoalById(goalId);
 
+        Document document;
         // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
         Optional<Document> existDocument = documentService.getDocumnetByFileKeyOptional(request.fileKey());
         if (existDocument.isPresent()) {
-            Document document = existDocument.get();
+            document = existDocument.get();
             document.updateUser(user);
             document.updateGoal(goal);
         }
         // 아직 생성이 안된 경우 문서 생성
         else {
-            Document document = DocumentMapper.toDocument(user, goal, request);
+            document = DocumentMapper.toDocument(user, goal, request);
             documentService.createDocument(document);
         }
+
+        return DocumentIdResponse.builder()
+                .documentId(document.getId())
+                .build();
     }
 
     // fileKey로 문서 parts 설정
