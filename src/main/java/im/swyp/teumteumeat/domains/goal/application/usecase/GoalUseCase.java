@@ -38,7 +38,7 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void createGoal(Long userId, GoalCreateRequest request) {
+    public Long createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
 
         Category category = null;
@@ -46,7 +46,7 @@ public class GoalUseCase {
             category = categoryService.getCategoryById(request.categoryId());
         }
         Goal goal = GoalMapper.toGoal(user, request, category, LocalDate.now());
-        goalService.createGoal(goal);
+        Long goalId = goalService.createGoal(goal);
 
         // 문서 등록 요청한 경우
         String fileKey = request.fileKey();
@@ -59,6 +59,8 @@ public class GoalUseCase {
             document.updateUser(user);
             document.updateGoal(goal);
         }
+
+        return goalId;
     }
 
     @Transactional

@@ -28,8 +28,8 @@ public class GoalService {
         return goalRepository.findAllByUserId(user.getId());
     }
 
-    public void createGoal(Goal goal) {
-        goalRepository.save(goal);
+    public Long createGoal(Goal goal) {
+        return goalRepository.save(goal).getId();
     }
 
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
