@@ -4,6 +4,8 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoReque
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.*;
+import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
+import im.swyp.teumteumeat.domains.goal.application.mapper.GoalMapper;
 import im.swyp.teumteumeat.domains.user.application.mapper.CommuteInfoMapper;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -96,5 +98,16 @@ public class UserUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
         user.updateCurrentGoal(goal);
+    }
+
+    public GoalResponse getCurrentGoal(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        Goal currentGoal = user.getCurrentGoal();
+
+        if (currentGoal == null) {
+            return null;
+        }
+
+        return GoalMapper.fromGoal(currentGoal);
     }
 }

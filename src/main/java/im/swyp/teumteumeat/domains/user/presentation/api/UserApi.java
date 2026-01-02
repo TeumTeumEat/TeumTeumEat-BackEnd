@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoReque
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.*;
+import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -74,5 +75,10 @@ public interface UserApi {
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "수정 성공"))
         ResponseEntity<ApiResponse<Void>> updateCurrentGoal(
                         @RequestParam Long goalId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "현재 목표 조회", description = "유저의 현재 진행 중인 목표를 조회합니다. (없을 경우 data: null)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = GoalResponse.class, description = "조회 성공"))
+        ResponseEntity<ApiResponse<GoalResponse>> getCurrentGoal(
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 }

@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoReque
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.*;
+import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.domains.user.presentation.api.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -113,5 +114,13 @@ public class UserController implements UserApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         userUseCase.updateCurrentGoal(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @GetMapping("/goal")
+    public ResponseEntity<ApiResponse<GoalResponse>> getCurrentGoal(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        GoalResponse response = userUseCase.getCurrentGoal(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 }
