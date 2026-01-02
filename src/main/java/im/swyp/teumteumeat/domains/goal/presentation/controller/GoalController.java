@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.goal.application.usecase.GoalUseCase;
 import im.swyp.teumteumeat.domains.goal.presentation.api.GoalApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -32,12 +33,12 @@ public class GoalController implements GoalApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createGoal(
+    public ResponseEntity<ApiResponse<CreatedResponse>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        goalUseCase.createGoal(user.getUserId(), request);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        Long savedId = goalUseCase.createGoal(user.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
     }
 
     @Override
