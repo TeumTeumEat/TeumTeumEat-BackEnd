@@ -28,8 +28,7 @@ public class DocumentMapper {
 
     public static Document toTempDocument(
             String fileKey,
-            String fileName
-    ) {
+            String fileName) {
         return Document.builder()
                 .fileKey(fileKey)
                 .fileName(fileName)
@@ -60,6 +59,7 @@ public class DocumentMapper {
                 .status(document.getStatus())
                 .hasSolvedToday(hasSolvedToday)
                 .isFirstTime(isFirstTime)
+                .updatedAt(document.getUpdatedAt())
                 .build();
     }
 }

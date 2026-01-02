@@ -84,7 +84,7 @@ public class DocumentUseCase {
             document.updateStatus(FileStatus.COMPLETED);
 
             // 퀴즈 생성
-            //quizUseCase.createQuizzesForPdfDocument(document);
+            // quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
@@ -95,8 +95,7 @@ public class DocumentUseCase {
         DocumentPart documentPart = DocumentPartMapper.toDocumentPart(
                 document,
                 request.partIndex(),
-                request.ocrText()
-        );
+                request.ocrText());
         documentService.createDocumentPart(documentPart);
 
         if (document.isAllPartsCollected()) {
@@ -112,7 +111,7 @@ public class DocumentUseCase {
             documentSummaryService.generateSummary(document.getId());
 
             // 퀴즈 생성
-            //quizUseCase.createQuizzesForPdfDocument(document);
+            // quizUseCase.createQuizzesForPdfDocument(document);
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
@@ -141,7 +140,7 @@ public class DocumentUseCase {
     }
 
     // 문서 요약 및 상세 조회 (단순 조회 - 퀴즈 풀기 전)
-    @Transactional(readOnly = true)
+    @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
@@ -156,6 +155,14 @@ public class DocumentUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+
+        // 오늘 퀴즈를 풀지 않았는데, 문서가 오늘 업데이트된 것이 아니라면 -> 요약글 재생성 (Smart GET)
+        boolean isUpdatedToday = document.getUpdatedAt().toLocalDate().isEqual(LocalDate.now());
+
+        if (!hasSolvedToday && !isUpdatedToday) {
+            documentSummaryService.generateSummary(document.getId());
+            quizUseCase.createQuizzesForPdfDocument(document);
+        }
 
         return DocumentMapper.toDocumentDetailResponse(document, hasSolvedToday, isFirstTime);
     }
