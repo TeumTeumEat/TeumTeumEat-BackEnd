@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/goals/{goalId}/documents")
+@RequestMapping("/api/v1/goals")
 public class DocumentSummaryController implements DocumentSummaryApi {
 
     private final DocumentSummaryUseCase documentSummaryUseCase;
 
     @Override
-    @PostMapping("/{documentId}/summary")
+    @PostMapping("/{goalId}/documents/{documentId}/summary")
     public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
@@ -29,7 +29,7 @@ public class DocumentSummaryController implements DocumentSummaryApi {
     }
 
     @Override
-    @GetMapping("/{documentId}/summary")
+    @GetMapping("/{goalId}/documents/{documentId}/summary")
     public ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
