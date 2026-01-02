@@ -3,7 +3,6 @@ package im.swyp.teumteumeat.domains.document.application.usecase;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
-import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentIdResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
@@ -13,7 +12,6 @@ import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
-import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -22,11 +20,6 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
-import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
-
-import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -81,7 +74,7 @@ public class DocumentUseCase {
             document.updateRawContent(request.rawContent());
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+            documentSummaryService.generateSummary(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
         }
     }
@@ -106,7 +99,9 @@ public class DocumentUseCase {
             document.updateRawContent(combinedText);
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document);
+
+            // Summary (요약) - Async Event Trigger
+            documentSummaryService.generateSummary(document.getId());
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();

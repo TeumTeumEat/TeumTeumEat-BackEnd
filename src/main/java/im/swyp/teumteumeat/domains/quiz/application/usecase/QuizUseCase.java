@@ -217,6 +217,14 @@ public class QuizUseCase {
     }
 
     @Transactional
+    public void ensureQuizzesExist(Document document, DocumentSummary summary) {
+        List<Quiz> existingQuizzes = quizService.getQuizzesByDocumentSummaryId(summary.getId());
+        if (existingQuizzes.isEmpty()) {
+            createQuizzesForPdfDocument(document, summary);
+        }
+    }
+
+    @Transactional
     public void deleteQuiz(Long quizId) {
         quizService.deleteQuiz(quizId);
     }

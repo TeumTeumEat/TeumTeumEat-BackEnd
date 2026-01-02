@@ -57,10 +57,18 @@ public class DocumentSummaryUseCase {
 
         DocumentSummary summary;
         if (!hasSolvedToday && !isCreatedToday) {
-            summary = documentSummaryService.generateSummary(document);
-            quizUseCase.createQuizzesForPdfDocument(document, summary);
+            // Async generation trigger (Fire and Forget)
+            documentSummaryService.generateSummary(document.getId());
+            summary = null; // 아직 생성 안됨
         } else {
-            summary = latestSummaryOpt.orElseGet(() -> documentSummaryService.generateSummary(document));
+            summary = latestSummaryOpt.orElse(null);
+            // 요약이 존재하면 퀴즈 존재 여부 확인 후 생성 (Lazy Generation)
+            if (summary != null) {
+                quizUseCase.ensureQuizzesExist(document, summary);
+            } else {
+                // 요약이 없으면 생성 요청 (Async)
+                documentSummaryService.generateSummary(document.getId());
+            }
         }
 
         return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
@@ -86,8 +94,13 @@ public class DocumentSummaryUseCase {
         document.validateOwner(userId);
 
         // 3. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성
-        DocumentSummary summary = documentSummaryService.generateSummary(document);
-        quizUseCase.createQuizzesForPdfDocument(document, summary);
+        // 3. 학습하지 않았을 시 새로운 요약글 생성 요청 (Async)
+        // 기존: 동기 생성 -> 비동기 변경됨
+        documentSummaryService.generateSummary(document.getId());
+        DocumentSummary summary = null; // 비동기라 바로 알 수 없음
+
+        // 퀴즈 생성은 getSummaryForView 시점에 Lazy하게 처리됨
+        // quizUseCase.createQuizzesForPdfDocument(document, summary);
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
