@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDet
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 
@@ -49,13 +50,15 @@ public class DocumentMapper {
         return DocumentListResponse.toDocumentListResponse(documents);
     }
 
-    public static DocumentDetailResponse toDocumentDetailResponse(Document document, boolean hasSolvedToday,
+    public static DocumentDetailResponse toDocumentDetailResponse(Document document, DocumentSummary documentSummary,
+            boolean hasSolvedToday,
             boolean isFirstTime) {
+        String summaryContent = (documentSummary != null) ? documentSummary.getSummary() : null;
         return DocumentDetailResponse.builder()
                 .documentId(document.getId())
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
-                .summary(document.getSummary())
+                .summary(summaryContent)
                 .status(document.getStatus())
                 .hasSolvedToday(hasSolvedToday)
                 .isFirstTime(isFirstTime)

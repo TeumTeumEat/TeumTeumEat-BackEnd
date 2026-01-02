@@ -75,13 +75,18 @@ public class HistoryLibraryUseCase {
 
             if (quiz.getDocument() != null) {
                 Document doc = quiz.getDocument();
+                String title = (quiz.getDocumentSummary() != null && quiz.getDocumentSummary().getTitle() != null)
+                        ? quiz.getDocumentSummary().getTitle()
+                        : doc.getFileName();
+                String summary = (quiz.getDocumentSummary() != null) ? quiz.getDocumentSummary().getSummary() : null;
+
                 key = "DOC_" + doc.getId();
                 if (!processedKeys.contains(key)) {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.DOCUMENT)
-                            .title(doc.getTitle() != null ? doc.getTitle() : doc.getFileName()) // PDF 파일명 또는 요약 제목
-                            .summarySnippet(getSnippet(doc.getSummary()))
+                            .title(title) // PDF 파일명 또는 요약 제목
+                            .summarySnippet(getSnippet(summary))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -135,12 +140,17 @@ public class HistoryLibraryUseCase {
                 categoryName = doc.getFileName(); // PDF는 카테고리 미정, 파일명으로 대체
                 uniqueKey = "DOC_" + doc.getId();
 
+                String title = (quiz.getDocumentSummary() != null && quiz.getDocumentSummary().getTitle() != null)
+                        ? quiz.getDocumentSummary().getTitle()
+                        : doc.getFileName();
+                String summary = (quiz.getDocumentSummary() != null) ? quiz.getDocumentSummary().getSummary() : null;
+
                 if (!processedKeys.contains(uniqueKey)) {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.DOCUMENT)
-                            .title(doc.getTitle() != null ? doc.getTitle() : doc.getFileName())
-                            .summarySnippet(getSnippet(doc.getSummary()))
+                            .title(title)
+                            .summarySnippet(getSnippet(summary))
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -204,9 +214,10 @@ public class HistoryLibraryUseCase {
         Quiz quiz = targetQuiz.getQuiz();
 
         if (type == GoalType.DOCUMENT) {
-            title = quiz.getDocument().getTitle() != null ? quiz.getDocument().getTitle()
+            title = (quiz.getDocumentSummary() != null && quiz.getDocumentSummary().getTitle() != null)
+                    ? quiz.getDocumentSummary().getTitle()
                     : quiz.getDocument().getFileName();
-            summary = quiz.getDocument().getSummary();
+            summary = (quiz.getDocumentSummary() != null) ? quiz.getDocumentSummary().getSummary() : null;
         } else {
             title = quiz.getCategoryDocument().getTitle() != null ? quiz.getCategoryDocument().getTitle()
                     : quiz.getCategoryDocument().getCategory().getName();

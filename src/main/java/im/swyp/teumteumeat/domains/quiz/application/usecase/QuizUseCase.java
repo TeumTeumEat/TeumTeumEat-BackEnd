@@ -5,6 +5,8 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
+import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
@@ -47,6 +49,7 @@ public class QuizUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final UserQuizService userQuizService;
+    private final DocumentSummaryRepository documentSummaryRepository;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -150,7 +153,7 @@ public class QuizUseCase {
 
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
-    public void createQuizzesForPdfDocument(Document document) {
+    public void createQuizzesForPdfDocument(Document document, DocumentSummary documentSummary) {
         // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
         int questionCount = calculateQuestionCount(document.getUser().getId());
 
@@ -179,6 +182,7 @@ public class QuizUseCase {
         response.quizzes().forEach(quizDto -> {
             quizService.createQuizFromPdfDocument(
                     document,
+                    documentSummary,
                     quizDto.question(),
                     convertOptionsToJson(quizDto.options()),
                     quizDto.answer(),
@@ -205,7 +209,11 @@ public class QuizUseCase {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        createQuizzesForPdfDocument(document);
+        // 최신 DocumentSummary 조회
+        DocumentSummary summary = documentSummaryRepository.findLatestByDocumentId(documentId)
+                .orElseThrow(() -> new BaseException(QuizResponseCode.NOT_FOUND_QUIZ)); // or appropriate error
+
+        createQuizzesForPdfDocument(document, summary);
     }
 
     @Transactional
