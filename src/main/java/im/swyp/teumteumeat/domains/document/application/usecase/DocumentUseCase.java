@@ -74,7 +74,7 @@ public class DocumentUseCase {
             document.updateRawContent(request.rawContent());
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document.getId());
+            documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
         }
     }
@@ -98,10 +98,8 @@ public class DocumentUseCase {
                     .collect(Collectors.joining(" "));
             document.updateRawContent(combinedText);
 
-            // Summary (요약)
-
-            // Summary (요약) - Async Event Trigger
-            documentSummaryService.generateSummary(document.getId());
+            // Summary (요약) - 비동기
+            documentSummaryService.generateSummaryAsync(document.getId());
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();

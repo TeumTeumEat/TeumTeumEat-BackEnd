@@ -26,15 +26,12 @@ public class DocumentSummaryService {
     private final ApplicationEventPublisher eventPublisher;
     private final DocumentSummaryRepository documentSummaryRepository;
 
-    public void generateSummary(Long documentId) {
+    public void generateSummaryAsync(Long documentId) {
         eventPublisher.publishEvent(new DocumentSummaryEvent(documentId));
     }
 
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void processSummary(DocumentSummaryEvent event) {
-        Document document = documentService.getDocumentById(event.documentId());
+    @Transactional
+    public DocumentSummary generateSummary(Document document) {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
         String summaryContent = llmService.generateContent(prompt);
@@ -49,12 +46,20 @@ public class DocumentSummaryService {
         String generatedTitle = llmService.generateTitle(summaryContent, topicInstruction);
         document.updateTitle(generatedTitle);
 
-        // DocumentSummary 저장 (변경된 로직: 별도 엔티티로 저장)
+        // DocumentSummary 저장
         DocumentSummary documentSummary = DocumentSummary.builder()
                 .document(document)
                 .summary(summaryContent)
                 .title(generatedTitle)
                 .build();
-        documentSummaryRepository.save(documentSummary);
+        return documentSummaryRepository.save(documentSummary);
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void processSummary(DocumentSummaryEvent event) {
+        Document document = documentService.getDocumentById(event.documentId());
+        generateSummary(document);
     }
 }
