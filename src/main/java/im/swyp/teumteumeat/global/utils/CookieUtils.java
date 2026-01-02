@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.common.util;
+package im.swyp.teumteumeat.global.utils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
