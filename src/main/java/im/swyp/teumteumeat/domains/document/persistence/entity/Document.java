@@ -55,8 +55,8 @@ public class Document extends BaseEntity {
     @Lob
     private String rawContent;
 
-    @Column(length = 500)
-    private String summary;
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentSummary> summaries = new ArrayList<>();
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Quiz> quizzes = new ArrayList<>();
@@ -69,7 +69,6 @@ public class Document extends BaseEntity {
             String fileKey,
             String title,
             String rawContent,
-            String summary,
             FileStatus status) {
         this.user = user;
         this.goal = goal;
@@ -77,7 +76,6 @@ public class Document extends BaseEntity {
         this.fileKey = fileKey;
         this.title = title;
         this.rawContent = rawContent;
-        this.summary = summary;
         this.status = status;
     }
 
@@ -101,10 +99,6 @@ public class Document extends BaseEntity {
 
     public void updateRawContent(String rawContent) {
         this.rawContent = rawContent;
-    }
-
-    public void updateSummary(String summary) {
-        this.summary = summary;
     }
 
     public void updateTitle(String title) {

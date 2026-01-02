@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListRespons
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.goal.domain.util.DateParser;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 
 import java.time.LocalDate;
@@ -18,8 +19,7 @@ public class GoalMapper {
             UserEntity user,
             GoalCreateRequest request,
             Category category,
-            LocalDate startDate
-    ) {
+            LocalDate startDate) {
         LocalDate endDate = DateParser.calculateEndDate(startDate, request.studyPeriod());
 
         return Goal.builder()
@@ -37,6 +37,11 @@ public class GoalMapper {
         LocalDate endDate = goal.getEndDate();
         String studyPeriod = ChronoUnit.WEEKS.between(startDate, endDate) + "주";
 
+        String fileName = null;
+        if (goal.getType() == GoalType.DOCUMENT && !goal.getDocuments().isEmpty()) {
+            fileName = goal.getDocuments().get(0).getFileName();
+        }
+
         return GoalResponse.builder()
                 .goalId(goal.getId())
                 .type(goal.getType())
@@ -45,6 +50,7 @@ public class GoalMapper {
                 .studyPeriod(studyPeriod)
                 .difficulty(goal.getDifficulty())
                 .prompt(goal.getPrompt())
+                .fileName(fileName)
                 .category(goal.getCategory() != null
                         ? CategoryMapper.fromCategory(goal.getCategory())
                         : null)

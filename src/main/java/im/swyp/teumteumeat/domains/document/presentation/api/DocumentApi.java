@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.document.presentation.api;
 
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
-import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
@@ -21,8 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Document(PDF)", description = "문서 API")
 public interface DocumentApi {
 
-        @Operation(summary = "문서 등록", description = "해당 목표에 문서를 등록합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CreatedResponse.class, description = "등록 성공"))
+        @Operation(summary = "문서 등록", description = "해당 목표에 문서를 등록합니다. (반환된 documentId를 통해 요약/퀴즈 조회를 진행)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "등록 성공"))
         ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
                         @PathVariable Long goalId,
                         @RequestBody @Valid DocumentCreateRequest request,
@@ -37,20 +36,6 @@ public interface DocumentApi {
         @Operation(summary = "문서 단건 조회", description = "특정 문서를 조회합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<DocumentResponse>> getDocument(
-                        @PathVariable Long goalId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
-
-        @Operation(summary = "문서 요약 생성 (학습 시작)", description = "문서의 요약본을 생성합니다. 이 시점부터 학습이 시작된 것으로 간주됩니다. (일일 제한 적용)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 성공"))
-        ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
-                        @PathVariable Long goalId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
-
-        @Operation(summary = "문서 요약 재조회 (단순 조회)", description = "학습 중인 문서의 요약본을 다시 조회합니다. (퀴즈 풀이 전용)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
-        ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);

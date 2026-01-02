@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.persistence.entity;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
@@ -48,15 +49,21 @@ public class Quiz extends BaseEntity {
     private CategoryDocument categoryDocument;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_summary_id")
+    private DocumentSummary documentSummary;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id")
     private Document document;
 
     @Builder
-    public Quiz(CategoryDocument categoryDocument, Document document, String content, String options, String answer,
+    public Quiz(CategoryDocument categoryDocument, Document document, DocumentSummary documentSummary, String content,
+            String options, String answer,
             String description,
             QuizType quizType, String topic, Difficulty difficulty) {
         this.categoryDocument = categoryDocument;
         this.document = document;
+        this.documentSummary = documentSummary;
         this.content = content;
         this.options = options;
         this.answer = answer;

@@ -14,20 +14,12 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
-import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
-import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
-import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
-
-import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -42,8 +34,6 @@ public class DocumentUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final DocumentSummaryService documentSummaryService;
-    private final QuizUseCase quizUseCase;
-    private final UserQuizService userQuizService;
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -84,11 +74,8 @@ public class DocumentUseCase {
             document.updateRawContent(request.rawContent());
 
             // Summary (요약)
-            documentSummaryService.generateSummary(document.getId());
+            documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
-
-            // 퀴즈 생성
-            //quizUseCase.createQuizzesForPdfDocument(document);
         }
     }
 
@@ -99,8 +86,7 @@ public class DocumentUseCase {
         DocumentPart documentPart = DocumentPartMapper.toDocumentPart(
                 document,
                 request.partIndex(),
-                request.ocrText()
-        );
+                request.ocrText());
         documentService.createDocumentPart(documentPart);
 
         if (document.isAllPartsCollected()) {
@@ -112,11 +98,8 @@ public class DocumentUseCase {
                     .collect(Collectors.joining(" "));
             document.updateRawContent(combinedText);
 
-            // Summary (요약)
-            documentSummaryService.generateSummary(document.getId());
-
-            // 퀴즈 생성
-            //quizUseCase.createQuizzesForPdfDocument(document);
+            // Summary (요약) - 비동기
+            documentSummaryService.generateSummaryAsync(document.getId());
 
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
@@ -142,54 +125,6 @@ public class DocumentUseCase {
         document.validateOwner(userId);
 
         return DocumentMapper.fromDocument(document);
-    }
-
-    // 문서 요약 및 상세 조회 (단순 조회 - 퀴즈 풀기 전)
-    @Transactional(readOnly = true)
-    public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
-        Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
-        // 1. Goal 만료 확인
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
-        boolean hasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-
-        return DocumentMapper.toDocumentDetailResponse(document, hasSolvedToday, isFirstTime);
-    }
-
-    // 문서 요약 및 상세 조회 (학습 시 사용 되는 메서드)
-    @Transactional
-    public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
-        Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
-        // 1. Goal 만료 확인
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
-        // 2. 요약글 생성 1회 제한 확인 (오늘 이미 학습했는지)
-        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-
-        // 3. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성
-        documentSummaryService.generateSummary(document.getId());
-        quizUseCase.createQuizzesForPdfDocument(document);
-
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-
-        return DocumentMapper.toDocumentDetailResponse(document, false, isFirstTime);
     }
 
     // 해당 목표의 모든 문서 삭제

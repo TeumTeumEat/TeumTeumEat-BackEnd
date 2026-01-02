@@ -63,6 +63,10 @@ public class UserEntity extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_goal_id")
+    private Goal currentGoal;
+
     private boolean onboardingCompleted;
 
     private boolean pushEnabled;
@@ -91,9 +95,9 @@ public class UserEntity extends BaseEntity {
 
     public boolean updateAndGetOnboardingCompleted() {
         boolean onboardingCompleted = isOnboardingCompleted() ||
-                                        name != null &&
-                                        commuteInfo != null &&
-                                        !goals.isEmpty();
+                name != null &&
+                        commuteInfo != null &&
+                        !goals.isEmpty();
         this.onboardingCompleted = onboardingCompleted;
 
         return onboardingCompleted;
@@ -107,5 +111,9 @@ public class UserEntity extends BaseEntity {
 
     public void updateSocialRefreshToken(String socialRefreshToken) {
         this.socialRefreshToken = socialRefreshToken;
+    }
+
+    public void updateCurrentGoal(Goal goal) {
+        this.currentGoal = goal;
     }
 }

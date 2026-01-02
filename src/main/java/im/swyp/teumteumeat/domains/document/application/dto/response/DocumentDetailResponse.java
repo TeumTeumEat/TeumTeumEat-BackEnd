@@ -4,6 +4,8 @@ import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+
 @Builder
 public record DocumentDetailResponse(
 
@@ -19,5 +21,7 @@ public record DocumentDetailResponse(
 
                 @Schema(description = "오늘 퀴즈 풀이 여부", example = "true") boolean hasSolvedToday,
 
-                @Schema(description = "최초 퀴즈 풀이 여부", example = "false") boolean isFirstTime) {
+                @Schema(description = "최초 퀴즈 풀이 여부", example = "false") boolean isFirstTime,
+
+                @Schema(description = "요약글 생성/수정 일시", example = "2024-01-01T12:00:00") LocalDateTime updatedAt) {
 }

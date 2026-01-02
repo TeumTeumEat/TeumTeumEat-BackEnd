@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -21,6 +24,12 @@ public class CategoryDocumentService {
 
     public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
         return categoryDocumentRepository.findAllByGoalId(goalId);
+    }
+
+    public boolean existsByGoalIdAndDate(Long goalId, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(LocalTime.MAX);
+        return categoryDocumentRepository.existsByGoalIdAndCreatedDateBetween(goalId, start, end);
     }
 
     public CategoryDocument getDocumentById(Long documentId) {

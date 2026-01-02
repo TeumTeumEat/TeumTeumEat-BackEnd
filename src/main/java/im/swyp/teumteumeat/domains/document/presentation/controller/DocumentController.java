@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.document.presentation.controller;
 
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
-import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
@@ -49,26 +48,6 @@ public class DocumentController implements DocumentApi {
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
         DocumentResponse response = documentUseCase.getDocument(user.getUserId(), goalId, documentId);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Override
-    @PostMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentUseCase.createSummary(user.getUserId(), goalId, documentId);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Override
-    @GetMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentUseCase.getSummaryForView(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
