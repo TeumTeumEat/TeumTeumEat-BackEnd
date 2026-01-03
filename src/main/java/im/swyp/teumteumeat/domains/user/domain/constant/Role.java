@@ -13,4 +13,13 @@ public enum Role {
 
     private final String key;
     private final String title;
+
+    public static Role fromKey(String key) {
+        for (Role role : Role.values()) {
+            if (role.getKey().equals(key)) {
+                return role;
+            }
+        }
+        throw new IllegalArgumentException("일치하는 권한이 없습니다: " + key);
+    }
 }

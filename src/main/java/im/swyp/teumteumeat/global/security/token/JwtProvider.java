@@ -1,9 +1,6 @@
 package im.swyp.teumteumeat.global.security.token;
 
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.domains.user.domain.service.UserService;
-import im.swyp.teumteumeat.global.security.constant.SocialProvider;
-import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.config.properties.JwtProperties;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
@@ -32,32 +29,28 @@ public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final SecretKey secretKey;
     private final CustomUserDetailsService userDetailsService;
-    private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
-    JwtProvider(JwtProperties jwtProperties, CustomUserDetailsService userDetailsService, UserService userService, RefreshTokenService refreshTokenService) {
+    JwtProvider(JwtProperties jwtProperties, CustomUserDetailsService userDetailsService, RefreshTokenService refreshTokenService) {
         this.jwtProperties = jwtProperties;
         this.secretKey = new SecretKeySpec(jwtProperties.secret().getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.userDetailsService = userDetailsService;
-        this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
 
     /**
      * 토큰 발급
      */
-    public Token issueToken(Long userId) {
-        UserEntity user = userService.getUserById(userId);
+    public Token issueToken(Long userId, Role role) {
         TokenClaim tokenClaim = TokenClaim.builder()
-                .socialProvider(user.getSocialProvider())
-                .socialId(user.getSocialId())
-                .role(user.getRole())
+                .userId(userId)
+                .role(role)
                 .build();
 
         String accessToken = generateAccessToken(tokenClaim);
         String refreshToken = generateRefreshToken(tokenClaim);
 
-        refreshTokenService.saveRefreshToken(refreshToken, user.getSocialProvider(), user.getSocialId());
+        refreshTokenService.saveRefreshToken(userId, refreshToken);
 
         return Token.builder()
                 .accessToken(accessToken)
@@ -71,7 +64,7 @@ public class JwtProvider {
     public String generateAccessToken(TokenClaim tokenClaim, long expirationTime) {
         return Jwts.builder()
                 .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_ACCESS_TOKEN)
-                .subject(tokenClaim.socialProvider() + DELIMITER + tokenClaim.socialId())
+                .subject(String.valueOf(tokenClaim.userId()))
                 .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
@@ -85,19 +78,18 @@ public class JwtProvider {
 
     /**
      * Access Token 재발급
-     * todo 보완 필요
      */
     public String reissueAccessToken(String refreshToken) {
         Claims claims = parseClaims(refreshToken);
-        String uniqueId = claims.getSubject();
-        String[] parts = uniqueId.split(DELIMITER);
-        SocialProvider socialProvider = SocialProvider.valueOf(parts[0]);
-        String socialId = parts[1];
+        String userIdStr = claims.getSubject();
+        Long userId = Long.parseLong(userIdStr);
+
+        String roleKey = claims.get(CLAIM_NAME_ROLE, String.class);
+        Role role = Role.fromKey(roleKey);
 
         TokenClaim tokenClaim = TokenClaim.builder()
-                .socialProvider(socialProvider)
-                .socialId(socialId)
-                .role(Role.USER)
+                .userId(userId)
+                .role(role)
                 .build();
 
         return generateAccessToken(tokenClaim);
@@ -109,7 +101,8 @@ public class JwtProvider {
     public String generateRefreshToken(TokenClaim tokenClaim, long expirationTime) {
         return Jwts.builder()
                 .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_REFRESH_TOKEN)
-                .subject(tokenClaim.socialProvider() + DELIMITER + tokenClaim.socialId())
+                .subject(String.valueOf(tokenClaim.userId()))
+                .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey)
@@ -125,8 +118,8 @@ public class JwtProvider {
      */
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
-        String uniqueId = claims.getSubject();
-        UserDetails userDetails = userDetailsService.loadUserByUsername(uniqueId);
+        String userId = claims.getSubject();
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }

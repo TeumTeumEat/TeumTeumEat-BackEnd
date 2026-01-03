@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.security.handler;
 
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.global.config.properties.FrontendProperties;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -35,6 +36,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             Authentication authentication) throws IOException {
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
         Long userId = principal.getUserId();
+        Role role = principal.role();
 
         if (authentication instanceof OAuth2AuthenticationToken) {
             OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
@@ -48,7 +50,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             }
         }
 
-        Token jwtToken = jwtProvider.issueToken(userId);
+        Token jwtToken = jwtProvider.issueToken(userId, role);
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendProperties.baseUrl())
                 .path(frontendProperties.mainPage())

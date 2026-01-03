@@ -66,7 +66,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         );
 
         // OAuth2User 반환
-        return new CustomUserDetails(user.getId(), authorities, oAuth2Attributes);
+        return new CustomUserDetails(user.getId(), user.getRole(), authorities, oAuth2Attributes);
     }
 
     private UserEntity getOrSaveUser(OAuth2Attributes oAuth2Attributes) {
