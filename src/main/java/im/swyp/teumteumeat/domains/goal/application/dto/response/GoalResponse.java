@@ -29,5 +29,7 @@ public record GoalResponse(
 
         @Schema(description = "(Nullable) PDF 파일명 (DOCUMENT 타입일 경우)", example = "1강.pdf") String fileName,
 
+        @Schema(description = "(Nullable) PDF 문서 ID (DOCUMENT 타입일 경우)", example = "1") Long documentId,
+
         CategoryResponse category) {
 }
