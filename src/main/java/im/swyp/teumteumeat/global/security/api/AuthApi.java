@@ -6,11 +6,14 @@ import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanati
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
+import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -34,4 +37,19 @@ public interface AuthApi {
     ResponseEntity<ApiResponse<LoginResponse>> oauthRegister(
             @RequestParam SocialProvider provider,
             @RequestBody @Valid SignUpRequest.Oidc request);
+
+    @Operation(
+            summary = "로그아웃",
+            description = "(Nullable) refreshToken 전송 시 서버에서 폐기합니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    description = "로그아웃 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<Void>> logOut(
+            HttpServletRequest request,
+            @RequestParam(required = false) String refreshToken,
+            @AuthenticationPrincipal CustomUserDetails user
+    );
 }

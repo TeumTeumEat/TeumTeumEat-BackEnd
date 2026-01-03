@@ -139,4 +139,8 @@ public class JwtProvider {
             throw new BaseException(AuthResponseCode.INVALID_JWT_TOKEN);
         }
     }
+
+    public void removeAccessTokenAndRefreshToken(Long userId, String accessToken, String refreshToken) {
+        // TODO: 토큰 폐기 구현
+    }
 }

@@ -95,4 +95,8 @@ public class OAuth2UseCase {
                 .isOnboardingCompleted(userService.updateAndGetOnboardingCompleted(user.getId()))
                 .build();
     }
+
+    public void logOut(Long userId, String accessToken, String refreshToken) {
+        jwtProvider.removeAccessTokenAndRefreshToken(userId, accessToken, refreshToken);
+    }
 }
