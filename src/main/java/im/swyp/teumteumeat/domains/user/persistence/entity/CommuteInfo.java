@@ -2,7 +2,10 @@ package im.swyp.teumteumeat.domains.user.persistence.entity;
 
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 

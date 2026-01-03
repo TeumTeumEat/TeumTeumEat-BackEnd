@@ -11,8 +11,6 @@ import java.util.List;
 public interface CategoryDocumentRepository extends JpaRepository<CategoryDocument, Long> {
     List<CategoryDocument> findAllByGoalId(Long goalId);
 
-    List<CategoryDocument> findAllByCategoryId(Long categoryId);
-
     boolean existsByGoalIdAndCreatedDateBetween(Long goalId, LocalDateTime start, LocalDateTime end);
 
     boolean existsByGoal_User_IdAndCreatedDateBetween(Long userId, LocalDateTime start, LocalDateTime end);

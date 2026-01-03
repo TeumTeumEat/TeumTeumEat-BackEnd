@@ -1,6 +1,6 @@
 package im.swyp.teumteumeat.global.security.handler;
 
-import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.global.config.properties.FrontendProperties;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -11,8 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,8 +27,6 @@ import java.io.IOException;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
-    // private final MobileAppProperties mobileAppProperties; //todo 모바일 앱은 DeepLink
-    // 생성
     private final FrontendProperties frontendProperties; // 웹 테스트용
     private final OAuth2AuthorizedClientRepository oAuth2AuthorizedClientRepository;
     private final UserService userService;
@@ -37,7 +35,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException {
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-        UserEntity user = principal.user();
+        Long userId = principal.getUserId();
+        Role role = principal.role();
 
         if (authentication instanceof OAuth2AuthenticationToken) {
             OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
@@ -47,11 +46,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     request);
 
             if (client != null && client.getRefreshToken() != null) {
-                userService.updateSocialRefreshToken(user, client.getRefreshToken().getTokenValue());
+                userService.updateSocialRefreshToken(userId, client.getRefreshToken().getTokenValue());
             }
         }
 
-        Token jwtToken = jwtProvider.issueToken(user);
+        Token jwtToken = jwtProvider.issueToken(userId, role);
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendProperties.baseUrl())
                 .path(frontendProperties.mainPage())

@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.List;
-
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 

@@ -1,29 +1,29 @@
 package im.swyp.teumteumeat.global.security.dto;
 
-import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import static im.swyp.teumteumeat.global.common.Constants.DELIMITER;
 
 public record CustomUserDetails(
-        UserEntity user,
+        Long userId,
+        Role role,
+        Collection<? extends GrantedAuthority> authorities,
         OAuth2Attributes oAuth2Attributes) implements UserDetails, OAuth2User {
 
-    public CustomUserDetails(UserEntity user) {
-        this(user, null);
+    public CustomUserDetails(Long userId, Role role, Collection<? extends GrantedAuthority> authorities) {
+        this(userId, role, authorities, null);
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getKey()));
+        return authorities;
     }
 
     @Override
@@ -33,7 +33,7 @@ public record CustomUserDetails(
 
     @Override
     public String getUsername() {
-        return String.valueOf(user.getId());
+        return String.valueOf(userId);
     }
 
     @Override
@@ -47,6 +47,6 @@ public record CustomUserDetails(
     }
 
     public Long getUserId() {
-        return user.getId();
+        return userId;
     }
 }

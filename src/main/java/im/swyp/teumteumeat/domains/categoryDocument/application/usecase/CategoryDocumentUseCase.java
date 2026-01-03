@@ -1,28 +1,22 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
-import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-
-import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
-import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
-
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-
-import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
-import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
 
 import java.time.LocalDate;
 import java.util.List;

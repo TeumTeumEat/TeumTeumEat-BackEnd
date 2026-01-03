@@ -1,7 +1,9 @@
 package im.swyp.teumteumeat.infra.s3.application.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record PresignedUrlRequest(
         @NotBlank(message = "파일 이름은 비어있을 수 없습니다.")
