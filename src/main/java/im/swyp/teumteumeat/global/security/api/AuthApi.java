@@ -6,7 +6,6 @@ import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanati
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
-import im.swyp.teumteumeat.global.security.dto.GoogleLoginRequest;
 import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,9 +34,4 @@ public interface AuthApi {
     ResponseEntity<ApiResponse<LoginResponse>> oauthRegister(
             @RequestParam SocialProvider provider,
             @RequestBody @Valid SignUpRequest.Oidc request);
-
-    @Operation(
-            summary = "(Deprecated) 삭제 예정"
-    )
-    ApiResponse<LoginResponse> googleLogin(@RequestBody GoogleLoginRequest request);
 }
