@@ -85,14 +85,14 @@ public class OAuth2UseCase {
                 }
 
                 if (refreshToken != null) {
-                    userService.updateSocialRefreshToken(user, refreshToken);
+                    userService.updateSocialRefreshToken(user.getId(), refreshToken);
                 }
             } catch (Exception e) {
                 log.error("Failed to exchange auth code for refresh token", e);
             }
         }
 
-        Token token = jwtProvider.issueToken(user);
+        Token token = jwtProvider.issueToken(user.getId());
 
         return LoginResponse.builder()
                 .accessToken(token.accessToken())

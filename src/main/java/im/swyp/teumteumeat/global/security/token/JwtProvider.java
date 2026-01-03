@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.global.security.token;
 
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.config.properties.JwtProperties;
@@ -31,19 +32,22 @@ public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final SecretKey secretKey;
     private final CustomUserDetailsService userDetailsService;
+    private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
-    JwtProvider(JwtProperties jwtProperties, CustomUserDetailsService userDetailsService, RefreshTokenService refreshTokenService) {
+    JwtProvider(JwtProperties jwtProperties, CustomUserDetailsService userDetailsService, UserService userService, RefreshTokenService refreshTokenService) {
         this.jwtProperties = jwtProperties;
         this.secretKey = new SecretKeySpec(jwtProperties.secret().getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.userDetailsService = userDetailsService;
+        this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
 
     /**
      * 토큰 발급
      */
-    public Token issueToken(UserEntity user) {
+    public Token issueToken(Long userId) {
+        UserEntity user = userService.getUserById(userId);
         TokenClaim tokenClaim = TokenClaim.builder()
                 .socialProvider(user.getSocialProvider())
                 .socialId(user.getSocialId())

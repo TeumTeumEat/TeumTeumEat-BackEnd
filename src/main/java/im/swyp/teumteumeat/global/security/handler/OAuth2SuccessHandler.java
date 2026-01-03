@@ -37,7 +37,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException {
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-        UserEntity user = principal.user();
+        Long userId = principal.getUserId();
 
         if (authentication instanceof OAuth2AuthenticationToken) {
             OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
@@ -47,11 +47,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     request);
 
             if (client != null && client.getRefreshToken() != null) {
-                userService.updateSocialRefreshToken(user, client.getRefreshToken().getTokenValue());
+                userService.updateSocialRefreshToken(userId, client.getRefreshToken().getTokenValue());
             }
         }
 
-        Token jwtToken = jwtProvider.issueToken(user);
+        Token jwtToken = jwtProvider.issueToken(userId);
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendProperties.baseUrl())
                 .path(frontendProperties.mainPage())

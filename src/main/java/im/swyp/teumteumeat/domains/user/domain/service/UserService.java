@@ -55,7 +55,8 @@ public class UserService {
     }
 
     @Transactional
-    public void updateSocialRefreshToken(UserEntity user, String token) {
+    public void updateSocialRefreshToken(Long userId, String token) {
+        UserEntity user = getOrThrow(userId);
         user.updateSocialRefreshToken(token);
         userRepository.save(user); // Force update to ensure persistence
     }

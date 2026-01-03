@@ -64,7 +64,7 @@ public class AuthController implements AuthApi {
                         .save(UserEntity.socialSignup(name, email, SocialProvider.GOOGLE, socialId)));
 
         // 3. 토큰 발급
-        Token token = jwtProvider.issueToken(user);
+        Token token = jwtProvider.issueToken(user.getId());
 
         return ApiResponse.ofSuccess(CommonResponseCode.OK, LoginResponse.builder()
                 .accessToken(token.accessToken())
