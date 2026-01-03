@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
-import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;

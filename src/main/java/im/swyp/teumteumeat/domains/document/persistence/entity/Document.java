@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.document.persistence.entity;
 
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.exception.BaseException;
@@ -13,8 +14,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
