@@ -58,22 +58,36 @@ public class JwtProvider {
                 .build();
     }
 
-    /**
-     * Access Token 발급
-     */
+    // 실제 서비스에서 사용하는 메인 API
+    public String generateAccessToken(TokenClaim tokenClaim) {
+        return generateAccessToken(tokenClaim, jwtProperties.accessToken().expirationTime());
+    }
+
+    public String generateRefreshToken(TokenClaim tokenClaim) {
+        return generateRefreshToken(tokenClaim, jwtProperties.refreshToken().expirationTime());
+    }
+
+    // 테스트 환경을 위해 expirationTime을 값으로 받음
     public String generateAccessToken(TokenClaim tokenClaim, long expirationTime) {
+        return generateToken(tokenClaim, CLAIM_VALUE_ACCESS_TOKEN, expirationTime);
+    }
+
+    public String generateRefreshToken(TokenClaim tokenClaim, long expirationTime) {
+        return generateToken(tokenClaim, CLAIM_VALUE_REFRESH_TOKEN, expirationTime);
+    }
+
+    /**
+     * 토큰 발급
+     */
+    private String generateToken(TokenClaim tokenClaim, String tokenType, long expirationTime) {
         return Jwts.builder()
-                .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_ACCESS_TOKEN)
-                .subject(String.valueOf(tokenClaim.userId()))
+                .claim(CLAIM_NAME_TOKEN_TYPE, tokenType)
                 .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
+                .subject(String.valueOf(tokenClaim.userId()))
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey)
                 .compact();
-    }
-
-    public String generateAccessToken(TokenClaim tokenClaim) {
-        return generateAccessToken(tokenClaim, jwtProperties.accessToken().expirationTime());
     }
 
     /**
@@ -93,24 +107,6 @@ public class JwtProvider {
                 .build();
 
         return generateAccessToken(tokenClaim);
-    }
-
-    /**
-     * Refresh Token 발급
-     */
-    public String generateRefreshToken(TokenClaim tokenClaim, long expirationTime) {
-        return Jwts.builder()
-                .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_REFRESH_TOKEN)
-                .subject(String.valueOf(tokenClaim.userId()))
-                .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey)
-                .compact();
-    }
-
-    public String generateRefreshToken(TokenClaim tokenClaim) {
-        return generateRefreshToken(tokenClaim, jwtProperties.refreshToken().expirationTime());
     }
 
     /**
