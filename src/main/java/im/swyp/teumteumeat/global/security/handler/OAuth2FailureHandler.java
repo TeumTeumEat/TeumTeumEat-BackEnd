@@ -17,8 +17,6 @@ import java.io.IOException;
 @lombok.extern.slf4j.Slf4j
 public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    // private final MobileAppProperties mobileAppProperties; //todo 모바일 앱은 DeepLink
-    // 생성
     private final FrontendProperties frontendProperties;
 
     @Override

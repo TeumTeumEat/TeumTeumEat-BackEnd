@@ -26,8 +26,6 @@ import java.io.IOException;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
-    // private final MobileAppProperties mobileAppProperties; //todo 모바일 앱은 DeepLink
-    // 생성
     private final FrontendProperties frontendProperties; // 웹 테스트용
     private final OAuth2AuthorizedClientRepository oAuth2AuthorizedClientRepository;
     private final UserService userService;

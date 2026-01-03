@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class TestController {
+
+    @Autowired
+    private OAuth2ClientProperties oauth2ClientProperties;
+
     @GetMapping("/api/v1/test/success")
     public String loginSuccess(@RequestParam("accessToken") String accessToken,
             @RequestParam("refreshToken") String refreshToken) {
@@ -19,8 +23,6 @@ public class TestController {
                 "<p>Refresh Token: " + refreshToken + "</p>";
     }
 
-    @Autowired
-    private OAuth2ClientProperties oauth2ClientProperties;
     @GetMapping("/api/v1/test/failure")
     public String loginFailure() {
         return "<h1 style='color:red;'>로그인 실패!</h1>" +
