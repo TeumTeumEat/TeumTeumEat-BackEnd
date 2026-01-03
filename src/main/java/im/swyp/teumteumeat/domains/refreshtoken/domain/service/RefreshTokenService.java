@@ -11,10 +11,11 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public void saveRefreshToken(Long userId, String refreshToken) {
+    public void saveRefreshToken(Long userId, String refreshToken, long ttl) {
         RefreshToken refreshTokenEntity = RefreshToken.builder()
                 .id(String.valueOf(userId))
                 .refreshToken(refreshToken)
+                .expiration(ttl)
                 .build();
 
         refreshTokenRepository.save(refreshTokenEntity);

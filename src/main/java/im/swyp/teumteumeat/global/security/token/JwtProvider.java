@@ -50,7 +50,8 @@ public class JwtProvider {
         String accessToken = generateAccessToken(tokenClaim);
         String refreshToken = generateRefreshToken(tokenClaim);
 
-        refreshTokenService.saveRefreshToken(userId, refreshToken);
+        long ttlInSeconds = jwtProperties.refreshToken().expirationTime() / 1000;
+        refreshTokenService.saveRefreshToken(userId, refreshToken, ttlInSeconds);
 
         return Token.builder()
                 .accessToken(accessToken)
