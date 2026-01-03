@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.goal.application.dto.request;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -33,4 +34,12 @@ public record GoalCreateRequest(
         @Schema(description = "파일 Key", example = "b151f_1강.pdf")
         String fileKey
 ) {
+    @AssertTrue(message = "카테고리 목표 설정 시 카테고리 ID는 필수입니다.")
+    @Schema(hidden = true)
+    public boolean isCategoryId() {
+        if (type == GoalType.CATEGORY) {
+            return categoryId != null;
+        }
+        return true;
+    }
 }
