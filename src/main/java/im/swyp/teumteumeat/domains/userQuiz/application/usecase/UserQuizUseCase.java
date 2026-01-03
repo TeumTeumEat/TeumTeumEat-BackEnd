@@ -38,6 +38,7 @@ public class UserQuizUseCase {
 
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
+    private final im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
 
     @Transactional
@@ -152,5 +153,10 @@ public class UserQuizUseCase {
 
     public boolean hasSolvedAnyQuizEver(Long userId) {
         return userQuizService.hasSolvedAnyQuizEver(userId);
+    }
+
+    public boolean hasCreatedDocumentToday(Long userId) {
+        return categoryDocumentService.hasDocumentCreatedToday(userId) ||
+                documentSummaryService.hasSummaryCreatedToday(userId);
     }
 }

@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record UserQuizStatusResponse(
-                boolean hasSolvedToday,
-                boolean isFirstTime) {
+        boolean hasSolvedToday,
+        boolean isFirstTime,
+        boolean hasCreatedToday) {
 }

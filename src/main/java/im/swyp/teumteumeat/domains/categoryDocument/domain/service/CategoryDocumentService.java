@@ -32,6 +32,12 @@ public class CategoryDocumentService {
         return categoryDocumentRepository.existsByGoalIdAndCreatedDateBetween(goalId, start, end);
     }
 
+    public boolean hasDocumentCreatedToday(Long userId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+        return categoryDocumentRepository.existsByGoal_User_IdAndCreatedDateBetween(userId, start, end);
+    }
+
     public CategoryDocument getDocumentById(Long documentId) {
         return categoryDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));

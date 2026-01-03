@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -61,5 +62,11 @@ public class DocumentSummaryService {
     public void processSummary(DocumentSummaryEvent event) {
         Document document = documentService.getDocumentById(event.documentId());
         generateSummary(document);
+    }
+
+    public boolean hasSummaryCreatedToday(Long userId) {
+        LocalDateTime start = java.time.LocalDate.now().atStartOfDay();
+        LocalDateTime end = java.time.LocalDate.now().atTime(java.time.LocalTime.MAX);
+        return documentSummaryRepository.existsByDocument_User_IdAndCreatedDateBetween(userId, start, end);
     }
 }
