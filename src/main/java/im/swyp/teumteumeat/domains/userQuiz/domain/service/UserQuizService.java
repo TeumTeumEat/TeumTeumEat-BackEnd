@@ -109,4 +109,9 @@ public class UserQuizService {
     public boolean hasSolvedAnyQuizEver(Long userId) {
         return !userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId).isEmpty();
     }
+
+    @Transactional
+    public void deleteAllByUserId(Long userId) {
+        userQuizRepository.deleteAllByUserId(userId);
+    }
 }
