@@ -1,7 +1,10 @@
 package im.swyp.teumteumeat.domains.user.application.usecase;
 
+import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.security.AppleUtil;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,9 @@ public class UserWithdrawalUseCase {
     private final UserService userService;
     private final AppleUtil appleUtil;
     private final RestTemplate restTemplate;
+    private final UserQuizService userQuizService;
+    private final GoalService goalService;
+    private final CategoryDocumentService categoryDocumentService;
 
     @Value("${spring.security.oauth2.client.registration.kakao.admin-key:}")
     private String kakaoAdminKey;
@@ -55,6 +61,12 @@ public class UserWithdrawalUseCase {
             default:
                 log.warn("Unknown provider for withdrawal: {}", provider);
         }
+
+        // 명시적으로 삭제
+        userQuizService.deleteAllByUserId(userId);
+
+        goalService.getGoals(user).forEach(goal -> {
+        });
 
         userService.deleteUser(user);
         log.info("User {} deleted.", userId);
