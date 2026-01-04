@@ -55,7 +55,7 @@ public class CategoryDocumentService {
 
     @Transactional
     public void saveDocument(CategoryDocument document) {
-        categoryDocumentRepository.save(document);
+        categoryDocumentRepository.saveAndFlush(document);
     }
 
     @Transactional
