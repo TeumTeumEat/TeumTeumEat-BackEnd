@@ -23,7 +23,7 @@ public class CategoryDocument extends BaseEntity {
     @Column(name = "category_document_id")
     private Long id;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(length = 500, nullable = false)
     private String content;
 
     @Column(length = 255)
