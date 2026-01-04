@@ -30,8 +30,6 @@ public class UserWithdrawalUseCase {
     private final AppleUtil appleUtil;
     private final RestTemplate restTemplate;
     private final UserQuizService userQuizService;
-    private final GoalService goalService;
-    private final CategoryDocumentService categoryDocumentService;
 
     @Value("${spring.security.oauth2.client.registration.kakao.admin-key:}")
     private String kakaoAdminKey;
@@ -64,9 +62,6 @@ public class UserWithdrawalUseCase {
 
         // 명시적으로 삭제
         userQuizService.deleteAllByUserId(userId);
-
-        goalService.getGoals(user).forEach(goal -> {
-        });
 
         userService.deleteUser(user);
         log.info("User {} deleted.", userId);
