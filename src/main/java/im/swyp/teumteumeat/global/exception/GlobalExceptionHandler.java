@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.exception;
 
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
@@ -19,7 +20,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.Set;
 
 @Slf4j
 @RestControllerAdvice
@@ -30,9 +30,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         BaseResponseCode responseCode = e.getResponseCode();
 
         // 의도된 예외는 로그 미출력
-        boolean isSilent = (responseCode == AuthResponseCode.NEED_REGISTER);
+        boolean isSilent = (responseCode == AuthResponseCode.NEED_REGISTER
+                         || responseCode == QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         if (!isSilent) {
             log.error("BaseException: ", e);
+        } else {
+            log.info("BaseException: {}", e.getMessage());
         }
 
         return new ResponseEntity<>(ApiResponse.ofFail(responseCode), responseCode.getStatus());
