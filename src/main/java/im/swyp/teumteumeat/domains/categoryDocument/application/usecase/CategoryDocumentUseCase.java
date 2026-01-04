@@ -159,6 +159,8 @@ public class CategoryDocumentUseCase {
         String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
                 topicInstruction);
         String content = llmService.generateContent(llmPrompt);
+        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 500자)
+        content = content.substring(0, Math.min(content.length(), 500));
 
         // 제목 생성
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
