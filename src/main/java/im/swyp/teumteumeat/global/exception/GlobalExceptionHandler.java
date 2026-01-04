@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.global.exception;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -18,14 +19,22 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.Set;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleBaseException(BaseException e) {
-        log.error("BaseException: ", e);
         BaseResponseCode responseCode = e.getResponseCode();
+
+        // 의도된 예외는 로그 미출력
+        boolean isSilent = (responseCode == AuthResponseCode.NEED_REGISTER);
+        if (!isSilent) {
+            log.error("BaseException: ", e);
+        }
+
         return new ResponseEntity<>(ApiResponse.ofFail(responseCode), responseCode.getStatus());
     }
 
