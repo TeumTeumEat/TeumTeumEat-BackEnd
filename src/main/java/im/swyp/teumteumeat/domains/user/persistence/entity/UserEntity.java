@@ -78,6 +78,7 @@ public class UserEntity extends BaseEntity {
                 .socialProvider(socialProvider)
                 .socialId(socialId)
                 .role(Role.USER)
+                .pushEnabled(true)
                 .build();
     }
 
