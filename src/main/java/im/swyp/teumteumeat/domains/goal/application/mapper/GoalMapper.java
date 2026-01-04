@@ -38,8 +38,10 @@ public class GoalMapper {
         String studyPeriod = ChronoUnit.WEEKS.between(startDate, endDate) + "주";
 
         String fileName = null;
+        Long documentId = null;
         if (goal.getType() == GoalType.DOCUMENT && !goal.getDocuments().isEmpty()) {
             fileName = goal.getDocuments().get(0).getFileName();
+            documentId = goal.getDocuments().get(0).getId();
         }
 
         return GoalResponse.builder()
@@ -51,7 +53,9 @@ public class GoalMapper {
                 .studyPeriod(studyPeriod)
                 .difficulty(goal.getDifficulty())
                 .prompt(goal.getPrompt())
+                .prompt(goal.getPrompt())
                 .fileName(fileName)
+                .documentId(documentId)
                 .category(goal.getCategory() != null
                         ? CategoryMapper.fromCategory(goal.getCategory())
                         : null)

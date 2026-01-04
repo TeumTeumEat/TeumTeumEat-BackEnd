@@ -51,7 +51,8 @@ public class HistoryLibraryUseCase {
 
         return CalendarResponse.builder()
                 .stampedDates(stampedDates)
-                .totalStamps(stampedDates.size())
+                .totalStamps(userQuizService.getTotalStudyDays(userId))
+                .monthlyStamps(stampedDates.size())
                 .currentStreak(currentStreak)
                 .build();
     }
@@ -117,7 +118,13 @@ public class HistoryLibraryUseCase {
     private String getSnippet(String fullText) {
         if (fullText == null)
             return "";
-        return fullText.length() > 50 ? fullText.substring(0, 50) + "..." : fullText;
+
+        // 마크다운 제거
+        String plainText = fullText.replaceAll("[#*_`\\-\\[\\]]", "") // 특수문자 제거
+                .replaceAll("\\n+", " ") // 줄바꿈을 공백으로 변경
+                .trim();
+
+        return plainText.length() > 50 ? plainText.substring(0, 50) + "..." : plainText;
     }
 
     @Transactional(readOnly = true)

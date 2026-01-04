@@ -16,6 +16,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -85,7 +86,11 @@ public class CategoryDocumentUseCase {
         // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
         if (!hasSolvedToday && !hasTodayDocument) {
             if (!categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                createDocumentInternal(goal);
+                try {
+                    createDocumentInternal(goal);
+                } catch (DataIntegrityViolationException e) {
+                    // 이미 생성된 경우 무시하고 조회 진행
+                }
                 documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
             }
         }
@@ -134,7 +139,15 @@ public class CategoryDocumentUseCase {
         if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
             throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
-        return createDocumentInternal(goal);
+        try {
+            return createDocumentInternal(goal);
+        } catch (DataIntegrityViolationException e) {
+            // 동시성 이슈 등으로 이미 생성된 경우, 기존 문서 반환
+            return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                    .findFirst()
+                    .orElseThrow(() -> e);
+        }
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {
