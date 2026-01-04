@@ -51,7 +51,8 @@ public class HistoryLibraryUseCase {
 
         return CalendarResponse.builder()
                 .stampedDates(stampedDates)
-                .totalStamps(stampedDates.size())
+                .totalStamps(userQuizService.getTotalStudyDays(userId))
+                .monthlyStamps(stampedDates.size())
                 .currentStreak(currentStreak)
                 .build();
     }

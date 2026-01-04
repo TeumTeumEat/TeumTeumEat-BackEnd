@@ -46,6 +46,10 @@ public class UserQuizService {
                 .toList();
     }
 
+    public int getTotalStudyDays(Long userId) {
+        return userQuizRepository.countDistinctDaysByUserId(userId);
+    }
+
     public int calculateCurrentStreak(Long userId) {
         List<LocalDate> days = getDistinctStudyDays(userId);
         if (days.isEmpty())
