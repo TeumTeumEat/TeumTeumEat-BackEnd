@@ -20,6 +20,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,11 @@ public class DocumentUseCase {
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
+        request = DocumentCreateRequest.builder()
+                .fileKey(Normalizer.normalize(request.fileKey(), Normalizer.Form.NFC))
+                .fileName(Normalizer.normalize(request.fileName(), Normalizer.Form.NFC))
+                .build();
+
         UserEntity user = userService.getUserById(userId);
         Goal goal = goalService.getGoalById(goalId);
 
