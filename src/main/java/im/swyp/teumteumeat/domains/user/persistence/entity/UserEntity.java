@@ -11,12 +11,14 @@ import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.utils.DatabaseEncryptionConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
+@DynamicUpdate
 @Table(name = "users")
 @Builder(access = AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
