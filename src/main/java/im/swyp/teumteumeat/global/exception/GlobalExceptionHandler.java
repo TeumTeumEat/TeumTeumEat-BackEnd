@@ -64,7 +64,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleNoResourceFoundException(NoResourceFoundException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("NoResourceFoundException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.NOT_FOUND;
         return new ResponseEntity<>(ApiResponse.ofFail(responseCode), status);
     }
