@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.config.notification;
+package im.swyp.teumteumeat.domains.notification.domain.constant;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

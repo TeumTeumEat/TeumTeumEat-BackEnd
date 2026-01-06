@@ -7,7 +7,7 @@ import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
-import im.swyp.teumteumeat.global.config.notification.NotificationProperties;
+import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
 import lombok.RequiredArgsConstructor;
 
