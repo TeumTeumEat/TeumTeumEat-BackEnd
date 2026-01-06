@@ -50,9 +50,11 @@ public class GoalUseCase {
         Long goalId = goalService.createGoal(goal);
 
         // 문서 등록 요청한 경우
-        String fileKey = Normalizer.normalize(request.fileKey(), Normalizer.Form.NFC);
-        String fileName = Normalizer.normalize(request.fileName(), Normalizer.Form.NFC);
+        String fileKey = request.fileKey();
+        String fileName = request.fileName();
         if (fileKey != null && fileName != null) {
+            fileKey = Normalizer.normalize(fileKey, Normalizer.Form.NFC);
+            fileName = Normalizer.normalize(fileName, Normalizer.Form.NFC);
             // 이미 문서 Entity가 생성되어 있으면 가져오고, 없으면 임시 문서 생성
             Document document = documentService.getOrSaveDocument(fileKey, fileName);
 
