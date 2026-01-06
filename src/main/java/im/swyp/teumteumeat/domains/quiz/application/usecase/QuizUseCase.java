@@ -163,7 +163,7 @@ public class QuizUseCase {
         Goal goal = document.getGoal();
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
-                : "전반적인 내용";
+                : (documentSummary.getTitle() != null ? documentSummary.getTitle() : "전반적인 내용");
 
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
 

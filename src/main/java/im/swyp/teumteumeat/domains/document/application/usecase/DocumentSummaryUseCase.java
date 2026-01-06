@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.document.application.usecase;
 
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
@@ -49,6 +50,10 @@ public class DocumentSummaryUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+
+        if (document.getRawContent() == null || document.getRawContent().trim().isEmpty()) {
+            throw new BaseException(DocumentResponseCode.DOCUMENT_NOT_READY);
+        }
 
         // 오늘 퀴즈를 풀지 않았는데, 문서가 오늘 업데이트된 것이 아니라면 -> 요약글 재생성 (Smart GET)
         Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
