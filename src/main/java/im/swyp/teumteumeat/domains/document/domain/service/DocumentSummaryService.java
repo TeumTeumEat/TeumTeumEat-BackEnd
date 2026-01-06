@@ -7,17 +7,12 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
-
 import java.util.Optional;
 
 @Service
@@ -25,13 +20,7 @@ import java.util.Optional;
 public class DocumentSummaryService {
 
     private final LLMService llmService;
-    private final DocumentService documentService;
-    private final ApplicationEventPublisher eventPublisher;
     private final DocumentSummaryRepository documentSummaryRepository;
-
-    public void generateSummaryAsync(Long documentId) {
-        eventPublisher.publishEvent(new DocumentSummaryEvent(documentId));
-    }
 
     @Transactional
     public DocumentSummary generateSummary(Document document) {
@@ -56,14 +45,6 @@ public class DocumentSummaryService {
                 .title(generatedTitle)
                 .build();
         return documentSummaryRepository.save(documentSummary);
-    }
-
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void processSummary(DocumentSummaryEvent event) {
-        Document document = documentService.getDocumentById(event.documentId());
-        generateSummary(document);
     }
 
     public boolean hasSummaryCreatedToday(Long userId) {
