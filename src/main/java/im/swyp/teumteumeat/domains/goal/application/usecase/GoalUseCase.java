@@ -63,11 +63,8 @@ public class GoalUseCase {
             document.updateGoal(goal);
         }
 
-        // 현재 목표가 설정되어 있지 않거나, 현재 목표가 끝났다면(만료 처리 필요), 새로 생성된 목표를 현재 목표로 설정
-        Goal currentGoal = user.getCurrentGoal();
-        if (currentGoal == null || currentGoal.getEndDate().isBefore(LocalDate.now())) {
-            user.updateCurrentGoal(goal);
-        }
+        // 새로 생성된 목표를 무조건 현재 목표로 설정
+        user.updateCurrentGoal(goal);
 
         return goalId;
     }

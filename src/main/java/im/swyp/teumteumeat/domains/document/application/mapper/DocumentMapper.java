@@ -54,10 +54,13 @@ public class DocumentMapper {
             boolean hasSolvedToday,
             boolean isFirstTime) {
         String summaryContent = (documentSummary != null) ? documentSummary.getSummary() : null;
+        String title = (documentSummary != null && documentSummary.getTitle() != null) ? documentSummary.getTitle()
+                : document.getTitle();
         return DocumentDetailResponse.builder()
                 .documentId(document.getId())
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
+                .title(title)
                 .summary(summaryContent)
                 .status(document.getStatus())
                 .hasSolvedToday(hasSolvedToday)

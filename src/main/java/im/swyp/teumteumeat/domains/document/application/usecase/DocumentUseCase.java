@@ -9,7 +9,7 @@ import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentPartMapper;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
-import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
+
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
@@ -34,7 +34,6 @@ public class DocumentUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
-    private final DocumentSummaryService documentSummaryService;
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -79,8 +78,8 @@ public class DocumentUseCase {
         else {
             document.updateRawContent(request.rawContent());
 
-            // Summary (요약)
-            documentSummaryService.generateSummaryAsync(document.getId());
+            // Summary (요약) (제거: Deadlock 방지 및 Lazy Generation 유도)
+            // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
         }
     }
@@ -104,9 +103,8 @@ public class DocumentUseCase {
                     .collect(Collectors.joining(" "));
             document.updateRawContent(combinedText);
 
-            // Summary (요약) - 비동기
-            documentSummaryService.generateSummaryAsync(document.getId());
-
+            // Summary (요약) - 비동기 (제거: Deadlock 방지 및 Lazy Generation 유도)
+            // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
         }
