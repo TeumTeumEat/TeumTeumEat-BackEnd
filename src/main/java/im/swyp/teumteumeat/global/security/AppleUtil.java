@@ -46,7 +46,6 @@ public class AppleUtil {
 
     public String createClientSecret() {
         Date expirationDate = Date.from(LocalDateTime.now().plusDays(30).atZone(ZoneId.systemDefault()).toInstant());
-        Date issuedAt = Date.from(LocalDateTime.now().minusMinutes(1).atZone(ZoneId.systemDefault()).toInstant());
 
         try {
             return Jwts.builder()
@@ -55,7 +54,7 @@ public class AppleUtil {
                     .audience().add("https://appleid.apple.com").and()
                     .subject(clientId)
                     .expiration(expirationDate)
-                    .issuedAt(issuedAt)
+                    .issuedAt(new Date())
                     .signWith(getPrivateKey(), Jwts.SIG.ES256)
                     .compact();
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
