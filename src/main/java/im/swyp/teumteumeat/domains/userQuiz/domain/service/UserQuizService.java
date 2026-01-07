@@ -76,6 +76,10 @@ public class UserQuizService {
         return userQuizRepository.findDistinctUsersByQuizDate(startOfDay, endOfDay);
     }
 
+    public int getTotalStudyDays(Long userId) {
+        return userQuizRepository.countDistinctDaysByUserId(userId);
+    }
+
     public boolean hasSolvedAnyQuizEver(Long userId) {
         return !userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId).isEmpty();
     }
