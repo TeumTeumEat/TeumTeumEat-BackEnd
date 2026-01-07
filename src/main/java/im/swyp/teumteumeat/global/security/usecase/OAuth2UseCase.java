@@ -60,13 +60,11 @@ public class OAuth2UseCase {
             String refreshToken = null;
             try {
                 if (provider == SocialProvider.APPLE) {
-                    String redirectUri = "";
                     AppleTokenResponse response = appleAuthClient.getToken(
                             appleUtil.getClientId(),
                             appleUtil.createClientSecret(),
                             request.authCode(),
-                            "authorization_code",
-                            redirectUri);
+                            "authorization_code");
                     refreshToken = response.refreshToken();
                 } else if (provider == SocialProvider.GOOGLE) {
                     String redirectUri = "";

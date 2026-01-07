@@ -34,9 +34,6 @@ public class UserWithdrawalUseCase {
     @Value("${spring.security.oauth2.client.registration.kakao.admin-key:}")
     private String kakaoAdminKey;
 
-    @Value("${spring.security.oauth2.client.registration.apple.client-id:}")
-    private String appleClientId;
-
     @Transactional
     public void withdraw(Long userId) {
         UserEntity user = userService.getUserById(userId);
@@ -122,7 +119,7 @@ public class UserWithdrawalUseCase {
             // 2. 토큰 철회 (Revoke)
             String revokeUrl = "https://appleid.apple.com/auth/revoke";
             MultiValueMap<String, String> revokeBody = new LinkedMultiValueMap<>();
-            revokeBody.add("client_id", appleClientId);
+            revokeBody.add("client_id", appleUtil.getClientId());
             revokeBody.add("client_secret", clientSecret);
             revokeBody.add("token", refreshToken);
             revokeBody.add("token_type_hint", "refresh_token");

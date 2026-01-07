@@ -14,14 +14,12 @@ public class AppleAuthClient {
 
     private final RestClient restClient;
 
-    public AppleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType,
-            String redirectUri) {
+    public AppleTokenResponse getToken(String clientId, String clientSecret, String code, String grantType) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
         formData.add("code", code);
         formData.add("grant_type", grantType);
-        formData.add("redirect_uri", redirectUri);
 
         return restClient.post()
                 .uri("https://appleid.apple.com/auth/token")
