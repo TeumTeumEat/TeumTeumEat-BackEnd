@@ -47,7 +47,7 @@ public class HistoryLibraryUseCase {
                 .sorted()
                 .toList();
 
-        int currentStreak = userQuizService.calculateCurrentStreak(userId);
+        int currentStreak = userQuizService.calculateStreakForUser(userId);
 
         return CalendarResponse.builder()
                 .stampedDates(stampedDates)
