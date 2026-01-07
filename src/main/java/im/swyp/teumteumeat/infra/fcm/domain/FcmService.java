@@ -31,7 +31,7 @@ public class FcmService {
                                     .setBody(body)
                                     .build()
                     )
-                    .putAllData(data)
+//                    .putAllData(data)
                     .build();
             FirebaseMessaging.getInstance().send(message);
         } catch (Exception e) {

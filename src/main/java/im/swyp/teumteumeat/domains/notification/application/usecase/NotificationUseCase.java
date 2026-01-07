@@ -10,11 +10,16 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 public class NotificationUseCase {
@@ -29,27 +34,37 @@ public class NotificationUseCase {
     public void sendNotifications(LocalTime now, LocalTime minuteEnd) {
         // 시간 범위에 속하는 출퇴근 시간인 유저를 모두 불러옴
         List<UserEntity> users = userService.getAllWithTokensByCommuteTime(now, minuteEnd);
+
+        // 이미 문제를 푼 유저는 리스트에서 제외
+        Set<Long> solvedUserIds = userQuizService.getAllUsersByHasSolvedAnyQuizToday().stream()
+                .map(UserEntity::getId)
+                .collect(Collectors.toSet());
+        users = users.stream()
+                .filter(u -> !solvedUserIds.contains(u.getId()))
+                .toList();
+
+        // 대상 유저의 스트릭 수 한번에 조회
+        List<Long> userIds = users.stream().map(UserEntity::getId).toList();
+        Map<Long, Integer> streakMap = userQuizService.calculateStreaksForUsers(userIds);
+
         String title = "틈틈잇 준비 완료!";
 
         users.forEach(user -> {
-            if (!userQuizService.hasSolvedAnyQuizToday(user.getId())) {
+            String name = user.getName();
+            int streak = streakMap.getOrDefault(user.getId(), 0);
 
-                String name = user.getName();
-                int streak = userQuizService.calculateCurrentStreak(user.getId());
+            List<String> messagePool = selectMessagePool(streak);
+            String template = getRandomMessageFromPool(messagePool);
+            String body = template
+                    .replace("{name}", name)
+                    .replace("{streak}", String.valueOf(streak));
 
-                List<String> messagePool = selectMessagePool(streak);
-                String template = getRandomMessageFromPool(messagePool);
-                String body = template
-                        .replace("{name}", name)
-                        .replace("{streak}", String.valueOf(streak));
-
-                // 유저의 등록된 토큰을 모두 불러옴
-                List<DeviceToken> tokens = user.getDeviceTokens();
-                tokens.forEach(token -> {
-                    // 알림 전송
-                    fcmService.sendNotification(token.getToken(), title, body, null);
-                });
-            }
+            // 유저의 등록된 토큰을 모두 불러옴
+            List<DeviceToken> tokens = user.getDeviceTokens();
+            tokens.forEach(token -> {
+                // 알림 전송
+                fcmService.sendNotification(token.getToken(), title, body, null);
+            });
         });
     }
 
