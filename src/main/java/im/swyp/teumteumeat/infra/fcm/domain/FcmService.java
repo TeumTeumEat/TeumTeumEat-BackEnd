@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Map;
 
 @Slf4j
@@ -31,7 +32,7 @@ public class FcmService {
                                     .setBody(body)
                                     .build()
                     )
-//                    .putAllData(data)
+                    .putAllData((data != null) ? data : Collections.emptyMap())
                     .build();
             FirebaseMessaging.getInstance().send(message);
         } catch (Exception e) {
