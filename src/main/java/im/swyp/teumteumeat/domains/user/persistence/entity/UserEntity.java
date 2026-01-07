@@ -73,6 +73,12 @@ public class UserEntity extends BaseEntity {
 
     private boolean pushEnabled;
 
+    private boolean quizGuideSeen;
+
+    public void completeQuizGuide() {
+        this.quizGuideSeen = true;
+    }
+
     public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
         return UserEntity.builder()
                 .name(name)

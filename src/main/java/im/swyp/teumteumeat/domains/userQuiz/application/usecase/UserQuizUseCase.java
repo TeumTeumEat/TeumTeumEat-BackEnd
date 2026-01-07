@@ -159,4 +159,15 @@ public class UserQuizUseCase {
         return categoryDocumentService.hasDocumentCreatedToday(userId) ||
                 documentSummaryService.hasSummaryCreatedToday(userId);
     }
+
+    @Transactional
+    public void completeQuizGuide(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        user.completeQuizGuide();
+    }
+
+    public boolean isQuizGuideSeen(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        return user.isQuizGuideSeen();
+    }
 }
