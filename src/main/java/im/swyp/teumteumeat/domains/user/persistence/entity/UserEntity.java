@@ -8,15 +8,17 @@ import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
-import im.swyp.teumteumeat.global.util.DatabaseEncryptionConverter;
+import im.swyp.teumteumeat.global.utils.DatabaseEncryptionConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
+@DynamicUpdate
 @Table(name = "users")
 @Builder(access = AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -63,6 +65,10 @@ public class UserEntity extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_goal_id")
+    private Goal currentGoal;
+
     private boolean onboardingCompleted;
 
     private boolean pushEnabled;
@@ -74,6 +80,7 @@ public class UserEntity extends BaseEntity {
                 .socialProvider(socialProvider)
                 .socialId(socialId)
                 .role(Role.USER)
+                .pushEnabled(true)
                 .build();
     }
 
@@ -91,9 +98,9 @@ public class UserEntity extends BaseEntity {
 
     public boolean updateAndGetOnboardingCompleted() {
         boolean onboardingCompleted = isOnboardingCompleted() ||
-                                        name != null &&
-                                        commuteInfo != null &&
-                                        !goals.isEmpty();
+                name != null &&
+                        commuteInfo != null &&
+                        !goals.isEmpty();
         this.onboardingCompleted = onboardingCompleted;
 
         return onboardingCompleted;
@@ -105,11 +112,11 @@ public class UserEntity extends BaseEntity {
         }
     }
 
-    public void updateRole(Role role) {
-        this.role = role;
-    }
-
     public void updateSocialRefreshToken(String socialRefreshToken) {
         this.socialRefreshToken = socialRefreshToken;
+    }
+
+    public void updateCurrentGoal(Goal goal) {
+        this.currentGoal = goal;
     }
 }

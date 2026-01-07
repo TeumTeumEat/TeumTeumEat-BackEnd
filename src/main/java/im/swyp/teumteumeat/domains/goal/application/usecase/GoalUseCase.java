@@ -17,6 +17,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class GoalUseCase {
     }
 
     @Transactional
-    public void createGoal(Long userId, GoalCreateRequest request) {
+    public Long createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
 
         Category category = null;
@@ -46,12 +47,14 @@ public class GoalUseCase {
             category = categoryService.getCategoryById(request.categoryId());
         }
         Goal goal = GoalMapper.toGoal(user, request, category, LocalDate.now());
-        goalService.createGoal(goal);
+        Long goalId = goalService.createGoal(goal);
 
         // 문서 등록 요청한 경우
         String fileKey = request.fileKey();
         String fileName = request.fileName();
         if (fileKey != null && fileName != null) {
+            fileKey = Normalizer.normalize(fileKey, Normalizer.Form.NFC);
+            fileName = Normalizer.normalize(fileName, Normalizer.Form.NFC);
             // 이미 문서 Entity가 생성되어 있으면 가져오고, 없으면 임시 문서 생성
             Document document = documentService.getOrSaveDocument(fileKey, fileName);
 
@@ -59,6 +62,11 @@ public class GoalUseCase {
             document.updateUser(user);
             document.updateGoal(goal);
         }
+
+        // 새로 생성된 목표를 무조건 현재 목표로 설정
+        user.updateCurrentGoal(goal);
+
+        return goalId;
     }
 
     @Transactional

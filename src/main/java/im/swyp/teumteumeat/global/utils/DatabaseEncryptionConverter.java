@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.util;
+package im.swyp.teumteumeat.global.utils;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

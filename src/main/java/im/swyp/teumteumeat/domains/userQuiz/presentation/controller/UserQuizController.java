@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.userQuiz.presentation.controller;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -53,6 +54,23 @@ public class UserQuizController implements UserQuizApi {
             @PathVariable Long quizId,
             @AuthenticationPrincipal CustomUserDetails user) {
         QuizSetResponse response = userQuizUseCase.getQuizForSolving(quizId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/status")
+    public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        boolean hasSolvedToday = userQuizUseCase.hasSolvedAnyQuizToday(user.getUserId());
+        boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
+        boolean hasGeneratedContent = userQuizUseCase.hasCreatedDocumentToday(user.getUserId());
+
+        UserQuizStatusResponse response = UserQuizStatusResponse.builder()
+                .hasSolvedToday(hasSolvedToday)
+                .isFirstTime(!hasSolvedEver)
+                .hasCreatedToday(hasGeneratedContent)
+                .build();
+
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 }

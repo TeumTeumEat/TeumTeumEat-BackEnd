@@ -8,12 +8,15 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,8 +61,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 회원가입 및 로그인
         UserEntity user = getOrSaveUser(oAuth2Attributes);
 
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority(user.getRole().getKey())
+        );
+
         // OAuth2User 반환
-        return new CustomUserDetails(user, oAuth2Attributes);
+        return new CustomUserDetails(user.getId(), user.getRole(), authorities, oAuth2Attributes);
     }
 
     private UserEntity getOrSaveUser(OAuth2Attributes oAuth2Attributes) {

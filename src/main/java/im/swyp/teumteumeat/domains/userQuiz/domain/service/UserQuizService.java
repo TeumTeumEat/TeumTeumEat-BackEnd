@@ -1,6 +1,8 @@
 package im.swyp.teumteumeat.domains.userQuiz.domain.service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 import im.swyp.teumteumeat.domains.notification.application.mapper.UserStudyDateMapping;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
@@ -10,6 +12,7 @@ import im.swyp.teumteumeat.domains.userQuiz.persistence.repository.UserQuizRepos
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -75,6 +78,11 @@ public class UserQuizService {
 
     public boolean hasSolvedAnyQuizEver(Long userId) {
         return !userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId).isEmpty();
+    }
+
+    @Transactional
+    public void deleteAllByUserId(Long userId) {
+        userQuizRepository.deleteAllByUserId(userId);
     }
 
     /**

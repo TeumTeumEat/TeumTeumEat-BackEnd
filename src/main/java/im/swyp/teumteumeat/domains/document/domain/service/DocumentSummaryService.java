@@ -1,18 +1,18 @@
 package im.swyp.teumteumeat.domains.document.domain.service;
 
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
+import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
 @Service
@@ -20,24 +20,14 @@ import java.util.Optional;
 public class DocumentSummaryService {
 
     private final LLMService llmService;
-    private final DocumentService documentService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DocumentSummaryRepository documentSummaryRepository;
 
-    public void generateSummary(Long documentId){
-        eventPublisher.publishEvent(new DocumentSummaryEvent(documentId));
-    }
-
-    // TransactionalEventListener가 커밋을 확인한 후 비동기로 이 메서드를 호출
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void processSummary(DocumentSummaryEvent event) {
-        Document document = documentService.getDocumentById(event.documentId());
+    @Transactional
+    public DocumentSummary generateSummary(Document document) {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
-        String summary = llmService.generateContent(prompt);
-        //todo 임시로 500자 이내로 잘라 넣음 (Data too long 문제)
-        document.updateSummary(summary.substring(0, Math.min(summary.length(), 500)));
+        String summaryContent = llmService.generateContent(prompt);
+        summaryContent = summaryContent.substring(0, Math.min(summaryContent.length(), 500));
 
         // 제목 생성
         String topicInstruction = Optional.ofNullable(document.getGoal())
@@ -45,7 +35,21 @@ public class DocumentSummaryService {
                 .filter(p -> !p.isEmpty())
                 .orElse("전반적인 내용");
 
-        String generatedTitle = llmService.generateTitle(summary, topicInstruction);
+        String generatedTitle = llmService.generateTitle(summaryContent, topicInstruction);
         document.updateTitle(generatedTitle);
+
+        // DocumentSummary 저장
+        DocumentSummary documentSummary = DocumentSummary.builder()
+                .document(document)
+                .summary(summaryContent)
+                .title(generatedTitle)
+                .build();
+        return documentSummaryRepository.save(documentSummary);
+    }
+
+    public boolean hasSummaryCreatedToday(Long userId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+        return documentSummaryRepository.existsByDocument_User_IdAndCreatedDateBetween(userId, start, end);
     }
 }

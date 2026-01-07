@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
-import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
@@ -10,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -21,6 +23,18 @@ public class CategoryDocumentService {
 
     public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
         return categoryDocumentRepository.findAllByGoalId(goalId);
+    }
+
+    public boolean existsByGoalIdAndDate(Long goalId, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(LocalTime.MAX);
+        return categoryDocumentRepository.existsByGoalIdAndCreatedDateBetween(goalId, start, end);
+    }
+
+    public boolean hasDocumentCreatedToday(Long userId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+        return categoryDocumentRepository.existsByGoal_User_IdAndCreatedDateBetween(userId, start, end);
     }
 
     public CategoryDocument getDocumentById(Long documentId) {
@@ -41,7 +55,7 @@ public class CategoryDocumentService {
 
     @Transactional
     public void saveDocument(CategoryDocument document) {
-        categoryDocumentRepository.save(document);
+        categoryDocumentRepository.saveAndFlush(document);
     }
 
     @Transactional

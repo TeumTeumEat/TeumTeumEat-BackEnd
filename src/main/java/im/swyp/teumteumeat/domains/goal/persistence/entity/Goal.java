@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
+import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -8,7 +9,10 @@ import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -49,6 +53,9 @@ public class Goal extends BaseEntity {
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
 
+    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CategoryDocument> categoryDocuments = new ArrayList<>();
+
     @Builder
     private Goal(
             UserEntity user,
@@ -56,8 +63,7 @@ public class Goal extends BaseEntity {
             LocalDate endDate,
             Difficulty difficulty,
             String prompt,
-            Category category
-    ) {
+            Category category) {
         this.user = user;
         this.type = type;
         this.endDate = endDate;
@@ -75,8 +81,7 @@ public class Goal extends BaseEntity {
     public void updateGoal(
             LocalDate endDate,
             Difficulty difficulty,
-            String prompt
-    ) {
+            String prompt) {
         this.endDate = (endDate != null) ? endDate : this.endDate;
         this.difficulty = (difficulty != null) ? difficulty : this.difficulty;
         this.prompt = (prompt != null) ? prompt : this.prompt;

@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.quiz.domain.service;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
@@ -27,6 +28,10 @@ public class QuizService {
 
         public List<Quiz> getQuizzesByDocumentId(Long documentId) {
                 return quizRepository.findByDocumentId(documentId);
+        }
+
+        public List<Quiz> getQuizzesByDocumentSummaryId(Long documentSummaryId) {
+                return quizRepository.findByDocumentSummaryId(documentSummaryId);
         }
 
         public List<Quiz> getUnsolvedCategoryQuizzes(Long categoryDocumentId, Long userId, int limit) {
@@ -60,23 +65,26 @@ public class QuizService {
                         CategoryDocument document,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
-                saveQuiz(document, null, question, options, answer, type, explanation, topic, difficulty);
+                saveQuiz(document, null, null, question, options, answer, type, explanation, topic, difficulty);
         }
 
         @Transactional
         public void createQuizFromPdfDocument(
                         Document document,
+                        DocumentSummary documentSummary,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
-                saveQuiz(null, document, question, options, answer, type, explanation, topic, difficulty);
+                saveQuiz(null, document, documentSummary, question, options, answer, type, explanation, topic,
+                                difficulty);
         }
 
-        private void saveQuiz(CategoryDocument categoryDocument, Document document,
+        private void saveQuiz(CategoryDocument categoryDocument, Document document, DocumentSummary documentSummary,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
                 Quiz quiz = Quiz.builder()
                                 .categoryDocument(categoryDocument)
                                 .document(document)
+                                .documentSummary(documentSummary)
                                 .content(question)
                                 .options(options)
                                 .answer(answer)

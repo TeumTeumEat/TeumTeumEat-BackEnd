@@ -1,8 +1,6 @@
 package im.swyp.teumteumeat.global.security.token;
 
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.global.security.constant.SocialProvider;
-import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.config.properties.JwtProperties;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
@@ -43,17 +41,17 @@ public class JwtProvider {
     /**
      * 토큰 발급
      */
-    public Token issueToken(UserEntity user) {
+    public Token issueToken(Long userId, Role role) {
         TokenClaim tokenClaim = TokenClaim.builder()
-                .socialProvider(user.getSocialProvider())
-                .socialId(user.getSocialId())
-                .role(user.getRole())
+                .userId(userId)
+                .role(role)
                 .build();
 
         String accessToken = generateAccessToken(tokenClaim);
         String refreshToken = generateRefreshToken(tokenClaim);
 
-        refreshTokenService.saveRefreshToken(refreshToken, user.getSocialProvider(), user.getSocialId());
+        long ttlInSeconds = jwtProperties.refreshToken().expirationTime() / 1000;
+        refreshTokenService.saveRefreshToken(userId, refreshToken, ttlInSeconds);
 
         return Token.builder()
                 .accessToken(accessToken)
@@ -61,59 +59,55 @@ public class JwtProvider {
                 .build();
     }
 
-    /**
-     * Access Token 발급
-     */
-    public String generateAccessToken(TokenClaim tokenClaim, long expirationTime) {
-        return Jwts.builder()
-                .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_ACCESS_TOKEN)
-                .subject(tokenClaim.socialProvider() + DELIMITER + tokenClaim.socialId())
-                .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey)
-                .compact();
-    }
-
+    // 실제 서비스에서 사용하는 메인 API
     public String generateAccessToken(TokenClaim tokenClaim) {
         return generateAccessToken(tokenClaim, jwtProperties.accessToken().expirationTime());
     }
 
-    /**
-     * Access Token 재발급
-     * todo 보완 필요
-     */
-    public String reissueAccessToken(String refreshToken) {
-        Claims claims = parseClaims(refreshToken);
-        String uniqueId = claims.getSubject();
-        String[] parts = uniqueId.split(DELIMITER);
-        SocialProvider socialProvider = SocialProvider.valueOf(parts[0]);
-        String socialId = parts[1];
+    public String generateRefreshToken(TokenClaim tokenClaim) {
+        return generateRefreshToken(tokenClaim, jwtProperties.refreshToken().expirationTime());
+    }
 
-        TokenClaim tokenClaim = TokenClaim.builder()
-                .socialProvider(socialProvider)
-                .socialId(socialId)
-                .role(Role.USER)
-                .build();
+    // 테스트 환경을 위해 expirationTime을 값으로 받음
+    public String generateAccessToken(TokenClaim tokenClaim, long expirationTime) {
+        return generateToken(tokenClaim, CLAIM_VALUE_ACCESS_TOKEN, expirationTime);
+    }
 
-        return generateAccessToken(tokenClaim);
+    public String generateRefreshToken(TokenClaim tokenClaim, long expirationTime) {
+        return generateToken(tokenClaim, CLAIM_VALUE_REFRESH_TOKEN, expirationTime);
     }
 
     /**
-     * Refresh Token 발급
+     * 토큰 발급
      */
-    public String generateRefreshToken(TokenClaim tokenClaim, long expirationTime) {
+    private String generateToken(TokenClaim tokenClaim, String tokenType, long expirationTime) {
         return Jwts.builder()
-                .claim(CLAIM_NAME_TOKEN_TYPE, CLAIM_VALUE_REFRESH_TOKEN)
-                .subject(tokenClaim.socialProvider() + DELIMITER + tokenClaim.socialId())
+                .claim(CLAIM_NAME_TOKEN_TYPE, tokenType)
+                .claim(CLAIM_NAME_ROLE, tokenClaim.role().getKey())
+                .subject(String.valueOf(tokenClaim.userId()))
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(secretKey)
                 .compact();
     }
 
-    public String generateRefreshToken(TokenClaim tokenClaim) {
-        return generateRefreshToken(tokenClaim, jwtProperties.refreshToken().expirationTime());
+    /**
+     * Access Token 재발급
+     */
+    public String reissueAccessToken(String refreshToken) {
+        Claims claims = parseClaims(refreshToken);
+        String userIdStr = claims.getSubject();
+        Long userId = Long.parseLong(userIdStr);
+
+        String roleKey = claims.get(CLAIM_NAME_ROLE, String.class);
+        Role role = Role.fromKey(roleKey);
+
+        TokenClaim tokenClaim = TokenClaim.builder()
+                .userId(userId)
+                .role(role)
+                .build();
+
+        return generateAccessToken(tokenClaim);
     }
 
     /**
@@ -121,8 +115,8 @@ public class JwtProvider {
      */
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
-        String uniqueId = claims.getSubject();
-        UserDetails userDetails = userDetailsService.loadUserByUsername(uniqueId);
+        String userId = claims.getSubject();
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
@@ -144,5 +138,9 @@ public class JwtProvider {
         } catch (RuntimeException e) {
             throw new BaseException(AuthResponseCode.INVALID_JWT_TOKEN);
         }
+    }
+
+    public void removeAccessTokenAndRefreshToken(Long userId, String accessToken, String refreshToken) {
+        // TODO: 토큰 폐기 구현
     }
 }

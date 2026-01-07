@@ -4,6 +4,8 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+
 @Builder
 public record CategoryDocumentResponse(
 
@@ -13,14 +15,20 @@ public record CategoryDocumentResponse(
 
         @Schema(description = "오늘 퀴즈 풀이 여부", example = "true") boolean hasSolvedToday,
 
-        @Schema(description = "최초 퀴즈 풀이 여부", example = "false") boolean isFirstTime) {
+        @Schema(description = "최초 퀴즈 풀이 여부", example = "false") boolean isFirstTime,
+
+        @Schema(description = "자료 제목", example = "Spring Framework 개요") String title,
+
+        @Schema(description = "자료 생성 일시", example = "2024-01-01T10:00:00") LocalDateTime createdAt) {
     public static CategoryDocumentResponse from(CategoryDocument document, boolean hasSolvedToday,
             boolean isFirstTime) {
         return CategoryDocumentResponse.builder()
                 .documentId(document.getId())
+                .title(document.getTitle())
                 .content(document.getContent())
                 .hasSolvedToday(hasSolvedToday)
                 .isFirstTime(isFirstTime)
+                .createdAt(document.getCreatedDate())
                 .build();
     }
 }

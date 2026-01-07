@@ -30,11 +30,19 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
                         LocalDateTime start,
                         LocalDateTime end);
 
+        @Query(value = "SELECT DISTINCT CAST(created_date AS date) FROM user_quiz WHERE user_id = :userId ORDER BY CAST(created_date AS date) DESC", nativeQuery = true)
+        List<java.sql.Date> findDistinctDaysByUserId(@Param("userId") Long userId);
+
+        @Query(value = "SELECT COUNT(DISTINCT CAST(created_date AS date)) FROM user_quiz WHERE user_id = :userId", nativeQuery = true)
+        int countDistinctDaysByUserId(@Param("userId") Long userId);
+
         boolean existsByUserIdAndQuiz_CategoryDocument_Category_IdAndCreatedDateBetween(Long userId, Long categoryId,
                         LocalDateTime start, LocalDateTime end);
 
         boolean existsByUserIdAndQuiz_Document_Goal_IdAndCreatedDateBetween(Long userId, Long goalId,
                         LocalDateTime start, LocalDateTime end);
+
+        void deleteAllByUserId(Long userId);
 
         @Query("SELECT DISTINCT uq.user FROM UserQuiz uq WHERE uq.createdDate BETWEEN :start AND :end")
         List<UserEntity> findDistinctUsersByQuizDate(LocalDateTime start, LocalDateTime end);

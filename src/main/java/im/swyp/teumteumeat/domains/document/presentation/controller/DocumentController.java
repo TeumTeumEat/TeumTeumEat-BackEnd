@@ -1,13 +1,13 @@
 package im.swyp.teumteumeat.domains.document.presentation.controller;
 
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
-import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
 import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
 import im.swyp.teumteumeat.domains.document.presentation.api.DocumentApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +24,12 @@ public class DocumentController implements DocumentApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> uploadDocument(
+    public ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
             @PathVariable Long goalId,
             @RequestBody @Valid DocumentCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails user) {
-        documentUseCase.uploadDocument(user.getUserId(), goalId, request);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        Long savedId = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
     }
 
     @Override
@@ -48,26 +48,6 @@ public class DocumentController implements DocumentApi {
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
         DocumentResponse response = documentUseCase.getDocument(user.getUserId(), goalId, documentId);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Override
-    @PostMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentUseCase.createSummary(user.getUserId(), goalId, documentId);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Override
-    @GetMapping("/{documentId}/summary")
-    public ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentUseCase.getSummaryForView(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

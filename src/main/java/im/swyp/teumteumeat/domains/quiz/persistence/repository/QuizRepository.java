@@ -16,6 +16,8 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
         List<Quiz> findByDocumentId(Long documentId);
 
+        List<Quiz> findByDocumentSummaryId(Long documentSummaryId);
+
         @Query("SELECT q FROM Quiz q WHERE q.categoryDocument.id = :documentId " +
                         "AND q.difficulty = :difficulty " +
                         "AND q.topic = :topic " +
