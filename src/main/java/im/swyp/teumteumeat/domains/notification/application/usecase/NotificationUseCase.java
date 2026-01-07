@@ -66,7 +66,7 @@ public class NotificationUseCase {
     private List<String> selectMessagePool(int currentStreak) {
         // 스트릭이 임계값을 넘었고, 설정된 확률에 따라 스트릭 메시지 전송 여부 결정
         if (currentStreak >= notificationProperties.getStreakThreshold() &&
-                random.nextInt(10) < notificationProperties.getStreakMessageRatio()) {
+                random.nextInt(100) < notificationProperties.getStreakMessageRatio()) {
             return notificationProperties.getStreakMessages();
         }
         return notificationProperties.getDefaultMessages();
