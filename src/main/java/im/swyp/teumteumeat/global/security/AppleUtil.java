@@ -55,7 +55,7 @@ public class AppleUtil {
                     .subject(clientId)
                     .expiration(expirationDate)
                     .issuedAt(new Date())
-                    .signWith(getPrivateKey())
+                    .signWith(getPrivateKey(), Jwts.SIG.ES256)
                     .compact();
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             log.error("Error creating Apple client secret", e);

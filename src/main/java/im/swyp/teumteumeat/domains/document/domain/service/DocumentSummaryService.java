@@ -27,7 +27,7 @@ public class DocumentSummaryService {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
         String summaryContent = llmService.generateContent(prompt);
-        summaryContent = summaryContent.substring(0, Math.min(summaryContent.length(), 500));
+        summaryContent = summaryContent.substring(0, Math.min(summaryContent.length(), 600));
 
         // 제목 생성
         String topicInstruction = Optional.ofNullable(document.getGoal())

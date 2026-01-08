@@ -22,7 +22,7 @@ public class DocumentSummary extends BaseEntity {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    @Column(length = 500)
+    @Column(length = 600)
     private String summary;
 
     @Column(length = 255)

@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissi
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizGuideResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -58,17 +59,27 @@ public class UserQuizController implements UserQuizApi {
     }
 
     @Override
+    @PostMapping("/guide")
+    public ResponseEntity<ApiResponse<QuizGuideResponse>> completeQuizGuide(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userQuizUseCase.completeQuizGuide(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, new QuizGuideResponse(true)));
+    }
+
+    @Override
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
             @AuthenticationPrincipal CustomUserDetails user) {
         boolean hasSolvedToday = userQuizUseCase.hasSolvedAnyQuizToday(user.getUserId());
         boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
         boolean hasGeneratedContent = userQuizUseCase.hasCreatedDocumentToday(user.getUserId());
+        boolean isQuizGuideSeen = userQuizUseCase.isQuizGuideSeen(user.getUserId());
 
         UserQuizStatusResponse response = UserQuizStatusResponse.builder()
                 .hasSolvedToday(hasSolvedToday)
                 .isFirstTime(!hasSolvedEver)
                 .hasCreatedToday(hasGeneratedContent)
+                .isQuizGuideSeen(isQuizGuideSeen)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
