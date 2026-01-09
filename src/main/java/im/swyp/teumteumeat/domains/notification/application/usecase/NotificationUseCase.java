@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.notification.application.usecase;
 
 import im.swyp.teumteumeat.domains.notification.application.dto.request.NotificationRequest;
+import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties.FixedStreakMessage;
 import im.swyp.teumteumeat.domains.notification.domain.service.DeviceTokenService;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -53,8 +54,7 @@ public class NotificationUseCase {
             String name = user.getName();
             int streak = streakMap.getOrDefault(user.getId(), 0);
 
-            List<String> messagePool = selectMessagePool(streak);
-            String template = getRandomMessageFromPool(messagePool);
+            String template = getMessageByUserStreak(streak);
             String body = template
                     .replace("{name}", name)
                     .replace("{streak}", String.valueOf(streak));
@@ -78,19 +78,26 @@ public class NotificationUseCase {
         ));
     }
 
-    private List<String> selectMessagePool(int currentStreak) {
-        // 스트릭이 임계값을 넘었고, 설정된 확률에 따라 스트릭 메시지 전송 여부 결정
-        if (currentStreak >= notificationProperties.getStreakThreshold() &&
+    private String getMessageByUserStreak(int userStreak) {
+        // 스트릭 메시지 발송 기준을 넘었고, 스트릭 메시지와 일반 메시지를 비율에 따라 적절히 섞어 보냄
+        if (userStreak >= notificationProperties.getStreakThreshold() &&
                 random.nextInt(100) < notificationProperties.getStreakMessageRatio()) {
-            return notificationProperties.getStreakMessages();
-        }
-        return notificationProperties.getDefaultMessages();
-    }
+            // 특정 스트릭 일 수의 메시지가 있다면 찾아서 반환
+            List<FixedStreakMessage> fixedStreakMessages = notificationProperties.getFixedStreakMessages();
+            for (FixedStreakMessage m : fixedStreakMessages) {
+                if (m.getDate() == userStreak) {
+                    return m.getMessage();
+                }
+            }
 
-    private String getRandomMessageFromPool(List<String> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return "오늘의 냠냠 지식이 도착했습니다! 지금 바로 확인해보세요. 🏆";
+            // 아니라면 스트릭 메시지 목록 중 랜덤 반환
+            List<String> randomStreakMessages = notificationProperties.getRandomStreakMessages();
+            int randomIndex = random.nextInt(randomStreakMessages.size());
+            return randomStreakMessages.get(randomIndex);
         }
-        return messages.get(random.nextInt(messages.size()));
+
+        // 위의 경우가 아닐 경우 기본 메시지 중 랜덤 반환
+        List<String> defaultMessages = notificationProperties.getDefaultMessages();
+        return defaultMessages.get(random.nextInt(defaultMessages.size()));
     }
 }
