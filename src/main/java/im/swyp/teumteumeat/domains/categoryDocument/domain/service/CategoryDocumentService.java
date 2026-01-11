@@ -25,6 +25,10 @@ public class CategoryDocumentService {
         return categoryDocumentRepository.findAllByGoalId(goalId);
     }
 
+    public List<CategoryDocument> getCommonDocuments(Long categoryId) {
+        return categoryDocumentRepository.findAllByCategoryIdAndGoalIsNull(categoryId);
+    }
+
     public boolean existsByGoalIdAndDate(Long goalId, LocalDate date) {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(LocalTime.MAX);

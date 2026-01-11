@@ -20,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @UseCase
@@ -126,7 +127,16 @@ public class CategoryDocumentUseCase {
     }
 
     private CategoryDocument getNextDocument(Goal goal, Long userId) {
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+        List<CategoryDocument> documents = new ArrayList<>(
+                categoryDocumentService.getDocumentsByGoalId(goal.getId()));
+
+        boolean isDefaultPrompt = goal.getPrompt() == null || goal.getPrompt().isBlank();
+        if (isDefaultPrompt) {
+            List<CategoryDocument> commonDocuments = categoryDocumentService
+                    .getCommonDocuments(goal.getCategory().getId());
+            documents.addAll(commonDocuments);
+        }
+
         List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
 
         return documents.stream()

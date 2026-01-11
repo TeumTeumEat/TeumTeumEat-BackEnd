@@ -16,7 +16,7 @@ public interface QuizSeederApi {
             @Parameter(description = "종료 카테고리 ID") @RequestParam Long endId,
             @Parameter(description = "카테고리 당 생성할 문서 개수") @RequestParam(defaultValue = "1") int count);
 
-    @Operation(summary = "퀴즈 대량 생성", description = "생성된 요약글(Goal이 없는 템플릿 문서)을 기반으로 상/중/하 난이도 퀴즈를 생성합니다.")
+    @Operation(summary = "퀴즈 대량 생성", description = "생성된 요약글(Goal이 없는 템플릿 문서)을 기반으로 상/중/하 난이도 각각 10문제씩(총 30문제) 생성합니다.")
     ResponseEntity<ApiResponse<String>> seedQuizzes(
             @Parameter(description = "시작 카테고리 ID") @RequestParam Long startId,
             @Parameter(description = "종료 카테고리 ID") @RequestParam Long endId);

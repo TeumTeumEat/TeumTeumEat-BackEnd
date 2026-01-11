@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/test/seed")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Test & Seeding API", description = "초기 데이터 구축 및 테스트용 API")
 public class QuizSeederController implements QuizSeederApi {
 
     private final QuizSeederUseCase quizSeederUseCase;
