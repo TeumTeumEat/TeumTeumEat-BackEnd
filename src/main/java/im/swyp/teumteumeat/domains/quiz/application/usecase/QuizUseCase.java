@@ -113,6 +113,31 @@ public class QuizUseCase {
                 questionCount);
     }
 
+    // 퀴즈 Seeder용: 특정 문서에 대해 모든 난이도의 기본(전반적인 내용) 퀴즈가 없으면 생성
+    @Transactional
+    public void createDefaultQuizzesForCategoryDocument(Long documentId) {
+        CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+        String categoryName = document.getCategory().getName();
+        String documentContent = document.getContent();
+
+        // Seeder는 "전반적인 내용"으로 상,중,하 난이도 5문제씩 생성 (총 15문제)
+        String topicInstruction = "전반적인 내용";
+        int questionCount = 5;
+
+        List<Quiz> existingQuizzes = quizService.getQuizzesByCategoryDocumentId(documentId);
+
+        for (Difficulty difficulty : Difficulty.values()) {
+            boolean exists = existingQuizzes.stream()
+                    .anyMatch(q -> q.getDifficulty() == difficulty &&
+                            (q.getTopic() == null || q.getTopic().equals(topicInstruction)));
+
+            if (!exists) {
+                generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
+                        questionCount);
+            }
+        }
+    }
+
     private static final String JSON_SCHEMA_INSTRUCTIONS = "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
             + "각 필드 설명:\n"
             + "- question: 퀴즈 질문 내용\n"

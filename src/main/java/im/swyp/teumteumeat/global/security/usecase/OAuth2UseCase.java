@@ -95,6 +95,7 @@ public class OAuth2UseCase {
     }
 
     public void logOut(Long userId, String accessToken, String refreshToken) {
+        userService.resetQuizGuide(userId);
         jwtProvider.removeAccessTokenAndRefreshToken(userId, accessToken, refreshToken);
     }
 }

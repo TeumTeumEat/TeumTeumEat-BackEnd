@@ -23,14 +23,13 @@ import java.util.Map;
 @Slf4j
 public class LLMService {
 
+    // OpenAI Config
     @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
-
+    private String openAiApiKey;
     @Value("${spring.ai.openai.chat.options.model}")
-    private String model;
-
+    private String openAiModel;
     @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
-    private String baseUrl;
+    private String openAiBaseUrl;
 
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
@@ -58,14 +57,14 @@ public class LLMService {
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
         // OpenAI API 호출 (RestClient 사용)
         RestClient restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .baseUrl(openAiBaseUrl)
+                .defaultHeader("Authorization", "Bearer " + openAiApiKey)
                 .build();
 
         try {
             // 요청 바디 구성
             Map<String, Object> requestBody = new java.util.HashMap<>();
-            requestBody.put("model", model);
+            requestBody.put("model", openAiModel);
             requestBody.put("messages", List.of(
                     Map.of("role", "system", "content", systemRole),
                     Map.of("role", "user", "content", promptMessage)));

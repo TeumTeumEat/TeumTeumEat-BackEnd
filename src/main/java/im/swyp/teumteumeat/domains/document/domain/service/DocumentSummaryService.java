@@ -27,7 +27,8 @@ public class DocumentSummaryService {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
         String summaryContent = llmService.generateContent(prompt);
-        summaryContent = summaryContent.substring(0, Math.min(summaryContent.length(), 600));
+        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
+        summaryContent = truncateContentSafe(summaryContent);
 
         // 제목 생성
         String topicInstruction = Optional.ofNullable(document.getGoal())
@@ -51,5 +52,17 @@ public class DocumentSummaryService {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
         return documentSummaryRepository.existsByDocument_User_IdAndCreatedDateBetween(userId, start, end);
+    }
+
+    private String truncateContentSafe(String content) {
+        if (content == null || content.length() <= 600) {
+            return content;
+        }
+        String truncated = content.substring(0, 600);
+        int lastPeriodIndex = truncated.lastIndexOf(".");
+        if (lastPeriodIndex != -1) {
+            return truncated.substring(0, lastPeriodIndex + 1);
+        }
+        return truncated;
     }
 }

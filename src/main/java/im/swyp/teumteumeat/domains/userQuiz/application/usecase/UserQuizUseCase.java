@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.userQuiz.application.usecase;
 
+import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
@@ -15,7 +17,6 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class UserQuizUseCase {
 
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
-    private final im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService documentSummaryService;
+    private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
 
     @Transactional
@@ -93,8 +94,17 @@ public class UserQuizUseCase {
             if (GoalType.DOCUMENT == documentType) {
                 // PDF 문서는 자동 생성은 보류 (개인만 접근 가능)
             } else {
-                quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
-                quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
+                // 프롬프트가 있는 경우에만 퀴즈 생성
+                // 프롬프트가 없는(Default) 경우에는 기존 퀴즈만 제공
+
+                CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+                Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+                boolean hasCustomPrompt = goal.getPrompt() != null && !goal.getPrompt().isBlank();
+
+                if (hasCustomPrompt) {
+                    quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
+                    quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
+                }
             }
         }
 
@@ -110,27 +120,31 @@ public class UserQuizUseCase {
 
         Difficulty targetDifficulty = goal.getDifficulty();
         String targetTopic = truncateTopic(goal.getPrompt());
-        if (targetTopic == null || targetTopic.isBlank()) {
+        boolean isDefaultPrompt = targetTopic == null || targetTopic.isBlank();
+
+        if (isDefaultPrompt) {
             targetTopic = "전반적인 내용"; // Generic topic fallback
         }
 
-        // 1단계: 유저의 Goal과 일치하는 퀴즈 조회
+        // 1단계: 조건에 맞는 퀴즈 조회
+        // (프롬프트가 없는 경우: 기존에 생성된 "전반적인 내용" 퀴즈들을 최대한 활용)
         List<Quiz> priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
                 targetDifficulty, targetTopic, quizCount);
 
-        // 2단계: 부족하면 조건 없이 나머지 조회 (Random)
+        // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
             int remainingCount = quizCount - priorityQuizzes.size();
-            List<Quiz> fallbackQuizzes = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
-            List<Long> priorityIds = priorityQuizzes.stream().map(Quiz::getId).toList();
 
-            List<Quiz> additionalQuizzes = fallbackQuizzes.stream()
-                    .filter(q -> !priorityIds.contains(q.getId()))
-                    .limit(remainingCount)
-                    .toList();
+            // 퀴즈 생성 (User Goal Difficulty/Topic 반영)
+            quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
 
-            priorityQuizzes.addAll(additionalQuizzes);
+            // 재생성 후 다시 조회
+            priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                    targetDifficulty, targetTopic, quizCount);
         }
+
+        // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족
+        // -> 위 getQuizzesForSolving에서 createQuizzesForDocument()를 호출하여 추가 생성
         return priorityQuizzes;
     }
 

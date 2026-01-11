@@ -20,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @UseCase
@@ -126,7 +127,16 @@ public class CategoryDocumentUseCase {
     }
 
     private CategoryDocument getNextDocument(Goal goal, Long userId) {
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+        List<CategoryDocument> documents = new ArrayList<>(
+                categoryDocumentService.getDocumentsByGoalId(goal.getId()));
+
+        boolean isDefaultPrompt = goal.getPrompt() == null || goal.getPrompt().isBlank();
+        if (isDefaultPrompt) {
+            List<CategoryDocument> commonDocuments = categoryDocumentService
+                    .getCommonDocuments(goal.getCategory().getId());
+            documents.addAll(commonDocuments);
+        }
+
         List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
 
         return documents.stream()
@@ -160,7 +170,8 @@ public class CategoryDocumentUseCase {
                 topicInstruction);
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자)
-        content = content.substring(0, Math.min(content.length(), 600));
+        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
+        content = truncateContentSafe(content);
 
         // 제목 생성
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
@@ -179,5 +190,17 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
+    }
+
+    private String truncateContentSafe(String content) {
+        if (content == null || content.length() <= 600) {
+            return content;
+        }
+        String truncated = content.substring(0, 600);
+        int lastPeriodIndex = truncated.lastIndexOf(".");
+        if (lastPeriodIndex != -1) {
+            return truncated.substring(0, lastPeriodIndex + 1);
+        }
+        return truncated;
     }
 }
