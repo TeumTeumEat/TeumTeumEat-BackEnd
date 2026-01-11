@@ -23,9 +23,6 @@ import java.util.Map;
 @Slf4j
 public class LLMService {
 
-    @Value("${spring.ai.provider:openai}")
-    private String activeProvider;
-
     // OpenAI Config
     @Value("${spring.ai.openai.api-key}")
     private String openAiApiKey;
@@ -33,14 +30,6 @@ public class LLMService {
     private String openAiModel;
     @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
     private String openAiBaseUrl;
-
-    // Naver Config
-    @Value("${spring.ai.naver.api-key:}")
-    private String naverApiKey;
-    @Value("${spring.ai.naver.chat.options.model:}")
-    private String naverModel;
-    @Value("${spring.ai.naver.base-url:}")
-    private String naverBaseUrl;
 
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
@@ -66,31 +55,16 @@ public class LLMService {
     }
 
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
-        String currentApiKey;
-        String currentModel;
-        String currentBaseUrl;
-
-        if ("naver".equalsIgnoreCase(activeProvider)) {
-            currentApiKey = naverApiKey;
-            currentModel = naverModel;
-            currentBaseUrl = naverBaseUrl;
-            log.debug("Using Naver LLM Provider");
-        } else {
-            currentApiKey = openAiApiKey;
-            currentModel = openAiModel;
-            currentBaseUrl = openAiBaseUrl;
-        }
-
         // OpenAI API 호출 (RestClient 사용)
         RestClient restClient = RestClient.builder()
-                .baseUrl(currentBaseUrl)
-                .defaultHeader("Authorization", "Bearer " + currentApiKey)
+                .baseUrl(openAiBaseUrl)
+                .defaultHeader("Authorization", "Bearer " + openAiApiKey)
                 .build();
 
         try {
             // 요청 바디 구성
             Map<String, Object> requestBody = new java.util.HashMap<>();
-            requestBody.put("model", currentModel);
+            requestBody.put("model", openAiModel);
             requestBody.put("messages", List.of(
                     Map.of("role", "system", "content", systemRole),
                     Map.of("role", "user", "content", promptMessage)));
