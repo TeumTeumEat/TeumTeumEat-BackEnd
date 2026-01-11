@@ -67,6 +67,12 @@ public class UserService {
         return user.updateAndGetOnboardingCompleted();
     }
 
+    @Transactional
+    public void resetQuizGuide(Long userId) {
+        UserEntity user = getOrThrow(userId);
+        user.resetQuizGuide();
+    }
+
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)
