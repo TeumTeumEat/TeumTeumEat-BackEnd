@@ -120,9 +120,9 @@ public class QuizUseCase {
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
-        // Seeder는 "전반적인 내용"으로 10문제씩 생성 (유저 최대 이동시간 대응)
+        // Seeder는 "전반적인 내용"으로 상,중,하 난이도 5문제씩 생성 (총 15문제)
         String topicInstruction = "전반적인 내용";
-        int questionCount = 10;
+        int questionCount = 5;
 
         List<Quiz> existingQuizzes = quizService.getQuizzesByCategoryDocumentId(documentId);
 

@@ -131,19 +131,16 @@ public class UserQuizUseCase {
         List<Quiz> priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
                 targetDifficulty, targetTopic, quizCount);
 
-        // 2단계: 부족한 경우 처리
-        // 2-1. 프롬프트가 '없는' 경우 -> 다른 난이도/토픽의 퀴즈라도 긁어옴 (생성 X)
-        if (priorityQuizzes.size() < quizCount && isDefaultPrompt) {
+        // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
+        if (priorityQuizzes.size() < quizCount) {
             int remainingCount = quizCount - priorityQuizzes.size();
-            List<Quiz> fallbackQuizzes = quizService.getUnsolvedCategoryQuizzes(documentId, userId, quizCount);
 
-            List<Long> priorityIds = priorityQuizzes.stream().map(Quiz::getId).toList();
-            List<Quiz> additionalQuizzes = fallbackQuizzes.stream()
-                    .filter(q -> !priorityIds.contains(q.getId()))
-                    .limit(remainingCount)
-                    .toList();
+            // 퀴즈 생성 (User Goal Difficulty/Topic 반영)
+            quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
 
-            priorityQuizzes.addAll(additionalQuizzes);
+            // 재생성 후 다시 조회
+            priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                    targetDifficulty, targetTopic, quizCount);
         }
 
         // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족

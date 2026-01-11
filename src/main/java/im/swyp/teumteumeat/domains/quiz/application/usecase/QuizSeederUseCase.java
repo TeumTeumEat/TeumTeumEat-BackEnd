@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.category.persistence.repository.CategoryRepos
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
+import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,9 @@ public class QuizSeederUseCase {
 
                 for (int i = 0; i < count; i++) {
                     String topic = "전반적인 " + category.getName() + " 개념 Part " + (i + 1);
-                    String summary = llmService
-                            .generateContent("Create a brief educational summary (around 500 chars) about "
-                                    + category.getName() + " (Topic " + (i + 1) + ") for a beginner developer.");
+                    String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
+                            topic);
+                    String summary = llmService.generateContent(llmPrompt);
                     summary = truncateContentSafe(summary);
 
                     CategoryDocument document = CategoryDocument.builder()
