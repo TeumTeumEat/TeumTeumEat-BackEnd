@@ -16,4 +16,6 @@ public interface CategoryDocumentRepository extends JpaRepository<CategoryDocume
     boolean existsByGoal_User_IdAndCreatedDateBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
     CategoryDocument findTopByCategoryIdOrderByIdDesc(Long categoryId);
+
+    List<CategoryDocument> findAllByCategoryIdAndGoalIsNull(Long categoryId);
 }
