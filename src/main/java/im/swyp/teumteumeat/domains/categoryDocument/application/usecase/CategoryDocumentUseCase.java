@@ -170,7 +170,8 @@ public class CategoryDocumentUseCase {
                 topicInstruction);
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자)
-        content = content.substring(0, Math.min(content.length(), 600));
+        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
+        content = truncateContentSafe(content);
 
         // 제목 생성
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
@@ -189,5 +190,17 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
+    }
+
+    private String truncateContentSafe(String content) {
+        if (content == null || content.length() <= 600) {
+            return content;
+        }
+        String truncated = content.substring(0, 600);
+        int lastPeriodIndex = truncated.lastIndexOf(".");
+        if (lastPeriodIndex != -1) {
+            return truncated.substring(0, lastPeriodIndex + 1);
+        }
+        return truncated;
     }
 }

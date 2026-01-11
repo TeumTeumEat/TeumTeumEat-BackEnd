@@ -42,6 +42,7 @@ public class QuizSeederUseCase {
                     String summary = llmService
                             .generateContent("Create a brief educational summary (around 500 chars) about "
                                     + category.getName() + " (Topic " + (i + 1) + ") for a beginner developer.");
+                    summary = truncateContentSafe(summary);
 
                     CategoryDocument document = CategoryDocument.builder()
                             .category(category)
@@ -88,5 +89,17 @@ public class QuizSeederUseCase {
             }
         }
         return successCount;
+    }
+
+    private String truncateContentSafe(String content) {
+        if (content == null || content.length() <= 600) {
+            return content;
+        }
+        String truncated = content.substring(0, 600);
+        int lastPeriodIndex = truncated.lastIndexOf(".");
+        if (lastPeriodIndex != -1) {
+            return truncated.substring(0, lastPeriodIndex + 1);
+        }
+        return truncated;
     }
 }
