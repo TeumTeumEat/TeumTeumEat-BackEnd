@@ -54,6 +54,8 @@ public class Document extends BaseEntity {
     @Lob
     private String rawContent;
 
+    private Integer estimateTime;
+
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentSummary> summaries = new ArrayList<>();
 
@@ -106,6 +108,10 @@ public class Document extends BaseEntity {
 
     public void updateTotalParts(Integer totalParts) {
         this.totalParts = totalParts;
+    }
+
+    public void updateEstimateTime(Integer estimateTime) {
+        this.estimateTime = estimateTime;
     }
 
     public boolean isAllPartsCollected() {

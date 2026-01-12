@@ -43,6 +43,7 @@ public class DocumentMapper {
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
                 .status(document.getStatus())
+                .estimateTime(document.getEstimateTime())
                 .build();
     }
 
