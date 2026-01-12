@@ -78,7 +78,7 @@ public class DocumentUseCase {
         // PDF에서 텍스트 추출이 완료된 경우
         else {
             document.updateRawContent(request.rawContent());
-            document.updateEstimateTime(request.estimateTime());
+            document.deleteEstimateTime();
 
             // Summary (요약) (제거: Deadlock 방지 및 Lazy Generation 유도)
             // documentSummaryService.generateSummaryAsync(document.getId());

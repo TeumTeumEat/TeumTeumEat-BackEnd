@@ -114,6 +114,10 @@ public class Document extends BaseEntity {
         this.estimateTime = estimateTime;
     }
 
+    public void deleteEstimateTime() {
+        this.estimateTime = null;
+    }
+
     public boolean isAllPartsCollected() {
         return parts.size() == totalParts;
     }
