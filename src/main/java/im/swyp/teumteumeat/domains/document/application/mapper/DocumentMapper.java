@@ -9,6 +9,8 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static im.swyp.teumteumeat.domains.document.domain.constant.FileStatus.PENDING;
@@ -38,12 +40,17 @@ public class DocumentMapper {
     }
 
     public static DocumentResponse fromDocument(Document document) {
+        LocalDateTime estimateTime = document.getEstimateTime();
+        Integer remainingMillis = (estimateTime != null)
+                ? (int) Math.max(0, Duration.between(LocalDateTime.now(), estimateTime).toMillis())
+                : null;
+
         return DocumentResponse.builder()
                 .documentId(document.getId())
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
                 .status(document.getStatus())
-                .estimateTime(document.getEstimateTime())
+                .estimateTime(remainingMillis)
                 .build();
     }
 

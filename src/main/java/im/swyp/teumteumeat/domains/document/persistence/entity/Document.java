@@ -12,6 +12,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +56,7 @@ public class Document extends BaseEntity {
     @Lob
     private String rawContent;
 
-    private Integer estimateTime;
+    private LocalDateTime estimateTime;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentSummary> summaries = new ArrayList<>();
@@ -111,7 +113,7 @@ public class Document extends BaseEntity {
     }
 
     public void updateEstimateTime(Integer estimateTime) {
-        this.estimateTime = estimateTime;
+        this.estimateTime = LocalDateTime.now().plus(estimateTime, ChronoUnit.MILLIS);
     }
 
     public void deleteEstimateTime() {
