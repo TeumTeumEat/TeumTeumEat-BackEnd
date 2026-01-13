@@ -72,11 +72,13 @@ public class DocumentUseCase {
         // OCR 처리가 필요한 경우
         if (request.needOcr()) {
             document.updateTotalParts(request.totalParts());
+            document.updateEstimateTime(request.estimateTime());
             document.updateStatus(FileStatus.PROCESSING);
         }
         // PDF에서 텍스트 추출이 완료된 경우
         else {
             document.updateRawContent(request.rawContent());
+            document.deleteEstimateTime();
 
             // Summary (요약) (제거: Deadlock 방지 및 Lazy Generation 유도)
             // documentSummaryService.generateSummaryAsync(document.getId());

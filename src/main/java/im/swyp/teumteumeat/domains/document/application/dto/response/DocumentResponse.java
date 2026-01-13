@@ -17,6 +17,9 @@ public record DocumentResponse(
         String fileKey,
 
         @Schema(description = "OCR 처리 상태", example = "PENDING (Schema ENUM 참조)")
-        FileStatus status
+        FileStatus status,
+
+        @Schema(description = "파일 처리 예상 소요 시간(status=PROCESSING일때만 반환, ms단위)", example = "1")
+        Integer estimateTime
 ) {
 }

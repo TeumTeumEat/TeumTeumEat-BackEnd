@@ -12,6 +12,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +55,8 @@ public class Document extends BaseEntity {
 
     @Lob
     private String rawContent;
+
+    private LocalDateTime estimateTime;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentSummary> summaries = new ArrayList<>();
@@ -106,6 +110,14 @@ public class Document extends BaseEntity {
 
     public void updateTotalParts(Integer totalParts) {
         this.totalParts = totalParts;
+    }
+
+    public void updateEstimateTime(Integer estimateTime) {
+        this.estimateTime = LocalDateTime.now().plus(estimateTime, ChronoUnit.MILLIS);
+    }
+
+    public void deleteEstimateTime() {
+        this.estimateTime = null;
     }
 
     public boolean isAllPartsCollected() {

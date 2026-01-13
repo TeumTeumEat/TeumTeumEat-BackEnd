@@ -5,6 +5,7 @@ public record OcrInitRequest(
     String fileKey,
     Integer totalParts,
     Boolean needOcr,
-    String rawContent
+    String rawContent,
+    Integer estimateTime
 ) {
 }
