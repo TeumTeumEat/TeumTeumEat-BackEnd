@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 
 import static im.swyp.teumteumeat.global.common.Constants.*;
@@ -92,9 +94,10 @@ public class JwtProvider {
     }
 
     /**
-     * Access Token 재발급
+     * Token 재발급
      */
-    public String reissueAccessToken(String refreshToken) {
+    public TokenResponse reissueTokens(String refreshToken) {
+        // 토큰 파싱
         Claims claims = parseClaims(refreshToken);
         String userIdStr = claims.getSubject();
         Long userId = Long.parseLong(userIdStr);
@@ -107,7 +110,25 @@ public class JwtProvider {
                 .role(role)
                 .build();
 
-        return generateAccessToken(tokenClaim);
+        // Access Token 재발급
+        String accessToken = generateAccessToken(tokenClaim);
+
+        // Refresh Token 일정 기간 이하인 경우 재발급
+        String newRefreshToken = null;
+        Date expiration = claims.getExpiration();
+
+        Instant expirationInstant = expiration.toInstant();
+        Instant now = Instant.now();
+
+        if (Duration.between(now, expirationInstant).toDays() <= jwtProperties.refreshToken().reissueLimitDays()) {
+            newRefreshToken = generateRefreshToken(tokenClaim);
+            //todo 기존 RefreshToken BlackList 등록
+        }
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 
     /**
