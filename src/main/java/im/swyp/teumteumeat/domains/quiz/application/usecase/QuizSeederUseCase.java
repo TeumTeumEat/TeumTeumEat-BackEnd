@@ -9,7 +9,7 @@ import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 
@@ -24,7 +24,6 @@ public class QuizSeederUseCase {
     private final LLMService llmService;
     private final QuizUseCase quizUseCase;
 
-    @Transactional
     public int seedDocuments(Long startId, Long endId, int count) {
         log.info("문서 시딩 시작 - 카테고리 ID: {} ~ {}, 카테고리 당 문서 수: {}", startId, endId, count);
         int successCount = 0;
@@ -63,7 +62,6 @@ public class QuizSeederUseCase {
         return successCount;
     }
 
-    @Transactional
     public int seedQuizzes(Long startId, Long endId) {
         log.info("퀴즈 시딩 시작 - 카테고리 ID: {} ~ {}", startId, endId);
         int successCount = 0;

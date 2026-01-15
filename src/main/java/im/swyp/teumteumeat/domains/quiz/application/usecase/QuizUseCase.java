@@ -32,6 +32,7 @@ import java.util.function.BiConsumer;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -141,7 +142,7 @@ public class QuizUseCase {
     private static final String JSON_SCHEMA_INSTRUCTIONS = "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 (스키마 정의나 metadata 포함 금지):\n"
             + "각 필드 설명:\n"
             + "- question: 퀴즈 질문 내용\n"
-            + "- options: 객관식 보기 (OX 퀴즈일 경우 비워둘 것)\n"
+            + "- options: 객관식 보기 (OX 퀴즈일 경우 'O', 'X' 포함)\n"
             + "- answer: 정답 (객관식일 경우 정답 보기의 텍스트, OX일 경우 'O' 또는 'X')\n"
             + "- type: 퀴즈 타입 ('MCQ' 또는 'OX')\n"
             + "- explanation: 정답에 대한 해설\n";
@@ -168,7 +169,7 @@ public class QuizUseCase {
         executeQuizGeneration(basePrompt, topic, (quizDto, storedTopic) -> quizService.createQuizFromCategoryDocument(
                 document,
                 quizDto.question(),
-                convertOptionsToJson(quizDto.options()),
+                convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
                 quizDto.answer(),
                 quizDto.type(),
                 quizDto.explanation(),
@@ -209,7 +210,7 @@ public class QuizUseCase {
                         document,
                         documentSummary,
                         quizDto.question(),
-                        convertOptionsToJson(quizDto.options()),
+                        convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
                         quizDto.answer(),
                         quizDto.type(),
                         quizDto.explanation(),
