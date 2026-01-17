@@ -5,6 +5,8 @@ import im.swyp.teumteumeat.domains.refreshtoken.persistence.entity.RefreshToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -28,6 +30,14 @@ public class RefreshTokenService {
                         refreshTokenRepository.deleteById(refreshToken);
                     }
                 });
+    }
+
+    public void deleteAllRefreshToken(Long userId) {
+        List<RefreshToken> tokens = refreshTokenRepository.findAllByUserId(userId);
+
+        if (!tokens.isEmpty()) {
+            refreshTokenRepository.deleteAll(tokens);
+        }
     }
 
     public boolean existRefreshToken(String refreshToken) {
