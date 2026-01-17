@@ -20,4 +20,17 @@ public class RefreshTokenService {
 
         refreshTokenRepository.save(refreshTokenEntity);
     }
+
+    public void deleteRefreshToken(Long userId, String refreshToken) {
+        refreshTokenRepository.findByRefreshToken(refreshToken)
+                .ifPresent(storedToken -> {
+                    if (storedToken.getUserId().equals(String.valueOf(userId))) {
+                        refreshTokenRepository.deleteById(refreshToken);
+                    }
+                });
+    }
+
+    public boolean existRefreshToken(String refreshToken) {
+        return refreshTokenRepository.existsById(refreshToken);
+    }
 }

@@ -48,7 +48,6 @@ public interface AuthApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> logOut(
-            HttpServletRequest request,
             @RequestParam(required = false) String refreshToken,
             @AuthenticationPrincipal CustomUserDetails user
     );
