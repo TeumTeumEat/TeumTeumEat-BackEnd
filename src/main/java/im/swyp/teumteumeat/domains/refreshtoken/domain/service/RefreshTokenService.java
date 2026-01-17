@@ -13,7 +13,7 @@ public class RefreshTokenService {
 
     public void saveRefreshToken(Long userId, String refreshToken, long ttl) {
         RefreshToken refreshTokenEntity = RefreshToken.builder()
-                .userId(String.valueOf(userId))
+                .userId(userId)
                 .refreshToken(refreshToken)
                 .expiration(ttl)
                 .build();
@@ -24,7 +24,7 @@ public class RefreshTokenService {
     public void deleteRefreshToken(Long userId, String refreshToken) {
         refreshTokenRepository.findByRefreshToken(refreshToken)
                 .ifPresent(storedToken -> {
-                    if (storedToken.getUserId().equals(String.valueOf(userId))) {
+                    if (storedToken.getUserId().equals(userId)) {
                         refreshTokenRepository.deleteById(refreshToken);
                     }
                 });
