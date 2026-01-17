@@ -13,7 +13,7 @@ public class RefreshTokenService {
 
     public void saveRefreshToken(Long userId, String refreshToken, long ttl) {
         RefreshToken refreshTokenEntity = RefreshToken.builder()
-                .id(String.valueOf(userId))
+                .userId(String.valueOf(userId))
                 .refreshToken(refreshToken)
                 .expiration(ttl)
                 .build();

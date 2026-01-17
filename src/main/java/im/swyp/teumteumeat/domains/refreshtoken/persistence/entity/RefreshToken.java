@@ -13,10 +13,10 @@ import org.springframework.data.redis.core.index.Indexed;
 public class RefreshToken {
 
     @Id
-    private String id;
+    private String refreshToken;
 
     @Indexed
-    private String refreshToken;
+    private String userId;
 
     @TimeToLive
     private Long expiration;
