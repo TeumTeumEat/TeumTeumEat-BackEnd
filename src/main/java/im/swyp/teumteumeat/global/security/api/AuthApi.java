@@ -10,7 +10,6 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
