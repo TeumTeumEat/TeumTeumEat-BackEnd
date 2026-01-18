@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum QuizPrompt {
-        GENERATE_QUIZ("%s 카테고리에 해당하는 %d문제의 퀴즈들을 한국어로 내줘. " +
+        GENERATE_QUIZ("카테고리 정보 [이름: %s, 경로: %s, 설명: %s]에 해당하는 %d문제의 퀴즈들을 한국어로 내줘. " +
                         "이때, 퀴즈의 내용은 다음 자료를 기반으로 설정해야해. \n" +
                         "%s\n" +
                         "퀴즈의 형식은 'OX'와 'MCQ'를 섞어서 출제해줘. 이때 'OX'는 o,x 퀴즈, 'MCQ'는 답이 3개 중에 하나인 3지선다의 객관식 문제를 의미해. 반드시 퀴즈 형식에 맞는 문제를 생성해야해."

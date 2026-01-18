@@ -108,9 +108,14 @@ public class QuizUseCase {
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
         // Topic 조회
+        // Topic 조회
         String topicInstruction = goalService.getTopic(userId, document.getCategory().getId());
 
-        generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
+        String path = document.getCategory().getPath();
+        String description = document.getCategory().getDescription() != null ? document.getCategory().getDescription()
+                : path + " " + categoryName;
+
+        generateAndSaveQuizzes(document, categoryName, path, description, documentContent, difficulty, topicInstruction,
                 questionCount);
     }
 
@@ -133,7 +138,13 @@ public class QuizUseCase {
                             (q.getTopic() == null || q.getTopic().equals(topicInstruction)));
 
             if (!exists) {
-                generateAndSaveQuizzes(document, categoryName, documentContent, difficulty, topicInstruction,
+                String description = document.getCategory().getDescription() != null
+                        ? document.getCategory().getDescription()
+                        : "설명 없음";
+                String path = document.getCategory().getPath() != null ? document.getCategory().getPath() : "경로 없음";
+
+                generateAndSaveQuizzes(document, categoryName, path, description, documentContent, difficulty,
+                        topicInstruction,
                         questionCount);
             }
         }
@@ -157,10 +168,13 @@ public class QuizUseCase {
         response.quizzes().forEach(quizDto -> saver.accept(quizDto, storedTopic));
     }
 
-    private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String documentContent,
+    private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String categoryPath,
+            String categoryDescription, String documentContent,
             Difficulty difficulty, String topic, int questionCount) {
         String basePrompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 categoryName,
+                categoryPath,
+                categoryDescription,
                 questionCount,
                 documentContent,
                 difficulty,

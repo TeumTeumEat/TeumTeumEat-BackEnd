@@ -166,10 +166,13 @@ public class CategoryDocumentUseCase {
         String topicInstruction = (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
 
         // LLM을 통해 콘텐츠 생성
+        String path = category.getPath();
+        String description = category.getDescription() != null ? category.getDescription()
+                : path + " " + category.getName();
+
         String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
-                topicInstruction);
+                path, description, topicInstruction);
         String content = llmService.generateContent(llmPrompt);
-        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자)
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = truncateContentSafe(content);
 
