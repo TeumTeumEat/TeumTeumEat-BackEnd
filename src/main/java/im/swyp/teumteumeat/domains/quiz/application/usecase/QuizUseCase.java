@@ -138,10 +138,10 @@ public class QuizUseCase {
                             (q.getTopic() == null || q.getTopic().equals(topicInstruction)));
 
             if (!exists) {
+                String path = document.getCategory().getPath();
                 String description = document.getCategory().getDescription() != null
                         ? document.getCategory().getDescription()
-                        : "설명 없음";
-                String path = document.getCategory().getPath() != null ? document.getCategory().getPath() : "경로 없음";
+                        : path + " " + categoryName;
 
                 generateAndSaveQuizzes(document, categoryName, path, description, documentContent, difficulty,
                         topicInstruction,
