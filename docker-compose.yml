@@ -13,8 +13,6 @@ services:
     environment:
       - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}
-      - SPRING_APPLE_KEY_PATH=file:/configs/AuthKey_Q3BP7MWHVD.p8
-      - SPRING_FIREBASE_KEY_PATH=file:/configs/firebaseKey.json
 
   spring-green:
     image: ghcr.io/teumteumeat/teumteumeat-backend:develop
@@ -30,8 +28,6 @@ services:
     environment:
       - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}
-      - SPRING_APPLE_KEY_PATH=file:/configs/AuthKey_Q3BP7MWHVD.p8
-      - SPRING_FIREBASE_KEY_PATH=file:/configs/firebaseKey.json
 
   nginx:
     image: nginx:stable-alpine

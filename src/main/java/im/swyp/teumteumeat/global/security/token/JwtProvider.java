@@ -95,6 +95,10 @@ public class JwtProvider {
      * Access Token 재발급
      */
     public String reissueAccessToken(String refreshToken) {
+        if (!refreshTokenService.existRefreshToken(refreshToken)) {
+            throw new BaseException(AuthResponseCode.INVALID_JWT_TOKEN);
+        }
+
         Claims claims = parseClaims(refreshToken);
         String userIdStr = claims.getSubject();
         Long userId = Long.parseLong(userIdStr);
@@ -125,8 +129,6 @@ public class JwtProvider {
      * 토큰 유효성 검증 후 Claims(Payload) 반환
      */
     private Claims parseClaims(String token) {
-        //todo RedisTokenBlackList
-
         try {
             return Jwts.parser()
                     .verifyWith(secretKey)
@@ -140,7 +142,7 @@ public class JwtProvider {
         }
     }
 
-    public void removeAccessTokenAndRefreshToken(Long userId, String accessToken, String refreshToken) {
-        // TODO: 토큰 폐기 구현
+    public void removeRefreshToken(Long userId, String refreshToken) {
+        refreshTokenService.deleteRefreshToken(userId, refreshToken);
     }
 }

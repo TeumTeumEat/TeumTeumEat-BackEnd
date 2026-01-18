@@ -9,7 +9,6 @@ import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.usecase.OAuth2UseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import static im.swyp.teumteumeat.global.common.Constants.BEARER;
 
 @Slf4j
 @RestController
@@ -42,13 +39,10 @@ public class AuthController implements AuthApi {
     @Override
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logOut(
-            HttpServletRequest request,
             @RequestParam(required = false) String refreshToken,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        String authHeader = request.getHeader("Authorization");
-        String accessToken = authHeader.substring(BEARER.length());
-        oAuth2UseCase.logOut(user.getUserId(), accessToken, refreshToken);
+        oAuth2UseCase.logOut(user.getUserId(), refreshToken);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }
