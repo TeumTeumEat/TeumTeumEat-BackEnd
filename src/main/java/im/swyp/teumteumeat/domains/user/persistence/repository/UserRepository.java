@@ -18,4 +18,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     @Query("select distinct u from UserEntity u join fetch u.deviceTokens where u.commuteInfo.endTime between :start and :end and u.pushEnabled = true")
     List<UserEntity> findAllWithTokensByEndTimeBetween(LocalTime start, LocalTime end);
+
+    @Query("select u from UserEntity u left join fetch u.currentGoal g left join fetch g.category where u.id = :id")
+    Optional<UserEntity> findWithCurrentGoalById(Long id);
 }

@@ -10,4 +10,7 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findAllByUserId(Long userId);
 
     Optional<Goal> findTopByUserIdAndCategoryIdOrderByCreatedDateDesc(Long userId, Long categoryId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "category")
+    Optional<Goal> findFirstByUserIdAndCategoryIdOrderByCreatedDateDesc(Long userId, Long categoryId);
 }

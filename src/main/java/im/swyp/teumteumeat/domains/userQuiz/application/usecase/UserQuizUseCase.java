@@ -35,8 +35,9 @@ import java.util.concurrent.TimeUnit;
 @Transactional(readOnly = true)
 public class UserQuizUseCase {
 
-    private final QuizService quizService;
     private final UserQuizService userQuizService;
+    private final QuizService quizService;
+    private final QuizUseCase quizUseCase;
     private final UserService userService;
     private final QuizMapper quizMapper;
     private final DistributedLockFacade distributedLockFacade;
@@ -44,7 +45,6 @@ public class UserQuizUseCase {
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
-    private final QuizUseCase quizUseCase;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -79,7 +79,7 @@ public class UserQuizUseCase {
                 .build();
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public List<QuizSetResponse> getQuizzesForSolving(
             Long documentId, Long userId, GoalType documentType) {
         // 이동시간 기반 문제 수 계산
@@ -118,9 +118,10 @@ public class UserQuizUseCase {
     }
 
     private List<Quiz> getPrioritizedQuizzes(Long documentId, Long userId, int quizCount) {
-        // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
-        CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
-        Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
+
+    // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
+        CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
+        Goal goal = goalService.findLatestGoalWithCategory(userId, document.getCategory().getId());
 
         Difficulty targetDifficulty = goal.getDifficulty();
         String rawTopic = truncateTopic(goal.getPrompt());

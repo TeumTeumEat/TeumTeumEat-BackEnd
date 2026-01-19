@@ -46,6 +46,11 @@ public class CategoryDocumentService {
                 .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
     }
 
+    public CategoryDocument getDocumentWithCategoryById(Long documentId) {
+        return categoryDocumentRepository.findWithCategoryAndGoalById(documentId)
+                .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
+    }
+
     @Transactional
     public CategoryDocument createDocument(Goal goal, String content, String title) {
         CategoryDocument document = CategoryDocument.builder()

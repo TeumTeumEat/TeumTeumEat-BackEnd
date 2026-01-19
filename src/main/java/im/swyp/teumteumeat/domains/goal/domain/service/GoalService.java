@@ -63,6 +63,11 @@ public class GoalService {
         return goal.getPrompt();
     }
 
+    public Goal findLatestGoalWithCategory(Long userId, Long categoryId) {
+        return goalRepository.findFirstByUserIdAndCategoryIdOrderByCreatedDateDesc(userId, categoryId)
+                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+    }
+
     /* HELPER METHOD */
     private Goal getOrThrow(Long id) {
         return goalRepository.findById(id)

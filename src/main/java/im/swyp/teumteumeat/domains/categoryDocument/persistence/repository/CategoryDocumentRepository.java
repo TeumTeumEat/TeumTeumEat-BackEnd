@@ -18,4 +18,7 @@ public interface CategoryDocumentRepository extends JpaRepository<CategoryDocume
     CategoryDocument findTopByCategoryIdOrderByIdDesc(Long categoryId);
 
     List<CategoryDocument> findAllByCategoryIdAndGoalIsNull(Long categoryId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "category", "goal" })
+    java.util.Optional<CategoryDocument> findWithCategoryAndGoalById(Long id);
 }

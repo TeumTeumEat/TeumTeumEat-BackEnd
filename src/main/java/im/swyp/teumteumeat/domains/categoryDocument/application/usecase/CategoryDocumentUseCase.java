@@ -18,6 +18,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -37,7 +38,7 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
 
@@ -51,7 +52,7 @@ public class CategoryDocumentUseCase {
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
 
@@ -109,7 +110,7 @@ public class CategoryDocumentUseCase {
     }
 
     private Goal getValidGoal(Long userId, Long categoryId) {
-        Goal goal = userService.getUserById(userId).getCurrentGoal();
+        Goal goal = userService.getUserWithCurrentGoal(userId).getCurrentGoal();
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
             throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
