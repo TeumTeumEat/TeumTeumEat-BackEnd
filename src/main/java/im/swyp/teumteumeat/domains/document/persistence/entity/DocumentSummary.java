@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "document_summary")
+@Table(name = "document_summary", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_document_summary_doc_date", columnNames = { "document_id", "created_date" })
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DocumentSummary extends BaseEntity {
 
