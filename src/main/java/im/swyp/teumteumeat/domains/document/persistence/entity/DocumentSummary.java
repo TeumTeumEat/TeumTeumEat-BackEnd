@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "document_summary")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DocumentSummary extends BaseEntity {
 

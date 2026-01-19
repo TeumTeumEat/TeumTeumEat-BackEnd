@@ -18,14 +18,19 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
@@ -36,6 +41,7 @@ public class UserQuizUseCase {
     private final UserQuizService userQuizService;
     private final UserService userService;
     private final QuizMapper quizMapper;
+    private final RedissonClient redissonClient;
 
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
@@ -133,14 +139,39 @@ public class UserQuizUseCase {
 
         // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
-            int remainingCount = quizCount - priorityQuizzes.size();
+            // Redisson Distributed Lock 도입
+            String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
+            RLock lock = redissonClient.getLock(lockKey);
 
-            // 퀴즈 생성 (User Goal Difficulty/Topic 반영)
-            quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
+            try {
+                // 3초 대기, 60초 락 점유 (LLM 응답이 늦어질 수 있으므로 넉넉하게 잡음)
+                if (lock.tryLock(3, 60, TimeUnit.SECONDS)) {
+                    try {
+                        // Double-Check: 락 획득 후 다시 한 번 개수 확인 (다른 스레드가 이미 생성했을 수도 있음)
+                        priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                                targetDifficulty, targetTopic, quizCount);
 
-            // 재생성 후 다시 조회
-            priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                    targetDifficulty, targetTopic, quizCount);
+                        if (priorityQuizzes.size() < quizCount) {
+                            int remainingCount = quizCount - priorityQuizzes.size();
+                            quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
+
+                            // 재생성 후 최종 조회
+                            priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                                    targetDifficulty, targetTopic, quizCount);
+                        }
+                    } finally {
+                        if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+                            lock.unlock();
+                        }
+                    }
+                } else {
+                    // 락 획득 실패 시 (Timeout) -> 기존 조회된 것만 반환하거나 예외처리
+                    // 여기서는 최대한 생성된 만큼만 반환
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+            }
         }
 
         // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족
