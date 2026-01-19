@@ -15,7 +15,9 @@ import java.util.List;
 
 @Entity
 @Getter
-@Table(name = "category_document")
+@Table(name = "category_document", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_category_document_goal_date", columnNames = { "goal_id", "created_date" })
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CategoryDocument extends BaseEntity {
     @Id
@@ -23,7 +25,7 @@ public class CategoryDocument extends BaseEntity {
     @Column(name = "category_document_id")
     private Long id;
 
-    @Column(length = 600, nullable = false)
+    @Column(length = 2000, nullable = false)
     private String content;
 
     @Column(length = 255)
