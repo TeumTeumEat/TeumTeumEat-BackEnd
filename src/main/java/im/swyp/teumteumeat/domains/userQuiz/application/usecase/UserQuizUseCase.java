@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ public class UserQuizUseCase {
     private final UserQuizService userQuizService;
     private final UserService userService;
     private final QuizMapper quizMapper;
-    private final org.redisson.api.RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
 
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
@@ -144,7 +145,7 @@ public class UserQuizUseCase {
 
             try {
                 // 3초 대기, 60초 락 점유 (LLM 응답이 늦어질 수 있으므로 넉넉하게 잡음)
-                if (lock.tryLock(3, 60, java.util.concurrent.TimeUnit.SECONDS)) {
+                if (lock.tryLock(3, 60, TimeUnit.SECONDS)) {
                     try {
                         // Double-Check: 락 획득 후 다시 한 번 개수 확인 (다른 스레드가 이미 생성했을 수도 있음)
                         priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,

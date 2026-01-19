@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +48,7 @@ public class DocumentSummaryService {
                 .build();
         try {
             return documentSummaryRepository.save(documentSummary);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             // 이미 오늘 생성된 요약이 있는 경우, 해당 요약 반환
             LocalDateTime start = LocalDate.now().atStartOfDay();
             LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
