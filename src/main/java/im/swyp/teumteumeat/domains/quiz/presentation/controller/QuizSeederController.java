@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RequiredArgsConstructor
 @Slf4j
 @PreAuthorize("hasRole('ADMIN')")
+@Deprecated
 public class QuizSeederController implements QuizSeederApi {
 
     private final QuizSeederUseCase quizSeederUseCase;
