@@ -15,9 +15,9 @@ import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -35,7 +35,7 @@ public class CategoryDocumentUseCase {
     private final UserQuizService userQuizService;
     private final GoalService goalService;
     private final LLMService llmService;
-    private final RedissonClient redissonClient;
+    private final DistributedLockFacade distributedLockFacade;
 
     @Transactional
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
@@ -148,38 +148,27 @@ public class CategoryDocumentUseCase {
 
     private CategoryDocument createNewDailyDocument(Goal goal) {
         String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
-        RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // 3초 대기, 60초 락 점유
-            if (lock.tryLock(3, 60, TimeUnit.SECONDS)) {
-                try {
-                    // Double-Check inside Lock
-                    if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                        return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                                .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                                .findFirst()
-                                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-                    }
-                    return createDocumentInternal(goal);
-                } finally {
-                    if (lock.isLocked() && lock.isHeldByCurrentThread()) {
-                        lock.unlock();
-                    }
-                }
-            } else {
-                // 락 획득 실패 (Timeout) -> 다른 스레드가 생성 중일 것이므로 재조회
+            return distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
+                // Double-Check inside Lock
                 if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
                     return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
                             .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
                             .findFirst()
-                            .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
+                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
                 }
-                throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+                return createDocumentInternal(goal);
+            });
+        } catch (BaseException e) {
+            // lock 실패 시 재조회 시도
+            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                        .findFirst()
+                        .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+            throw e;
         }
     }
 
@@ -197,7 +186,7 @@ public class CategoryDocumentUseCase {
                 path, description, topicInstruction);
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        content = truncateContentSafe(content);
+        content = ContentUtils.truncateContentSafe(content);
 
         // 제목 생성
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
@@ -216,17 +205,5 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
-    }
-
-    private String truncateContentSafe(String content) {
-        if (content == null || content.length() <= 600) {
-            return content;
-        }
-        String truncated = content.substring(0, 600);
-        int lastPeriodIndex = truncated.lastIndexOf(".");
-        if (lastPeriodIndex != -1) {
-            return truncated.substring(0, lastPeriodIndex + 1);
-        }
-        return truncated;
     }
 }
