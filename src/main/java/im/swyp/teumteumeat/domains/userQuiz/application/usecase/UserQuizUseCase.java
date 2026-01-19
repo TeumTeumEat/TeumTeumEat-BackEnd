@@ -140,7 +140,7 @@ public class UserQuizUseCase {
             String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
 
             priorityQuizzes = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-                // Double-Check: 락 획득 후 다시 한 번 개수 확인
+                // 이중 체크(Double-Check): 락 획득 후 다시 한 번 개수 확인
                 List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
                         targetDifficulty, targetTopic, quizCount);
 

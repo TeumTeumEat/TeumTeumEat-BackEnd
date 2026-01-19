@@ -37,12 +37,11 @@ public class DocumentSummaryService {
         String lockKey = "lock:document_summary:generation:" + documentId;
 
         return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // Re-fetch document with Goal to avoid LazyInitializationException and ensure
-            // attached state for updates
+            // LazyInitializationException 방지 및 업데이트를 위한 영속성 상태 보장을 위해 Goal과 함께 문서 재조회
             Document fetchedDocument = documentRepository.findWithGoalById(documentId)
                     .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
-            // Double-Check inside Lock
+            // 락 내부에서 이중 체크 (Double-Check)
             LocalDateTime start = LocalDate.now().atStartOfDay();
             LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
             Optional<DocumentSummary> existingSummary = documentSummaryRepository
@@ -65,7 +64,7 @@ public class DocumentSummaryService {
 
             String generatedTitle = llmService.generateTitle(summaryContent, topicInstruction);
             fetchedDocument.updateTitle(generatedTitle);
-            documentRepository.save(fetchedDocument); // Explicit save for detached/re-fetched entity
+            documentRepository.save(fetchedDocument); // 분리된(detached) 혹은 재조회된 엔티티에 대한 명시적 저장
 
             // DocumentSummary 저장
             DocumentSummary documentSummary = DocumentSummary.builder()

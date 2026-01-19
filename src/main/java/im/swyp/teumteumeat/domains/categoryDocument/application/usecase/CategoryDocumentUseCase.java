@@ -152,7 +152,7 @@ public class CategoryDocumentUseCase {
 
         // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
         return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // Double-Check inside Lock
+            // 락 내부에서 이중 체크 (Double-Check)
             if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
                 return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
                         .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
