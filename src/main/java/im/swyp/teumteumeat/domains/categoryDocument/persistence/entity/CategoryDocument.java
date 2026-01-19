@@ -15,9 +15,6 @@ import java.util.List;
 
 @Entity
 @Getter
-@Table(name = "category_document", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_category_document_goal_date", columnNames = { "goal_id", "created_date" })
-})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CategoryDocument extends BaseEntity {
     @Id

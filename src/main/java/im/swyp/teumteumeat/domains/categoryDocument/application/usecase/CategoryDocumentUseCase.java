@@ -15,13 +15,15 @@ import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class CategoryDocumentUseCase {
     private final UserQuizService userQuizService;
     private final GoalService goalService;
     private final LLMService llmService;
+    private final DistributedLockFacade distributedLockFacade;
 
     @Transactional
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
@@ -86,14 +89,12 @@ public class CategoryDocumentUseCase {
 
         // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
         if (!hasSolvedToday && !hasTodayDocument) {
-            if (!categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                try {
-                    createDocumentInternal(goal);
-                } catch (DataIntegrityViolationException e) {
-                    // 이미 생성된 경우 무시하고 조회 진행
-                }
-                documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+            try {
+                createNewDailyDocument(goal);
+            } catch (Exception e) {
+                // 이미 생성되었거나 락 획득 실패 등은 무시하고 조회 진행
             }
+            documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
         }
 
         return documents.stream()
@@ -146,17 +147,28 @@ public class CategoryDocumentUseCase {
     }
 
     private CategoryDocument createNewDailyDocument(Goal goal) {
-        if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-            throw new BaseException(CommonResponseCode.NOT_FOUND);
-        }
+        String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
+
         try {
-            return createDocumentInternal(goal);
-        } catch (DataIntegrityViolationException e) {
-            // 동시성 이슈 등으로 이미 생성된 경우, 기존 문서 반환
-            return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                    .findFirst()
-                    .orElseThrow(() -> e);
+            return distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
+                // Double-Check inside Lock
+                if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                    return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                            .findFirst()
+                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                }
+                return createDocumentInternal(goal);
+            });
+        } catch (BaseException e) {
+            // lock 실패 시 재조회 시도
+            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                        .findFirst()
+                        .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
+            }
+            throw e;
         }
     }
 
@@ -174,7 +186,7 @@ public class CategoryDocumentUseCase {
                 path, description, topicInstruction);
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        content = truncateContentSafe(content);
+        content = ContentUtils.truncateContentSafe(content);
 
         // 제목 생성
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
@@ -193,17 +205,5 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
-    }
-
-    private String truncateContentSafe(String content) {
-        if (content == null || content.length() <= 600) {
-            return content;
-        }
-        String truncated = content.substring(0, 600);
-        int lastPeriodIndex = truncated.lastIndexOf(".");
-        if (lastPeriodIndex != -1) {
-            return truncated.substring(0, lastPeriodIndex + 1);
-        }
-        return truncated;
     }
 }

@@ -6,8 +6,11 @@ import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSumma
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -22,38 +26,52 @@ public class DocumentSummaryService {
 
     private final LLMService llmService;
     private final DocumentSummaryRepository documentSummaryRepository;
+    private final DistributedLockFacade distributedLockFacade;
 
     @Transactional
     public DocumentSummary generateSummary(Document document) {
-        String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
-                document.getRawContent());
-        String summaryContent = llmService.generateContent(prompt);
-        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        summaryContent = truncateContentSafe(summaryContent);
+        String lockKey = "lock:document_summary:generation:" + document.getId();
 
-        // 제목 생성
-        String topicInstruction = Optional.ofNullable(document.getGoal())
-                .map(Goal::getPrompt)
-                .filter(p -> !p.isEmpty())
-                .orElse("전반적인 내용");
-
-        String generatedTitle = llmService.generateTitle(summaryContent, topicInstruction);
-        document.updateTitle(generatedTitle);
-
-        // DocumentSummary 저장
-        DocumentSummary documentSummary = DocumentSummary.builder()
-                .document(document)
-                .summary(summaryContent)
-                .title(generatedTitle)
-                .build();
         try {
-            return documentSummaryRepository.save(documentSummary);
-        } catch (DataIntegrityViolationException e) {
-            // 이미 오늘 생성된 요약이 있는 경우, 해당 요약 반환
+            return distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
+                // Double-Check inside Lock
+                LocalDateTime start = LocalDate.now().atStartOfDay();
+                LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+                Optional<DocumentSummary> existingSummary = documentSummaryRepository
+                        .findByDocumentIdAndCreatedDateBetween(document.getId(), start, end);
+                if (existingSummary.isPresent()) {
+                    return existingSummary.get();
+                }
+
+                String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
+                        document.getRawContent());
+                String summaryContent = llmService.generateContent(prompt);
+                // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
+                summaryContent = ContentUtils.truncateContentSafe(summaryContent);
+
+                // 제목 생성
+                String topicInstruction = Optional.ofNullable(document.getGoal())
+                        .map(Goal::getPrompt)
+                        .filter(p -> !p.isEmpty())
+                        .orElse("전반적인 내용");
+
+                String generatedTitle = llmService.generateTitle(summaryContent, topicInstruction);
+                document.updateTitle(generatedTitle);
+
+                // DocumentSummary 저장
+                DocumentSummary documentSummary = DocumentSummary.builder()
+                        .document(document)
+                        .summary(summaryContent)
+                        .title(generatedTitle)
+                        .build();
+                return documentSummaryRepository.save(documentSummary);
+            });
+        } catch (BaseException e) {
+            // 락 획득 실패 (Timeout) -> 다른 스레드가 생성했는지 확인
             LocalDateTime start = LocalDate.now().atStartOfDay();
             LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
             return documentSummaryRepository.findByDocumentIdAndCreatedDateBetween(document.getId(), start, end)
-                    .orElseThrow(() -> e);
+                    .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -63,15 +81,4 @@ public class DocumentSummaryService {
         return documentSummaryRepository.existsByDocument_User_IdAndCreatedDateBetween(userId, start, end);
     }
 
-    private String truncateContentSafe(String content) {
-        if (content == null || content.length() <= 600) {
-            return content;
-        }
-        String truncated = content.substring(0, 600);
-        int lastPeriodIndex = truncated.lastIndexOf(".");
-        if (lastPeriodIndex != -1) {
-            return truncated.substring(0, lastPeriodIndex + 1);
-        }
-        return truncated;
-    }
 }

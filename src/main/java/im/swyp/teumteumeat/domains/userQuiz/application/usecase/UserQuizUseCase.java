@@ -18,12 +18,11 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
-import im.swyp.teumteumeat.global.common.CommonResponseCode;
+
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -41,7 +40,7 @@ public class UserQuizUseCase {
     private final UserQuizService userQuizService;
     private final UserService userService;
     private final QuizMapper quizMapper;
-    private final RedissonClient redissonClient;
+    private final DistributedLockFacade distributedLockFacade;
 
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
@@ -125,12 +124,9 @@ public class UserQuizUseCase {
         Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
 
         Difficulty targetDifficulty = goal.getDifficulty();
-        String targetTopic = truncateTopic(goal.getPrompt());
-        boolean isDefaultPrompt = targetTopic == null || targetTopic.isBlank();
-
-        if (isDefaultPrompt) {
-            targetTopic = "전반적인 내용"; // Generic topic fallback
-        }
+        String rawTopic = truncateTopic(goal.getPrompt());
+        boolean isDefaultPrompt = rawTopic == null || rawTopic.isBlank();
+        String targetTopic = isDefaultPrompt ? "전반적인 내용" : rawTopic;
 
         // 1단계: 조건에 맞는 퀴즈 조회
         // (프롬프트가 없는 경우: 기존에 생성된 "전반적인 내용" 퀴즈들을 최대한 활용)
@@ -138,39 +134,28 @@ public class UserQuizUseCase {
                 targetDifficulty, targetTopic, quizCount);
 
         // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
+        // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
-            // Redisson Distributed Lock 도입
             String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
-            RLock lock = redissonClient.getLock(lockKey);
 
             try {
-                // 3초 대기, 60초 락 점유 (LLM 응답이 늦어질 수 있으므로 넉넉하게 잡음)
-                if (lock.tryLock(3, 60, TimeUnit.SECONDS)) {
-                    try {
-                        // Double-Check: 락 획득 후 다시 한 번 개수 확인 (다른 스레드가 이미 생성했을 수도 있음)
-                        priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                priorityQuizzes = distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
+                    // Double-Check: 락 획득 후 다시 한 번 개수 확인
+                    List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                            targetDifficulty, targetTopic, quizCount);
+
+                    if (currentQuizzes.size() < quizCount) {
+                        int remainingCount = quizCount - currentQuizzes.size();
+                        quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
+
+                        // 재생성 후 최종 조회
+                        return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
                                 targetDifficulty, targetTopic, quizCount);
-
-                        if (priorityQuizzes.size() < quizCount) {
-                            int remainingCount = quizCount - priorityQuizzes.size();
-                            quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
-
-                            // 재생성 후 최종 조회
-                            priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                                    targetDifficulty, targetTopic, quizCount);
-                        }
-                    } finally {
-                        if (lock.isLocked() && lock.isHeldByCurrentThread()) {
-                            lock.unlock();
-                        }
                     }
-                } else {
-                    // 락 획득 실패 시 (Timeout) -> 기존 조회된 것만 반환하거나 예외처리
-                    // 여기서는 최대한 생성된 만큼만 반환
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+                    return currentQuizzes;
+                });
+            } catch (BaseException e) {
+                // 락 획득 실패 시 (Timeout) -> 기존 조회된 것만 반환 (예외 무시)
             }
         }
 
