@@ -149,27 +149,27 @@ public class CategoryDocumentUseCase {
     private CategoryDocument createNewDailyDocument(Goal goal) {
         String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
 
-        try {
-            return distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
-                // Double-Check inside Lock
-                if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                    return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                            .findFirst()
-                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-                }
-                return createDocumentInternal(goal);
-            });
-        } catch (BaseException e) {
-            // lock 실패 시 재조회 시도
+        // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
+        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+            // Double-Check inside Lock
+            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                        .findFirst()
+                        .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+            }
+            return createDocumentInternal(goal);
+        }).orElseGet(() -> {
+            // 락 획득 실패 (Timeout 30s) -> 재조회 시도
             if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
                 return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
                         .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
                         .findFirst()
                         .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
             }
-            throw e;
-        }
+            // 30초나 기다렸는데도 문서가 없고 락도 못 얻음 -> 서버 에러
+            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+        });
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {

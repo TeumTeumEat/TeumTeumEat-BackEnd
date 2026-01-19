@@ -19,7 +19,6 @@ import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 
-import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import lombok.RequiredArgsConstructor;
@@ -134,29 +133,24 @@ public class UserQuizUseCase {
                 targetDifficulty, targetTopic, quizCount);
 
         // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
-        // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
             String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
 
-            try {
-                priorityQuizzes = distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
-                    // Double-Check: 락 획득 후 다시 한 번 개수 확인
-                    List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+            priorityQuizzes = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+                // Double-Check: 락 획득 후 다시 한 번 개수 확인
+                List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                        targetDifficulty, targetTopic, quizCount);
+
+                if (currentQuizzes.size() < quizCount) {
+                    int remainingCount = quizCount - currentQuizzes.size();
+                    quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
+
+                    // 재생성 후 최종 조회
+                    return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
                             targetDifficulty, targetTopic, quizCount);
-
-                    if (currentQuizzes.size() < quizCount) {
-                        int remainingCount = quizCount - currentQuizzes.size();
-                        quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
-
-                        // 재생성 후 최종 조회
-                        return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                                targetDifficulty, targetTopic, quizCount);
-                    }
-                    return currentQuizzes;
-                });
-            } catch (BaseException e) {
-                // 락 획득 실패 시 (Timeout) -> 기존 조회된 것만 반환 (예외 무시)
-            }
+                }
+                return currentQuizzes;
+            }).orElse(priorityQuizzes);
         }
 
         // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족
