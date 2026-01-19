@@ -273,7 +273,7 @@ public class QuizUseCase {
                 return 5;
             if (usageTime <= 10)
                 return 7;
-            return 10;
+
         } catch (Exception e) {
             return 10; // 유저 조회 실패 등 예외 시 기본값
         }

@@ -16,12 +16,14 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class CategoryDocumentUseCase {
     private final UserQuizService userQuizService;
     private final GoalService goalService;
     private final LLMService llmService;
+    private final RedissonClient redissonClient;
 
     @Transactional
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
@@ -86,14 +89,12 @@ public class CategoryDocumentUseCase {
 
         // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
         if (!hasSolvedToday && !hasTodayDocument) {
-            if (!categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                try {
-                    createDocumentInternal(goal);
-                } catch (DataIntegrityViolationException e) {
-                    // 이미 생성된 경우 무시하고 조회 진행
-                }
-                documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
+            try {
+                createNewDailyDocument(goal);
+            } catch (Exception e) {
+                // 이미 생성되었거나 락 획득 실패 등은 무시하고 조회 진행
             }
+            documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
         }
 
         return documents.stream()
@@ -146,17 +147,39 @@ public class CategoryDocumentUseCase {
     }
 
     private CategoryDocument createNewDailyDocument(Goal goal) {
-        if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-            throw new BaseException(CommonResponseCode.NOT_FOUND);
-        }
+        String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
+        RLock lock = redissonClient.getLock(lockKey);
+
         try {
-            return createDocumentInternal(goal);
-        } catch (DataIntegrityViolationException e) {
-            // 동시성 이슈 등으로 이미 생성된 경우, 기존 문서 반환
-            return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                    .findFirst()
-                    .orElseThrow(() -> e);
+            // 3초 대기, 60초 락 점유
+            if (lock.tryLock(3, 60, TimeUnit.SECONDS)) {
+                try {
+                    // Double-Check inside Lock
+                    if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                        return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                                .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                                .findFirst()
+                                .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                    }
+                    return createDocumentInternal(goal);
+                } finally {
+                    if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+                        lock.unlock();
+                    }
+                }
+            } else {
+                // 락 획득 실패 (Timeout) -> 다른 스레드가 생성 중일 것이므로 재조회
+                if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                    return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                            .findFirst()
+                            .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
+                }
+                throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
 
