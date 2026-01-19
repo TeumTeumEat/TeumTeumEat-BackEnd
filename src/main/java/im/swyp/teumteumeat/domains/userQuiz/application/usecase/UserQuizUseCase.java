@@ -22,6 +22,8 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -79,7 +81,7 @@ public class UserQuizUseCase {
                 .build();
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public List<QuizSetResponse> getQuizzesForSolving(
             Long documentId, Long userId, GoalType documentType) {
         // 이동시간 기반 문제 수 계산
@@ -119,7 +121,7 @@ public class UserQuizUseCase {
 
     private List<Quiz> getPrioritizedQuizzes(Long documentId, Long userId, int quizCount) {
 
-    // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
+        // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
         CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
         Goal goal = goalService.findLatestGoalWithCategory(userId, document.getCategory().getId());
 
