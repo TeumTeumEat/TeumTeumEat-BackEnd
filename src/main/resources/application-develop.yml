@@ -1,0 +1,24 @@
+# application-develop.yml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  datasource:
+    username: ${DEV_DB_USERNAME}
+    password: ${DEV_DB_PASSWORD}
+    url: ${DEV_DB_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${DEV_REDIS_HOST}
+      port: ${DEV_REDIS_PORT}
+
+swagger:
+  server-url: ${DEV_SWAGGER_SERVER_URL}
+
+frontend:
+  base-url: ${DEV_BASE_URL}
+  main-page: ${MAIN_PAGE}
+  login-fail-page: ${LOGIN_FAIL_PAGE}
+  local-url: ${LOCAL_URL}
+  local-secure-url: ${LOCAL_SECURE_URL}

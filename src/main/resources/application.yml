@@ -1,0 +1,166 @@
+spring:
+  application:
+    name: TeumTeumEat
+  profiles:
+    active: local
+  jpa:
+    open-in-view: false
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            admin-key: ${KAKAO_ADMIN_KEY}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            scope:
+              - profile_nickname
+              - account_email
+            client-name: kakao
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+          apple:
+            client-id: ${APPLE_CLIENT_ID}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/apple"
+            client-authentication-method: client_secret_post
+            scope:
+              - name
+              - email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+            jwk-set-uri: https://kauth.kakao.com/.well-known/jwks.json
+          google:
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+          apple:
+            authorization-uri: https://appleid.apple.com/auth/authorize
+            token-uri: https://appleid.apple.com/auth/token
+            user-info-uri: https://appleid.apple.com/auth/userinfo
+            jwk-set-uri: https://appleid.apple.com/auth/keys
+            user-name-attribute: sub
+  apple:
+    team-id: ${APPLE_TEAM_ID}
+    client-id: ${APPLE_CLIENT_ID}
+    key-id: ${APPLE_KEY_ID}
+    key-path: ${APPLE_KEY_PATH}
+  # LLM
+  ai:
+    openai:
+      base-url: https://api.openai.com/v1
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-5-mini
+          temperature: 0.7 # 창의성 조절 (0.0 ~ 1.0)
+
+oauth2:
+  client:
+    provider:
+      apple:
+        jwks-uri: https://appleid.apple.com
+        secret: ${APPLE_CLIENT_ID}
+        issuer: https://appleid.apple.com
+      google:
+        jwks-uri: https://www.googleapis.com
+        secret: ${GOOGLE_CLIENT_ID}
+        client-secret: ${GOOGLE_CLIENT_SECRET}
+        issuer: https://accounts.google.com
+      kakao:
+        jwks-uri: https://kauth.kakao.com
+        secret: ${KAKAO_SECRET}
+        issuer: https://kauth.kakao.com
+
+# JWT
+jwt:
+  secret: ${JWT_SECRET}
+  access-token:
+    expiration-time: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME}
+  refresh-token:
+    expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
+    reissue-limit-days: ${JWT_REFRESH_TOKEN_REISSUE_LIMIT_DAYS}
+
+# 프론트 임의 controller 내 url
+
+rest-client:
+  connect-timeout: 5
+  read-timeout: 60
+
+infra:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+  fcm:
+    key-path: file:configs/firebaseKey.json
+
+auth:
+  internal-token: ${AWS_LAMBDA_AUTH_TOKEN}
+
+app:
+  security:
+    encryption-key: ${APP_ENCRYPTION_KEY}
+
+server:
+  forward-headers-strategy: native
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never
+    include-message: never
+
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health
+    jmx:
+      exposure:
+        exclude: "*"
+  server:
+    port: 9292
+    ssl:
+      enabled: false
+
+notification:
+  streak-threshold: 3
+  streak-message-ratio: 50
+  default-messages:
+    - "{name}님, 오늘의 냠냠지식이 배달됐어요! 🍪 얼른 냠냠잇에게 간식을 먹여주세요"
+    - "지금 숏츠 보고 있니…? 👀 딱 5분만 투자해서 {name}님의 지식을 채워보세요!"
+    - "출퇴근길 심심하죠? 가볍게 퀴즈 한 판 어때요? ✍️"
+    - "배고픈 냠냠잇이 {name}님을 기다려요! 😢 얼른 퀴즈 풀고 간식 주러 오실래요?"
+  random-streak-messages:
+    - "벌써 {streak}일째! 🔥 오늘도 틈틈잇 먹고 연속 불꽃을 지켜주세요!"
+    - "{name}님, {streak}일 연속 학습 중! 🏆 오늘의 간식까지 먹으면 기록 갱신이에요!"
+    - "갓생 살기 참 쉽다! {streak}일째 완주 중!✨"
+    - "지금 포기하기엔 너무 아까운 틈틈잇 {streak}일 기록! ❤️‍🔥 딱 5분만 투자해 볼까요?"
+  fixed-streak-messages:
+    - message: "벌써 5일! 7연속 스탬프까지 얼마 안남았어요! 🏁"
+      date: 5
+    - message: "대단해요! 일주일째 틈틈잇 중🔥🔥🔥"
+      date: 7
+    - message: "이제 완벽한 루틴이네요 18일 연속! ✨ 3주 연속 틈틈잇과 함께 갓생 살자!"
+      date: 18
+    - message: "전설의 4주 연속 스탬프가 눈앞에! 🏆 25일간의 틈틈잇 대기록 잊지 마세요!"
+      date: 25
