@@ -49,3 +49,5 @@ test_output*.txt
 
 ### Firebase Key ###
 firebaseKey.json
+
+.env
