@@ -41,8 +41,6 @@ jobs:
         run: |
           mkdir -p configs/
           
-          echo "${{ secrets.APPLICATION_SECRET }}" | base64 --decode > configs/application.yml
-          echo "${{ secrets.APPLICATION_SECRET_PROFILE }}" | base64 --decode > configs/application-${{ vars.SPRING_PROFILE }}.yml
           echo "${{ secrets.ENV }}" | base64 --decode > configs/.env
           echo "${{ secrets.APPLE_P8 }}" | base64 --decode > configs/AuthKey_Q3BP7MWHVD.p8
           echo "${{ secrets.FIREBASE_KEY }}" | base64 --decode > configs/firebaseKey.json
