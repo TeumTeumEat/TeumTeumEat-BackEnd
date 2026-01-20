@@ -18,6 +18,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -37,7 +38,7 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
 
@@ -51,7 +52,7 @@ public class CategoryDocumentUseCase {
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
 
@@ -109,7 +110,7 @@ public class CategoryDocumentUseCase {
     }
 
     private Goal getValidGoal(Long userId, Long categoryId) {
-        Goal goal = userService.getUserById(userId).getCurrentGoal();
+        Goal goal = userService.getUserWithCurrentGoal(userId).getCurrentGoal();
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
             throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
@@ -149,27 +150,27 @@ public class CategoryDocumentUseCase {
     private CategoryDocument createNewDailyDocument(Goal goal) {
         String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
 
-        try {
-            return distributedLockFacade.executeWithLock(lockKey, 3, 60, TimeUnit.SECONDS, () -> {
-                // Double-Check inside Lock
-                if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                    return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                            .findFirst()
-                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-                }
-                return createDocumentInternal(goal);
-            });
-        } catch (BaseException e) {
-            // lock 실패 시 재조회 시도
+        // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
+        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+            // 락 내부에서 이중 체크 (Double-Check)
+            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                        .findFirst()
+                        .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+            }
+            return createDocumentInternal(goal);
+        }).orElseGet(() -> {
+            // 락 획득 실패 (Timeout 30s) -> 재조회 시도
             if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
                 return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
                         .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
                         .findFirst()
                         .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
             }
-            throw e;
-        }
+            // 30초나 기다렸는데도 문서가 없고 락도 못 얻음 -> 서버 에러
+            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+        });
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {

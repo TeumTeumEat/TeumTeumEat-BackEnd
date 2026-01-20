@@ -8,6 +8,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -40,6 +41,34 @@ public class DistributedLockFacade {
 
             try {
                 return action.get();
+            } finally {
+                if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Lock acquisition interrupted: {}", lockKey, e);
+            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * 분산 락을 시도하고, 획득 성공 시 작업을 수행
+     * 락 획득 실패(Timeout) 시 예외를 던지지 않고 빈 Optional을 반환
+     */
+    public <T> Optional<T> tryExecuteWithLock(String lockKey, long waitTime, long leaseTime,
+            TimeUnit timeUnit, Supplier<T> action) {
+        RLock lock = redissonClient.getLock(lockKey);
+
+        try {
+            if (!lock.tryLock(waitTime, leaseTime, timeUnit)) {
+                log.warn("Failed to acquire lock: {}", lockKey);
+                return Optional.empty();
+            }
+
+            try {
+                return Optional.ofNullable(action.get());
             } finally {
                 if (lock.isLocked() && lock.isHeldByCurrentThread()) {
                     lock.unlock();

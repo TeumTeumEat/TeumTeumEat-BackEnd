@@ -8,6 +8,11 @@ import java.util.Optional;
 
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findAllByGoalId(Long goalId);
+
     void deleteAllByGoalId(Long goalId);
+
     Optional<Document> findByFileKey(String fileKey);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "goal")
+    Optional<Document> findWithGoalById(Long id);
 }
