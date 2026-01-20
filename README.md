@@ -83,6 +83,8 @@
         - Run/Debug Configuration -> Edit Configuration -> Enable EnvFile, + 버튼 클릭하여 .env 파일을 추가합니다.
 - 관련 파일 : .env.example, application.yml
 
+<br/>
+
 ## 🚀 CI/CD
 - 환경 변수
   - Github Secret에 작성한 .env 파일을 Base64로 인코딩하여 ENV 변수로 등록합니다. (cat .env | base64 또는 [base64encode.org](https://www.base64encode.org/)  활용 )
@@ -90,6 +92,8 @@
   - 배포 서버의 HOST, PORT, USERNAME, PASSWORD(선택), KEY(선택), PASSPHRASE(선택), PROJECT_PATH 값을 입력합니다.
   - develop 브랜치에 코드가 Push되면 CI/CD가 진행됩니다.
 - 관련 파일 : ci.yml, cd.yml, docker-compose.yml, Dockerfile
+
+<br/>
 
 ## 👥 틈틈잇을 만든 사람들
 | PM 김주영 | BE 김지민 | BE 이효재 |
