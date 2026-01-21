@@ -10,6 +10,8 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./configs:/configs
+    env_file:
+      - .env
     environment:
       - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}
@@ -25,6 +27,8 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./configs:/configs
+    env_file:
+      - .env
     environment:
       - SPRING_CONFIG_ADDITIONAL-LOCATION=file:/configs/
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE:-local}

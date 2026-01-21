@@ -42,10 +42,10 @@ out/
 ### Test outputs ###
 test_output*.txt
 
-*.yml
-
 ### Apple Key ###
 *.p8
 
 ### Firebase Key ###
 firebaseKey.json
+
+.env
