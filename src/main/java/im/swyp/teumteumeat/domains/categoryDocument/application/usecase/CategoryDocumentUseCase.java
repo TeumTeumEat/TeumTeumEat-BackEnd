@@ -5,7 +5,6 @@ import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.Cat
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
-import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -34,7 +33,6 @@ public class CategoryDocumentUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final UserService userService;
     private final UserQuizService userQuizService;
-    private final GoalService goalService;
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
 
