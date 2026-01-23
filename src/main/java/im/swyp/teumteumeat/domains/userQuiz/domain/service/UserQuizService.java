@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -28,7 +29,7 @@ public class UserQuizService {
 
     @Transactional
     public void saveUserQuiz(UserQuiz userQuiz) {
-        userQuizRepository.save(userQuiz);
+        userQuizRepository.saveAndFlush(userQuiz);
     }
 
     public List<UserQuiz> getQuizzesByDateRange(Long userId, LocalDateTime start, LocalDateTime end) {
@@ -49,7 +50,7 @@ public class UserQuizService {
     /**
      * 소비된 CategoryDocument ID 목록 반환 (냠냠지식)
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Long> getConsumedDocumentIds(Long userId) {
         return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
     }
@@ -57,7 +58,7 @@ public class UserQuizService {
     /**
      * 소비된 Document ID 목록 반환 (PDF 요약)
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Long> getConsumedPdfDocumentIds(Long userId) {
         return userQuizRepository.findConsumedPdfDocumentIdsByUserId(userId);
     }
