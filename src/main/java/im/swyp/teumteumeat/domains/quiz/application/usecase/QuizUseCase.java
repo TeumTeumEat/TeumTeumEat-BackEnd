@@ -18,6 +18,7 @@ import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
@@ -101,7 +102,9 @@ public class QuizUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        if (userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
+        UserEntity user = userService.getUserById(userId);
+        if (user.getRole() != Role.ADMIN
+                && userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
@@ -244,7 +247,8 @@ public class QuizUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goal.getId())) {
+        UserEntity user = userService.getUserById(userId);
+        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizTodayByGoal(userId, goal.getId())) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,10 @@ public class CategoryDocumentService {
 
     public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
         return categoryDocumentRepository.findAllByGoalId(goalId);
+    }
+
+    public Optional<CategoryDocument> getLatestDocumentByGoalId(Long goalId) {
+        return categoryDocumentRepository.findTopByGoal_IdOrderByCreatedDateDesc(goalId);
     }
 
     public List<CategoryDocument> getCommonDocuments(Long categoryId) {

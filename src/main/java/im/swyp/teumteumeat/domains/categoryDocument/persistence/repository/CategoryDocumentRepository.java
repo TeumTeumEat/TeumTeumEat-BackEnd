@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CategoryDocumentRepository extends JpaRepository<CategoryDocument, Long> {
@@ -20,5 +21,7 @@ public interface CategoryDocumentRepository extends JpaRepository<CategoryDocume
     List<CategoryDocument> findAllByCategoryIdAndGoalIsNull(Long categoryId);
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "category", "goal" })
-    java.util.Optional<CategoryDocument> findWithCategoryAndGoalById(Long id);
+    Optional<CategoryDocument> findWithCategoryAndGoalById(Long id);
+
+    Optional<CategoryDocument> findTopByGoal_IdOrderByCreatedDateDesc(Long goalId);
 }

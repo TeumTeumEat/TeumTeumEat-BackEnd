@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
@@ -38,9 +40,17 @@ public class CategoryDocumentUseCase {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserWithCurrentGoal(userId);
+        Goal goal = user.getCurrentGoal();
 
-        if (userQuizService.hasSolvedQuizToday(userId, categoryId)) {
+        if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizToday(userId, categoryId)) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
@@ -53,22 +63,50 @@ public class CategoryDocumentUseCase {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserById(userId);
 
-        boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean realHasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+        boolean hasSolvedToday = !isAdmin && realHasSolvedToday;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        CategoryDocument targetDocument = getNextDocument(goal, userId);
+        CategoryDocument targetDocument;
 
-        if (targetDocument == null) {
-            // 아직 오늘의 요약글이 없고, 오늘 퀴즈도 푼 적 없다면 -> 새로 생성
-            if (!hasSolvedToday) {
-                targetDocument = createNewDailyDocument(goal);
+        if (isAdmin) {
+            // ADMIN 로직: 오늘 생성된 최신 문서를 확인 (DB 직접 조회)
+            CategoryDocument todayDoc = categoryDocumentService.getLatestDocumentByGoalId(goal.getId())
+                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                    .orElse(null);
+
+            if (todayDoc != null) {
+                // 오늘 생성된 게 있다 -> 풀었는지 확인
+                boolean isSolved = userQuizService.getConsumedDocumentIds(userId).contains(todayDoc.getId());
+                if (isSolved) {
+                    // 풀었음 -> 새로 생성 (무한 루프)
+                    targetDocument = createNewDailyDocument(goal);
+                } else {
+                    // 안 풀었음 -> 기존 유지
+                    targetDocument = todayDoc;
+                }
             } else {
-                // 이미 오늘 문제를 풀었으면, 오늘 생성된 문서를 반환 (단순 조회용)
-                targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                        .findFirst()
-                        .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                // 오늘 생성된 게 없음 -> 생성
+                targetDocument = createNewDailyDocument(goal);
+            }
+        } else {
+            // 일반 유저 로직
+            targetDocument = getNextDocument(goal, userId);
+
+            if (targetDocument == null) {
+                // 아직 오늘의 요약글이 없고, 오늘 퀴즈도 푼 적 없다면 -> 새로 생성
+                if (!realHasSolvedToday) {
+                    targetDocument = createNewDailyDocument(goal);
+                } else {
+                    // 이미 오늘 문제를 풀었으면, 오늘 생성된 문서를 반환 (단순 조회용)
+                    targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
+                            .findFirst()
+                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+                }
             }
         }
 
@@ -78,16 +116,18 @@ public class CategoryDocumentUseCase {
     @Transactional
     public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserById(userId);
 
         List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        boolean hasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean realHasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean hasSolvedToday = user.getRole() != Role.ADMIN && realHasSolvedToday;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         boolean hasTodayDocument = !documents.isEmpty() &&
                 documents.get(documents.size() - 1).getCreatedDate().toLocalDate().isEqual(LocalDate.now());
 
         // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
-        if (!hasSolvedToday && !hasTodayDocument) {
+        if (!realHasSolvedToday && !hasTodayDocument) {
             try {
                 createNewDailyDocument(goal);
             } catch (Exception e) {
@@ -150,8 +190,9 @@ public class CategoryDocumentUseCase {
 
         // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
         return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // 락 내부에서 이중 체크 (Double-Check)
-            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
+            // 락 내부에서 이중 체크 (Double-Check) - ADMIN은 예외 (무조건 생성)
+            boolean isAdmin = goal.getUser().getRole() == Role.ADMIN;
+            if (!isAdmin && categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
                 return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
                         .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
                         .findFirst()
