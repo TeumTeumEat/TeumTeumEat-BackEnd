@@ -46,8 +46,20 @@ public class UserQuizService {
         return userQuizRepository.findAllByUserIdOrderByCreatedDateDesc(userId);
     }
 
+    /**
+     * 소비된 CategoryDocument ID 목록 반환 (냠냠지식)
+     */
+    @Transactional
     public List<Long> getConsumedDocumentIds(Long userId) {
         return userQuizRepository.findConsumedDocumentIdsByUserId(userId);
+    }
+
+    /**
+     * 소비된 Document ID 목록 반환 (PDF 요약)
+     */
+    @Transactional
+    public List<Long> getConsumedPdfDocumentIds(Long userId) {
+        return userQuizRepository.findConsumedPdfDocumentIdsByUserId(userId);
     }
 
     public boolean hasSolvedQuizToday(Long userId, Long categoryId) {
@@ -91,6 +103,7 @@ public class UserQuizService {
 
     /**
      * 유저의 스트릭 일 수 반환
+     * 
      * @param userId 유저 ID
      * @return 스트릭 수
      * @see #calculateStreaksForUsers
@@ -102,6 +115,7 @@ public class UserQuizService {
 
     /**
      * 유저별로 스트릭 일 수를 계산하여 반환
+     * 
      * @param userIds 조회 대상 유저 목록
      * @return 유저별 스트릭 일 수
      */
@@ -111,8 +125,7 @@ public class UserQuizService {
         Map<Long, List<LocalDate>> userDaysMap = userStudyDates.stream()
                 .collect(Collectors.groupingBy(
                         UserStudyDateMapping::getUserId,
-                        Collectors.mapping(UserStudyDateMapping::getStudyDate, Collectors.toList())
-                ));
+                        Collectors.mapping(UserStudyDateMapping::getStudyDate, Collectors.toList())));
 
         // 유저별 스트릭 계산
         Map<Long, Integer> streakMap = new HashMap<>();
@@ -123,9 +136,10 @@ public class UserQuizService {
         return streakMap;
     }
 
-    //* HELPER METHOD *//
+    // * HELPER METHOD *//
     /**
      * 스트릭 일 수 계산
+     * 
      * @param days 날짜 목록
      * @return 스트릭 일 수
      */
