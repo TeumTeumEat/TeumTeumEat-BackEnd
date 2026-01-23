@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepos
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
@@ -44,10 +45,16 @@ public class DocumentSummaryService {
             // 락 내부에서 이중 체크 (Double-Check)
             LocalDateTime start = LocalDate.now().atStartOfDay();
             LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
-            Optional<DocumentSummary> existingSummary = documentSummaryRepository
-                    .findByDocumentIdAndCreatedDateBetween(documentId, start, end);
-            if (existingSummary.isPresent()) {
-                return existingSummary.get();
+
+            boolean isAdmin = fetchedDocument.getUser()
+                    .getRole() == Role.ADMIN;
+
+            if (!isAdmin) {
+                Optional<DocumentSummary> existingSummary = documentSummaryRepository
+                        .findByDocumentIdAndCreatedDateBetween(documentId, start, end);
+                if (existingSummary.isPresent()) {
+                    return existingSummary.get();
+                }
             }
 
             String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),

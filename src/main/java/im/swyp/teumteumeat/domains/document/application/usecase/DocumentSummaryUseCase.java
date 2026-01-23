@@ -16,6 +16,9 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ import java.util.Optional;
 public class DocumentSummaryUseCase {
 
     private final GoalService goalService;
+    private final UserService userService;
     private final UserQuizService userQuizService;
     private final DocumentService documentService;
     private final DocumentSummaryRepository documentSummaryRepository;
@@ -45,7 +49,6 @@ public class DocumentSummaryUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        boolean hasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         Document document = documentService.getDocumentById(documentId);
@@ -60,20 +63,50 @@ public class DocumentSummaryUseCase {
         boolean isCreatedToday = latestSummaryOpt.map(s -> s.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
                 .orElse(false);
 
+        UserEntity user = userService.getUserById(userId);
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+
+        boolean realHasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
+        boolean hasSolvedToday = !isAdmin && realHasSolvedToday;
+
+        boolean isSolvedThisDocument = userQuizService.getConsumedDocumentIds(userId).contains(documentId);
+
         DocumentSummary summary;
-        if (!hasSolvedToday && !isCreatedToday) {
-            // 동기
-            summary = documentSummaryService.generateSummary(document);
-            quizUseCase.createQuizzesForPdfDocument(document, summary);
-        } else {
-            summary = latestSummaryOpt.orElse(null);
-            // 요약이 존재하면 퀴즈 존재 여부 확인 후 생성 (Lazy Generation)
-            if (summary != null) {
-                quizUseCase.ensureQuizzesExist(document, summary);
-            } else {
-                // 요약이 없으면 생성
+
+        if (isAdmin) {
+            // ADMIN 로직: 이 문서를 풀었으면 무조건 재생성, 안 풀었으면 기존 요약 확인
+            if (isSolvedThisDocument) {
                 summary = documentSummaryService.generateSummary(document);
                 quizUseCase.createQuizzesForPdfDocument(document, summary);
+            } else {
+                // 안 풀었음 -> 기존 요약 있나?
+                // (ADMIN은 isCreatedToday 상관없이, 단순히 '있으면' 쓴다. 없으면 만든다.)
+                summary = latestSummaryOpt.orElseGet(() -> {
+                    DocumentSummary newSummary = documentSummaryService.generateSummary(document);
+                    quizUseCase.createQuizzesForPdfDocument(document, newSummary);
+                    return newSummary;
+                });
+                // 퀴즈 존재 보장
+                if (latestSummaryOpt.isPresent()) {
+                    quizUseCase.ensureQuizzesExist(document, summary);
+                }
+            }
+        } else {
+            // 일반 유저 로직
+            if (!hasSolvedToday && !isCreatedToday) {
+                // 동기
+                summary = documentSummaryService.generateSummary(document);
+                quizUseCase.createQuizzesForPdfDocument(document, summary);
+            } else {
+                summary = latestSummaryOpt.orElse(null);
+                // 요약이 존재하면 퀴즈 존재 여부 확인 후 생성 (Lazy Generation)
+                if (summary != null) {
+                    quizUseCase.ensureQuizzesExist(document, summary);
+                } else {
+                    // 요약이 없으면 생성
+                    summary = documentSummaryService.generateSummary(document);
+                    quizUseCase.createQuizzesForPdfDocument(document, summary);
+                }
             }
         }
 
@@ -91,8 +124,9 @@ public class DocumentSummaryUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        // 2. 요약글 생성 1회 제한 확인 (오늘 이미 학습했는지)
-        if (userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
+        // 2. 요약글 생성 1회 제한 확인 (오늘 이미 학습했는지) - ADMIN 제외
+        UserEntity user = userService.getUserById(userId);
+        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
