@@ -69,7 +69,7 @@ public class DocumentSummaryUseCase {
         boolean realHasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
         boolean hasSolvedToday = !isAdmin && realHasSolvedToday;
 
-        boolean isSolvedThisDocument = userQuizService.getConsumedDocumentIds(userId).contains(documentId);
+        boolean isSolvedThisDocument = userQuizService.getConsumedPdfDocumentIds(userId).contains(documentId);
 
         DocumentSummary summary;
 
