@@ -20,6 +20,7 @@ import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.Token;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Slf4j
@@ -94,8 +95,9 @@ public class OAuth2UseCase {
                 .build();
     }
 
-    public void logOut(Long userId, String accessToken, String refreshToken) {
+    @Transactional
+    public void logOut(Long userId, String refreshToken) {
         userService.resetQuizGuide(userId);
-        jwtProvider.removeAccessTokenAndRefreshToken(userId, accessToken, refreshToken);
+        jwtProvider.removeRefreshToken(userId, refreshToken);
     }
 }

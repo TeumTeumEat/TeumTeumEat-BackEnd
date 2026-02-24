@@ -25,6 +25,7 @@ import java.util.List;
 public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
+    private final im.swyp.teumteumeat.domains.user.domain.service.UserService userService;
 
     // 유저가 퀴즈를 푸는 기능
     @Override
@@ -74,6 +75,13 @@ public class UserQuizController implements UserQuizApi {
         boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
         boolean hasGeneratedContent = userQuizUseCase.hasCreatedDocumentToday(user.getUserId());
         boolean isQuizGuideSeen = userQuizUseCase.isQuizGuideSeen(user.getUserId());
+
+        im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity userEntity = userService
+                .getUserById(user.getUserId());
+        if (userEntity.getRole() == im.swyp.teumteumeat.domains.user.domain.constant.Role.ADMIN) {
+            hasSolvedToday = false;
+            hasGeneratedContent = false;
+        }
 
         UserQuizStatusResponse response = UserQuizStatusResponse.builder()
                 .hasSolvedToday(hasSolvedToday)

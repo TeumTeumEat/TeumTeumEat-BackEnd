@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,10 @@ public class CategoryDocumentService {
 
     public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
         return categoryDocumentRepository.findAllByGoalId(goalId);
+    }
+
+    public Optional<CategoryDocument> getLatestDocumentByGoalId(Long goalId) {
+        return categoryDocumentRepository.findTopByGoal_IdOrderByCreatedDateDesc(goalId);
     }
 
     public List<CategoryDocument> getCommonDocuments(Long categoryId) {
@@ -43,6 +48,11 @@ public class CategoryDocumentService {
 
     public CategoryDocument getDocumentById(Long documentId) {
         return categoryDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
+    }
+
+    public CategoryDocument getDocumentWithCategoryById(Long documentId) {
+        return categoryDocumentRepository.findWithCategoryAndGoalById(documentId)
                 .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
     }
 

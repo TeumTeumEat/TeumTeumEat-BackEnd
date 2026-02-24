@@ -9,13 +9,13 @@ import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @UseCase
 @RequiredArgsConstructor
 @Slf4j
+@Deprecated
 public class QuizSeederUseCase {
 
     private final CategoryRepository categoryRepository;
@@ -24,7 +24,6 @@ public class QuizSeederUseCase {
     private final LLMService llmService;
     private final QuizUseCase quizUseCase;
 
-    @Transactional
     public int seedDocuments(Long startId, Long endId, int count) {
         log.info("문서 시딩 시작 - 카테고리 ID: {} ~ {}, 카테고리 당 문서 수: {}", startId, endId, count);
         int successCount = 0;
@@ -40,8 +39,12 @@ public class QuizSeederUseCase {
 
                 for (int i = 0; i < count; i++) {
                     String topic = "전반적인 " + category.getName() + " 개념 Part " + (i + 1);
+                    String path = category.getPath();
+                    String description = category.getDescription() != null ? category.getDescription()
+                            : path + " " + category.getName();
+
                     String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
-                            topic);
+                            path, description, topic);
                     String summary = llmService.generateContent(llmPrompt);
                     summary = truncateContentSafe(summary);
 
@@ -63,7 +66,6 @@ public class QuizSeederUseCase {
         return successCount;
     }
 
-    @Transactional
     public int seedQuizzes(Long startId, Long endId) {
         log.info("퀴즈 시딩 시작 - 카테고리 ID: {} ~ {}", startId, endId);
         int successCount = 0;

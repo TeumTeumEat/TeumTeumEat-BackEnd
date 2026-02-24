@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.user.application.usecase;
 
-import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
-import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.refreshtoken.domain.service.RefreshTokenService;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
@@ -30,6 +29,7 @@ public class UserWithdrawalUseCase {
     private final AppleUtil appleUtil;
     private final RestTemplate restTemplate;
     private final UserQuizService userQuizService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${spring.security.oauth2.client.registration.kakao.admin-key:}")
     private String kakaoAdminKey;
@@ -59,6 +59,7 @@ public class UserWithdrawalUseCase {
 
         // 명시적으로 삭제
         userQuizService.deleteAllByUserId(userId);
+        refreshTokenService.deleteAllRefreshToken(userId);
 
         userService.deleteUser(user);
         log.info("User {} deleted.", userId);

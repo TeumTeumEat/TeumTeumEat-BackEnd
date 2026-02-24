@@ -124,7 +124,7 @@ public class HistoryLibraryUseCase {
                 .replaceAll("\\n+", " ") // 줄바꿈을 공백으로 변경
                 .trim();
 
-        return plainText.length() > 50 ? plainText.substring(0, 50) + "..." : plainText;
+        return plainText.length() > 100 ? plainText.substring(0, 100) + "..." : plainText;
     }
 
     @Transactional(readOnly = true)

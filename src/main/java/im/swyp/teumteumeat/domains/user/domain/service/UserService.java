@@ -26,6 +26,11 @@ public class UserService {
         return getOrThrow(userId);
     }
 
+    public UserEntity getUserWithCurrentGoal(Long userId) {
+        return userRepository.findWithCurrentGoalById(userId)
+                .orElseThrow(() -> new BaseException(UserResponseCode.NOT_FOUND_USER));
+    }
+
     @Transactional(readOnly = true)
     public List<UserEntity> getAllWithTokensByCommuteTime(LocalTime now, LocalTime minuteEnd) {
         List<UserEntity> users = new ArrayList<>();

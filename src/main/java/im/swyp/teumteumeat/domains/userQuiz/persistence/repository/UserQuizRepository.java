@@ -19,6 +19,9 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
         @Query("SELECT h.quiz.categoryDocument.id FROM UserQuiz h WHERE h.user.id = :userId")
         List<Long> findConsumedDocumentIdsByUserId(@Param("userId") Long userId);
 
+        @Query("SELECT h.quiz.document.id FROM UserQuiz h WHERE h.user.id = :userId")
+        List<Long> findConsumedPdfDocumentIdsByUserId(@Param("userId") Long userId);
+
         List<UserQuiz> findAllByUserIdAndCreatedDateBetween(Long userId, LocalDateTime start,
                         LocalDateTime end);
 
@@ -45,9 +48,9 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
         List<UserEntity> findDistinctUsersByQuizDate(LocalDateTime start, LocalDateTime end);
 
         @Query("SELECT u.user.id AS userId, CAST(u.createdDate AS date) AS studyDate " +
-                "FROM UserQuiz u " +
-                "WHERE u.user.id IN :userIds " +
-                "GROUP BY u.user.id, CAST(u.createdDate AS date) " +
-                "ORDER BY u.user.id, CAST(u.createdDate AS date) DESC")
+                        "FROM UserQuiz u " +
+                        "WHERE u.user.id IN :userIds " +
+                        "GROUP BY u.user.id, CAST(u.createdDate AS date) " +
+                        "ORDER BY u.user.id, CAST(u.createdDate AS date) DESC")
         List<UserStudyDateMapping> findUserStudyDates(List<Long> userIds);
 }
