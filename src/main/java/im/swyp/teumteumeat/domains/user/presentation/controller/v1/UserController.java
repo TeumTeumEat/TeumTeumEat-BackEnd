@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.user.presentation.controller;
+package im.swyp.teumteumeat.domains.user.presentation.controller.v1;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
@@ -6,7 +6,7 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequ
 import im.swyp.teumteumeat.domains.user.application.dto.response.*;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
-import im.swyp.teumteumeat.domains.user.presentation.api.UserApi;
+import im.swyp.teumteumeat.domains.user.presentation.api.v1.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -102,9 +102,9 @@ public class UserController implements UserApi {
 
     @Override
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<TokenResponse>> tokenReissue(@RequestBody ReissueRequest request) {
-        TokenResponse tokenResponse = jwtProvider.reissueTokens(request.refreshToken());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, tokenResponse));
+    public ResponseEntity<ApiResponse<String>> tokenReissue(@RequestBody ReissueRequest request) {
+        String reissuedAccessToken = jwtProvider.reissueTokens(request.refreshToken()).accessToken();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, reissuedAccessToken));
     }
 
     @Override
