@@ -66,7 +66,7 @@ public interface UserApi {
         ResponseEntity<ApiResponse<AccountInfoResponse>> getAccountInfo(
                         @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "토큰 재발급", description = "refreshToken을 이용해 accessToken을 재발급합니다.<br>")
+        @Operation(summary = "토큰 재발급", description = "refreshToken을 이용해 accessToken을 재발급합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = String.class, description = "재발급 성공"))
         ResponseEntity<ApiResponse<String>> tokenReissue(
                         @RequestBody ReissueRequest request);
