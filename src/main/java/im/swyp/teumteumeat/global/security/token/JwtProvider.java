@@ -120,10 +120,13 @@ public class JwtProvider {
         String newRefreshToken = null;
         Date expiration = claims.getExpiration();
 
-        Instant expirationInstant = expiration.toInstant();
+        Instant expirationInstant = expiration.toInstant(); // 토큰 만료일
         Instant now = Instant.now();
+        Duration remainingDuration = Duration.between(now, expirationInstant);
+        Duration reissueLimit = Duration.ofDays(jwtProperties.refreshToken().reissueLimitDays());
 
-        if (Duration.between(now, expirationInstant).toDays() <= jwtProperties.refreshToken().reissueLimitDays()) {
+        // 만료일 이하일 경우에 재발급
+        if (remainingDuration.compareTo(reissueLimit) <= 0) {
             newRefreshToken = generateRefreshToken(tokenClaim);
 
             long ttlInSeconds = jwtProperties.refreshToken().expirationTime() / 1000;
