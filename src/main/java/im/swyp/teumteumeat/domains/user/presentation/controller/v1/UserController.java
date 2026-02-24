@@ -1,10 +1,14 @@
 package im.swyp.teumteumeat.domains.user.presentation.controller.v1;
 
+import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
-import im.swyp.teumteumeat.domains.user.application.dto.response.*;
-import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.NameResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.CommuteInfoResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.CompletedResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.UserSettingsResponse;
+import im.swyp.teumteumeat.domains.user.application.dto.response.AccountInfoResponse;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.domains.user.presentation.api.v1.UserApi;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -17,7 +21,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/users")
