@@ -125,7 +125,10 @@ public class JwtProvider {
 
         if (Duration.between(now, expirationInstant).toDays() <= jwtProperties.refreshToken().reissueLimitDays()) {
             newRefreshToken = generateRefreshToken(tokenClaim);
-            //todo 기존 RefreshToken BlackList 등록
+
+            long ttlInSeconds = jwtProperties.refreshToken().expirationTime() / 1000;
+            refreshTokenService.saveRefreshToken(userId, newRefreshToken, ttlInSeconds);
+            refreshTokenService.deleteRefreshToken(userId, refreshToken);
         }
 
         return TokenResponse.builder()
