@@ -112,7 +112,7 @@ public class UserController implements UserApi {
 
     @Override
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<String>> tokenReissue(@RequestBody ReissueRequest request) {
+    public ResponseEntity<ApiResponse<String>> tokenReissue(@RequestBody @Valid ReissueRequest request) {
         String reissuedAccessToken = jwtProvider.reissueTokens(request.refreshToken()).accessToken();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, reissuedAccessToken));
     }

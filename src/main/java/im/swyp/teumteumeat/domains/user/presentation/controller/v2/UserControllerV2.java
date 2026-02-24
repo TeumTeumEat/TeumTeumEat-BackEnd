@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.ReissueRequest;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ public class UserControllerV2 implements UserApiV2 {
 
     @Override
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<TokenResponse>> tokenReissue(@RequestBody ReissueRequest request) {
+    public ResponseEntity<ApiResponse<TokenResponse>> tokenReissue(@RequestBody @Valid ReissueRequest request) {
         TokenResponse tokenResponse = jwtProvider.reissueTokens(request.refreshToken());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, tokenResponse));
     }
