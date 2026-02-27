@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.user.presentation.api;
+package im.swyp.teumteumeat.domains.user.presentation.api.v1;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.CommuteInfoRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;

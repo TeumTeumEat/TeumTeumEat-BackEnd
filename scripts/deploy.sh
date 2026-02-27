@@ -2,7 +2,7 @@
 set -e
 
 # 설정 변수
-DOCKER_COMPOSE_DIR="/home/ubuntu"
+DOCKER_COMPOSE_DIR="${DOCKER_COMPOSE_DIR:-/home/ubuntu}"
 SERVICE_URL_PATH="$DOCKER_COMPOSE_DIR/configs/nginx/service-url.inc"
 MAX_RETRIES=10
 RETRY_INTERVAL=10

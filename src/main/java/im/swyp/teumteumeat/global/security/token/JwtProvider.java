@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 
 import static im.swyp.teumteumeat.global.common.Constants.*;
@@ -92,9 +94,9 @@ public class JwtProvider {
     }
 
     /**
-     * Access Token 재발급
+     * Token 재발급
      */
-    public String reissueAccessToken(String refreshToken) {
+    public TokenResponse reissueTokens(String refreshToken) {
         if (!refreshTokenService.existRefreshToken(refreshToken)) {
             throw new BaseException(AuthResponseCode.INVALID_JWT_TOKEN);
         }
@@ -111,7 +113,31 @@ public class JwtProvider {
                 .role(role)
                 .build();
 
-        return generateAccessToken(tokenClaim);
+        // Access Token 재발급
+        String accessToken = generateAccessToken(tokenClaim);
+
+        // Refresh Token 일정 기간 이하인 경우 재발급
+        String newRefreshToken = null;
+        Date expiration = claims.getExpiration();
+
+        Instant expirationInstant = expiration.toInstant(); // 토큰 만료일
+        Instant now = Instant.now();
+        Duration remainingDuration = Duration.between(now, expirationInstant);
+        Duration reissueLimit = Duration.ofDays(jwtProperties.refreshToken().reissueLimitDays());
+
+        // 만료일 이하일 경우에 재발급
+        if (remainingDuration.compareTo(reissueLimit) <= 0) {
+            newRefreshToken = generateRefreshToken(tokenClaim);
+
+            long ttlInSeconds = jwtProperties.refreshToken().expirationTime() / 1000;
+            refreshTokenService.saveRefreshToken(userId, newRefreshToken, ttlInSeconds);
+            refreshTokenService.deleteRefreshToken(userId, refreshToken);
+        }
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 
     /**

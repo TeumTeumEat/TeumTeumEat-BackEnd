@@ -16,6 +16,7 @@ public record JwtProperties(
 
     @ConfigurationProperties(prefix = "refresh-token")
     public record RefreshTokenProperties(
-            long expirationTime
+            long expirationTime,
+            long reissueLimitDays
     ) { }
 }
