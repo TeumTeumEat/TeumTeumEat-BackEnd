@@ -123,4 +123,8 @@ public class Document extends BaseEntity {
     public boolean isAllPartsCollected() {
         return parts.size() == totalParts;
     }
+
+    public boolean isProcessingCompleted() {
+        return this.status == FileStatus.COMPLETED;
+    }
 }

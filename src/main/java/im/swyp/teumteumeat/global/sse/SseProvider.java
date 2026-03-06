@@ -6,7 +6,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 실시간 알림(SSE)의 생성 및 전송을 담당하는 컴포넌트
@@ -25,9 +27,6 @@ public class SseProvider {
 
     /**
      * 클라이언트와 서버 간의 SSE 연결을 생성하고 리포지토리에 저장
-     *
-     * @param key 연결 고유 Key (예: userId:docId)
-     * @return 생성된 SseEmitter 객체
      */
     public SseEmitter createEmitter(String key) {
         String emitterId = makeTimeIncludeId(key);
@@ -53,9 +52,34 @@ public class SseProvider {
         Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
         emitters.forEach((id, emitter) -> {
             // 재연결을 위한 캐시 저장 (Last-Event-Id 사용)
-            emitterRepository.saveEventCache(id, data);
+            emitterRepository.saveEventCache(id, new SseEvent(eventName, data));
             sendToClient(emitter, id, eventName, data);
         });
+    }
+
+    /**
+     * 재연결 시 캐시에서 찾아 미전송 데이터 전송
+     */
+    public void recoverEvents(String key, String lastEventId) {
+        // 해당 유저의 모든 캐시 조회
+        Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(key);
+
+        // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
+        events.entrySet().stream()
+                .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
+                .forEach(entry -> {
+                    SseEvent sseEvent = (SseEvent) entry.getValue();
+                    sendEvent(entry.getKey(), sseEvent.name(), sseEvent.data());
+                });
+    }
+
+    /**
+     * 인자 목록을 기반으로 고유 Key 생성
+     */
+    public String generateKey(Object... identifiers) {
+        return Arrays.stream(identifiers)
+                .map(String::valueOf)
+                .collect(Collectors.joining(ID_DELIMITER));
     }
 
     /* HELPER METHOD */
@@ -76,4 +100,6 @@ public class SseProvider {
     private String makeTimeIncludeId(String key) {
         return key + ID_DELIMITER + System.currentTimeMillis();
     }
+
+    private record SseEvent(String name, Object data) {}
 }

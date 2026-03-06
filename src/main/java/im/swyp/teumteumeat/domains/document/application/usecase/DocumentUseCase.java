@@ -17,9 +17,12 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.sse.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import javax.annotation.Nullable;
 import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +37,10 @@ public class DocumentUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
+    private final NotificationService notificationService;
+
+    private static final String SSE_EVENT_COMPLETE = "document_processing_complete";
+    private static final String SSE_MSG_COMPLETE = "문서의 텍스트 추출이 완료되었습니다.";
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -83,6 +90,7 @@ public class DocumentUseCase {
             // Summary (요약) (제거: Deadlock 방지 및 Lazy Generation 유도)
             // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
+            sendCompleteNotification(document.getUser().getId(), document.getId());
         }
     }
 
@@ -109,6 +117,7 @@ public class DocumentUseCase {
             // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
+            sendCompleteNotification(document.getUser().getId(), document.getId());
         }
     }
 
@@ -152,5 +161,26 @@ public class DocumentUseCase {
         document.validateOwner(userId);
 
         documentService.deleteDocument(documentId);
+    }
+
+    public SseEmitter subscribe(Long userId, Long documentId, @Nullable String lastEventId) {
+        // 문서 인가
+        documentService.getDocumentById(documentId).validateOwner(userId);
+
+        // SSE 구독
+        SseEmitter emitter = notificationService.subscribe(lastEventId, userId, documentId);
+
+        // 처리가 완료된 경우 즉시 알림 전송
+        if (documentService.isTextProcessingCompleted(documentId)) {
+            sendCompleteNotification(userId, documentId);
+        }
+
+        return emitter;
+    }
+
+    /* HELPER METHOD */
+    private void sendCompleteNotification(Long userId, Long documentId) {
+        String key = notificationService.generateKey(userId, documentId);
+        notificationService.send(key, SSE_EVENT_COMPLETE, SSE_MSG_COMPLETE);
     }
 }

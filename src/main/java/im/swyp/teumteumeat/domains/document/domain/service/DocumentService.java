@@ -45,6 +45,10 @@ public class DocumentService {
                 });
     }
 
+    public Boolean isTextProcessingCompleted(Long documentId) {
+        return getOrThrow(documentId).isProcessingCompleted();
+    }
+
     public void createDocument(Document document) {
         documentRepository.save(document);
     }
