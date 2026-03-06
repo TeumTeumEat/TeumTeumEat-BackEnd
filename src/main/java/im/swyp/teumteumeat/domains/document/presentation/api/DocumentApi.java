@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface DocumentApi {
 
         @Operation(summary = "문서 등록", description = "해당 목표에 문서를 등록합니다. (반환된 documentId를 통해 요약/퀴즈 조회를 진행)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "등록 성공"))
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CreatedResponse.class, description = "등록 성공"))
         ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
                         @PathVariable Long goalId,
                         @RequestBody @Valid DocumentCreateRequest request,
