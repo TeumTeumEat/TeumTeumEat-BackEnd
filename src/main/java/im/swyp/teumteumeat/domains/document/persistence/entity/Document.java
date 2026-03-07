@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.persistence.entity;
 
+import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
@@ -44,6 +45,9 @@ public class Document extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private FileStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private DocumentErrorType errorReason;
 
     private Integer totalParts;
 
@@ -98,6 +102,11 @@ public class Document extends BaseEntity {
 
     public void updateStatus(FileStatus status) {
         this.status = status;
+    }
+
+    public void updateStatusToFailed(DocumentErrorType reason) {
+        this.status = FileStatus.FAILED;
+        this.errorReason = reason;
     }
 
     public void updateRawContent(String rawContent) {

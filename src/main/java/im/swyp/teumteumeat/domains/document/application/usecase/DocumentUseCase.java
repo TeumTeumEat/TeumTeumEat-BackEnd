@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.application.usecase;
 
+import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
 import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentStatusResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
@@ -176,6 +177,14 @@ public class DocumentUseCase {
         sendSseEvent(document);
 
         return emitter;
+    }
+
+    @Transactional
+    public void handleOcrFailure(String fileKey, DocumentErrorType errorType) {
+        documentService.getDocumnetByFileKeyOptional(fileKey).ifPresent(document -> {
+            document.updateStatusToFailed(errorType);
+            sendSseEvent(document);
+        });
     }
 
     /* HELPER METHOD */

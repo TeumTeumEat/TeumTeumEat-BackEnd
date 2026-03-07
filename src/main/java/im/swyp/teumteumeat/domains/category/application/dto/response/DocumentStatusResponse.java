@@ -21,7 +21,7 @@ public record DocumentStatusResponse(
             case PROCESSING ->
                     processing(Math.max(0, Duration.between(LocalDateTime.now(), document.getEstimateTime()).toMillis()));
             case COMPLETED -> completed();
-            case FAILED -> failed(null);
+            case FAILED -> failed(document.getErrorReason());
         };
     }
 
