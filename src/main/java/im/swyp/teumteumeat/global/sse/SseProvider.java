@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.sse;
 
+import im.swyp.teumteumeat.global.sse.dto.SseConnectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,6 @@ public class SseProvider {
 
     private static final Long DEFAULT_TIMEOUT = 10 * 60 * 1000L; // 10MIN
     private static final String EVENT_NAME_CONNECT = "connect";
-    private static final String MSG_CONNECT_SUCCESS = "EventStream Created.";
     private static final String ID_DELIMITER = ":";
 
     private final EmitterRepository emitterRepository;
@@ -39,7 +39,7 @@ public class SseProvider {
 
         // 503 에러를 방지하기 위한 더미 이벤트 전송
         // 연결이 이뤄진 후 하나의 데이터도 전송되지 않는다면, 유효 시간이 끝나면 503이 응답되는 문제가 있음.
-        sendToClient(emitter, emitterId, EVENT_NAME_CONNECT, MSG_CONNECT_SUCCESS);
+        sendToClient(emitter, emitterId, EVENT_NAME_CONNECT, SseConnectResponse.connected());
 
         return emitter;
     }
