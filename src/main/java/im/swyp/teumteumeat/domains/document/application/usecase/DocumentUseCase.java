@@ -141,6 +141,7 @@ public class DocumentUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+        document.validateBelongTo(goalId);
 
         return DocumentMapper.fromDocument(document);
     }
@@ -162,6 +163,7 @@ public class DocumentUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+        document.validateBelongTo(goalId);
 
         documentService.deleteDocument(documentId);
     }
