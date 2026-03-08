@@ -29,8 +29,13 @@ public class DocumentCallbackController implements DocumentCallbackApi {
             @RequestHeader("X-INTERNAL-TOKEN") String token,
             @RequestBody OcrInitRequest request
     ) {
+        validateToken(token);
+
         try {
-            validateToken(token);
+            if (Boolean.FALSE.equals(request.success())) {
+                documentUseCase.handleOcrFailure(request.fileKey(), request.reason());
+                return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+            }
             documentUseCase.setParts(request);
         } catch (Exception e) {
             documentUseCase.handleOcrFailure(request.fileKey(), DocumentErrorType.SERVER_ERROR);
@@ -45,8 +50,13 @@ public class DocumentCallbackController implements DocumentCallbackApi {
             @RequestHeader("X-INTERNAL-TOKEN") String token,
             @RequestBody OcrPartRequest request
     ) {
+        validateToken(token);
+
         try {
-            validateToken(token);
+            if (Boolean.FALSE.equals(request.success())) {
+                documentUseCase.handleOcrFailure(request.fileKey(), request.reason());
+                return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+            }
             documentUseCase.saveParts(request);
         } catch (Exception e) {
             documentUseCase.handleOcrFailure(request.fileKey(), DocumentErrorType.SERVER_ERROR);
