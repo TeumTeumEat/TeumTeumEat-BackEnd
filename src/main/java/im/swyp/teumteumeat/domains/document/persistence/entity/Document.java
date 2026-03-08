@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.document.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
@@ -89,6 +90,12 @@ public class Document extends BaseEntity {
     public void validateOwner(Long userId) {
         if (!this.user.getId().equals(userId)) {
             throw new BaseException(FORBIDDEN);
+        }
+    }
+
+    public void validateBelongTo(Long goalId) {
+        if (this.goal == null || !this.goal.getId().equals(goalId)) {
+            throw new BaseException(DocumentResponseCode.INVALID_DOCUMENT_GOAL_ASSOCIATION);
         }
     }
 

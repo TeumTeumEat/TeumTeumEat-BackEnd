@@ -38,6 +38,7 @@ public class DocumentController implements DocumentApi {
     @Override
     @GetMapping(value = "/{documentId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
+            @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
@@ -45,7 +46,7 @@ public class DocumentController implements DocumentApi {
 
         // Nginx 버퍼링 방지 설정
         response.setHeader("X-Accel-Buffering", "no");
-        return documentUseCase.subscribe(user.getUserId(), documentId, lastEventId);
+        return documentUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
     }
 
     @Override

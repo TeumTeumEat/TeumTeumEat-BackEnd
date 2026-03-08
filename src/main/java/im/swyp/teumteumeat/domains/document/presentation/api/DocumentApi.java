@@ -32,6 +32,7 @@ public interface DocumentApi {
 
         @Operation(summary = "파일 업로드 텍스트 추출 SSE 구독", description = "파일 업로드 후 텍스트 추출이 완료되면 응답을 받습니다. (자세한 설명은 Notion API 명세서 참조)")
         SseEmitter subscribe(
+                @PathVariable Long goalId,
                 @PathVariable Long documentId,
                 @AuthenticationPrincipal CustomUserDetails user,
                 @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,

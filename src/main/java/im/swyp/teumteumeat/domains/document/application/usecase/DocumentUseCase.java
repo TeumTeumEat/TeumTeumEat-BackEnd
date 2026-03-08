@@ -166,10 +166,15 @@ public class DocumentUseCase {
         documentService.deleteDocument(documentId);
     }
 
-    public SseEmitter subscribe(Long userId, Long documentId, @Nullable String lastEventId) {
+    public SseEmitter subscribe(Long userId, Long goalId, Long documentId, @Nullable String lastEventId) {
+        // 목표 인가
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
         // 문서 인가
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+        document.validateBelongTo(goalId);
 
         // SSE 구독
         SseEmitter emitter = notificationService.subscribe(lastEventId, userId, documentId);
