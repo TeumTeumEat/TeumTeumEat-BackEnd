@@ -102,6 +102,9 @@ public class Document extends BaseEntity {
 
     public void updateStatus(FileStatus status) {
         this.status = status;
+        if (status != FileStatus.FAILED) {
+            this.errorReason = null;
+        }
     }
 
     public void updateStatusToFailed(DocumentErrorType reason) {
