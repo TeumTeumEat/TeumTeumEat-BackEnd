@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.category.application.dto.response;
+package im.swyp.teumteumeat.domains.category.domain.constant;
 
 public enum DocumentErrorType {
     TIMEOUT,

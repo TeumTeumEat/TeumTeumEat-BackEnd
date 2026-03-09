@@ -1,6 +1,6 @@
 package im.swyp.teumteumeat.domains.document.presentation.controller;
 
-import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
 import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;

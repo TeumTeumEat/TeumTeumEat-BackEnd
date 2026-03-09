@@ -1,6 +1,6 @@
 package im.swyp.teumteumeat.domains.document.application.dto.request;
 
-import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
 
 public record OcrInitRequest(
     String fileName,

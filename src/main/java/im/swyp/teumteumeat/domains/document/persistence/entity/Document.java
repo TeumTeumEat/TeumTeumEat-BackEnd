@@ -1,6 +1,6 @@
 package im.swyp.teumteumeat.domains.document.persistence.entity;
 
-import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
