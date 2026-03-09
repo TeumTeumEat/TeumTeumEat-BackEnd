@@ -32,11 +32,11 @@ public interface DocumentApi {
 
         @Operation(summary = "파일 업로드 텍스트 추출 SSE 구독", description = "파일 업로드 후 텍스트 추출이 완료되면 응답을 받습니다. (자세한 설명은 Notion API 명세서 참조)")
         SseEmitter subscribe(
-                @PathVariable Long goalId,
-                @PathVariable Long documentId,
-                @AuthenticationPrincipal CustomUserDetails user,
-                @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-                HttpServletResponse response);
+                        @PathVariable Long goalId,
+                        @PathVariable Long documentId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
+                        @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+                        HttpServletResponse response);
 
         @Operation(summary = "문서 조회", description = "해당 목표에 등록된 문서 목록을 조회합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentListResponse.class, description = "조회 성공"))
