@@ -62,20 +62,15 @@ public class SseProvider {
     /**
      * 재연결 시 캐시에서 찾아 미전송 데이터 전송
      */
-    public void recoverEvents(String key, String lastEventId) {
+    public void recoverEvents(SseEmitter target, String key, String lastEventId) {
         // 해당 유저의 모든 캐시 조회
         Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(key);
-
-        // 현재 연결된 emitter들
-        String searchPrefix = key + ID_DELIMITER;
-        Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
-
         // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
         events.entrySet().stream()
                 .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
                 .forEach(entry -> {
                     SseEvent sseEvent = (SseEvent) entry.getValue();
-                    emitters.forEach((emitterId, emitter) -> sendToClient(emitter, entry.getKey(), sseEvent.name(), sseEvent.data()));
+                    sendToClient(target, entry.getKey(), sseEvent.name(), sseEvent.data());
                 });
     }
 

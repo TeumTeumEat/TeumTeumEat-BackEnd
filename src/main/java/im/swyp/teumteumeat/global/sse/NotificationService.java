@@ -16,7 +16,7 @@ public class NotificationService {
 
         // 재연결 시 누락된 데이터 복구
         if (lastEventId != null && !lastEventId.isEmpty()) {
-            sseProvider.recoverEvents(key, lastEventId);
+            sseProvider.recoverEvents(emitter, key, lastEventId);
         }
 
         return emitter;
