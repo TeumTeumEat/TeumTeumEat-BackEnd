@@ -68,6 +68,7 @@ public class SseProvider {
         // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
         events.entrySet().stream()
                 .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
+                .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
                     SseEvent sseEvent = (SseEvent) entry.getValue();
                     sendToClient(target, entry.getKey(), sseEvent.name(), sseEvent.data());
