@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
@@ -115,6 +116,8 @@ public class Document extends BaseEntity {
     }
 
     public void updateStatusToFailed(DocumentErrorType reason) {
+        Objects.requireNonNull(reason);
+
         this.status = FileStatus.FAILED;
         this.errorReason = reason;
     }
