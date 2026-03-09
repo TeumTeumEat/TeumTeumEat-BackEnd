@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.document.application.usecase;
 
 import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentErrorType;
-import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentStatusResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
@@ -10,6 +9,7 @@ import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentRes
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentPartMapper;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
+import im.swyp.teumteumeat.domains.document.domain.event.DocumentSseEvent;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
@@ -21,6 +21,7 @@ import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.sse.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -40,8 +41,7 @@ public class DocumentUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final NotificationService notificationService;
-
-    private static final String SSE_EVENT_NAME = "document_processing_status";
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -93,7 +93,7 @@ public class DocumentUseCase {
             document.updateStatus(FileStatus.COMPLETED);
         }
         // PROCESSING 또는 COMPLETED 알림을 전송
-        sendSseEvent(document);
+        eventPublisher.publishEvent(new DocumentSseEvent(document));
     }
 
     @Transactional
@@ -120,7 +120,7 @@ public class DocumentUseCase {
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
             // 완료 알림을 전송
-            sendSseEvent(document);
+            eventPublisher.publishEvent(new DocumentSseEvent(document));
         }
     }
 
@@ -181,7 +181,7 @@ public class DocumentUseCase {
         // SSE 구독
         SseEmitter emitter = notificationService.subscribe(lastEventId, userId, documentId);
         // 현재 상태를 전송
-        sendSseEvent(document);
+        eventPublisher.publishEvent(new DocumentSseEvent(document));
 
         return emitter;
     }
@@ -190,18 +190,7 @@ public class DocumentUseCase {
     public void handleOcrFailure(String fileKey, DocumentErrorType errorType) {
         documentService.getDocumnetByFileKeyOptional(fileKey).ifPresent(document -> {
             document.updateStatusToFailed(errorType);
-            sendSseEvent(document);
+            eventPublisher.publishEvent(new DocumentSseEvent(document));
         });
-    }
-
-    /* HELPER METHOD */
-    private void sendSseEvent(Document document) {
-        // 임시 문서에 유저가 할당되지 않았다면 종료
-        if (document.getUser() == null) {
-            return;
-        }
-
-        String key = notificationService.generateKey(document.getUser().getId(), document.getId());
-        notificationService.send(key, SSE_EVENT_NAME, DocumentStatusResponse.from(document));
     }
 }
