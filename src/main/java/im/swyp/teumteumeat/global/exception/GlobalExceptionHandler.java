@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -112,5 +113,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .status(responseCode.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.ofFail(responseCode));
+    }
+
+    // 정상적인 SSE 종료 처리
+    @Override
+    protected ResponseEntity<Object> handleAsyncRequestTimeoutException(AsyncRequestTimeoutException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return null;
     }
 }
