@@ -48,13 +48,15 @@ public class SseProvider {
      * 특정 키를 구독 중인 클라이언트에게 이벤트를 전송
      */
     public void sendEvent(String key, String eventName, Object data) {
+        // 전송 시점의 ID 생성
+        String eventId = key + ID_DELIMITER + System.currentTimeMillis();
+        // 재연결을 위한 캐시 저장 (Last-Event-Id 사용)
+        emitterRepository.saveEventCache(eventId, new SseEvent(eventName, data));
+
+        // 현재 연결된 모든 emitter에 전송
         String searchPrefix = key + ID_DELIMITER;
         Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
-        emitters.forEach((id, emitter) -> {
-            // 재연결을 위한 캐시 저장 (Last-Event-Id 사용)
-            emitterRepository.saveEventCache(id, new SseEvent(eventName, data));
-            sendToClient(emitter, id, eventName, data);
-        });
+        emitters.forEach((emitterId, emitter) -> sendToClient(emitter, eventId, eventName, data));
     }
 
     /**
@@ -64,12 +66,16 @@ public class SseProvider {
         // 해당 유저의 모든 캐시 조회
         Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(key);
 
+        // 현재 연결된 emitter들
+        String searchPrefix = key + ID_DELIMITER;
+        Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
+
         // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
         events.entrySet().stream()
                 .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
                 .forEach(entry -> {
                     SseEvent sseEvent = (SseEvent) entry.getValue();
-                    sendEvent(entry.getKey(), sseEvent.name(), sseEvent.data());
+                    emitters.forEach((emitterId, emitter) -> sendToClient(emitter, entry.getKey(), sseEvent.name(), sseEvent.data()));
                 });
     }
 
