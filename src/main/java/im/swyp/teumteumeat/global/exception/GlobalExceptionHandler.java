@@ -5,7 +5,9 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -22,6 +24,8 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -32,7 +36,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         // 의도된 예외는 로그 미출력
         boolean isSilent = (responseCode == AuthResponseCode.NEED_REGISTER
-                         || responseCode == QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+                || responseCode == QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         if (!isSilent) {
             log.error("BaseException: ", e);
         } else {
@@ -69,6 +73,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Exception: ", e);
+        BaseResponseCode responseCode = CommonResponseCode.INTERNAL_SERVER_ERROR;
+        return ResponseEntity
+                .status(responseCode.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ApiResponse.ofFail(responseCode));
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIOException(IOException e, HttpServletRequest req) {
+        // SSE 클라이언트 연결 끊김 처리
+        String rootCauseMessage = ExceptionUtils.getRootCauseMessage(e);
+        if ((
+                rootCauseMessage.contains("Broken pipe") ||
+                rootCauseMessage.contains("Connection reset by peer") ||
+                rootCauseMessage.contains("소프트웨어의 의해 중단되었습니다"))
+                && req.getRequestURI().contains("/sse")
+        ) {
+            return null;
+        }
+
+        log.error("IOException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity
                 .status(responseCode.getStatus())
