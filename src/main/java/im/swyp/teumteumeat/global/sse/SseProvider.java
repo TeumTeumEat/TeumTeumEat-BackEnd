@@ -65,7 +65,8 @@ public class SseProvider {
      */
     public boolean recoverEvents(SseEmitter target, String key, String lastEventId) {
         // 해당 유저의 모든 캐시 조회
-        Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(key);
+        String searchPrefix = key + ID_DELIMITER;
+        Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(searchPrefix);
         AtomicBoolean isRecovered = new AtomicBoolean(false);
 
         // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
