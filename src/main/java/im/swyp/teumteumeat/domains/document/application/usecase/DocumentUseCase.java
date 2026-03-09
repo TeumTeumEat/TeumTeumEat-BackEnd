@@ -11,7 +11,6 @@ import im.swyp.teumteumeat.domains.document.application.mapper.DocumentPartMappe
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.document.domain.event.DocumentSseEvent;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
-
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
@@ -22,10 +21,10 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.sse.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import javax.annotation.Nullable;
 import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
