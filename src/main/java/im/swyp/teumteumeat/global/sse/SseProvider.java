@@ -9,6 +9,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -62,9 +63,11 @@ public class SseProvider {
     /**
      * 재연결 시 캐시에서 찾아 미전송 데이터 전송
      */
-    public void recoverEvents(SseEmitter target, String key, String lastEventId) {
+    public boolean recoverEvents(SseEmitter target, String key, String lastEventId) {
         // 해당 유저의 모든 캐시 조회
         Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(key);
+        AtomicBoolean isRecovered = new AtomicBoolean(false);
+
         // lastEventId보다 나중에 발생한 이벤트만 필터링하여 재전송
         events.entrySet().stream()
                 .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
@@ -72,7 +75,11 @@ public class SseProvider {
                 .forEach(entry -> {
                     SseEvent sseEvent = (SseEvent) entry.getValue();
                     sendToClient(target, entry.getKey(), sseEvent.name(), sseEvent.data());
+                    isRecovered.set(true);
                 });
+
+        // 재전송 되었다면 true 반환
+        return isRecovered.get();
     }
 
     /**

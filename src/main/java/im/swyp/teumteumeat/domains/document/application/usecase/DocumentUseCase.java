@@ -179,11 +179,12 @@ public class DocumentUseCase {
         document.validateBelongTo(goalId);
 
         // SSE 구독
-        SseEmitter emitter = notificationService.subscribe(lastEventId, userId, documentId);
-        // 현재 상태를 전송
-        eventPublisher.publishEvent(new DocumentSseEvent(document));
-
-        return emitter;
+        return notificationService.subscribe(
+                lastEventId,
+                // 신규 구독이거나 재전송이 되지 않았을 때만 최신 상태를 반환
+                () -> eventPublisher.publishEvent(new DocumentSseEvent(document)),
+                userId,
+                documentId);
     }
 
     @Transactional
