@@ -128,6 +128,9 @@ public class CategoryDocumentUseCase {
         if (goal.getEndDate().isBefore(LocalDate.now())) {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
+        if (goal.isCompleted()) {
+            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
         return goal;
     }
 
