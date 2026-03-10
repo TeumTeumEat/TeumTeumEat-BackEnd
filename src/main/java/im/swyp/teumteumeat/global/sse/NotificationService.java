@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.sse;
 
+import im.swyp.teumteumeat.global.sse.dto.EmitterDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -12,12 +13,14 @@ public class NotificationService {
 
     public SseEmitter subscribe(String lastEventId, Runnable onCacheMiss, Object... identifiers) {
         String key = generateKey(identifiers);
-        SseEmitter emitter = sseProvider.createEmitter(key);
+        EmitterDto dto = sseProvider.createEmitter(key);
+        String emitterId = dto.id();
+        SseEmitter emitter = dto.emitter();
 
         boolean recovered = false;
         // 재연결 시 누락된 데이터 복구
         if (lastEventId != null && !lastEventId.isEmpty()) {
-            recovered = sseProvider.recoverEvents(emitter, key, lastEventId);
+            recovered = sseProvider.recoverEvents(emitter, emitterId, key, lastEventId);
         }
 
         // 신규 구독이거나 누락된 데이터가 없다면 최신 상태를 반환

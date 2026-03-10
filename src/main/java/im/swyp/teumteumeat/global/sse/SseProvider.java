@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.sse;
 
+import im.swyp.teumteumeat.global.sse.dto.EmitterDto;
 import im.swyp.teumteumeat.global.sse.dto.SseConnectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class SseProvider {
     /**
      * 클라이언트와 서버 간의 SSE 연결을 생성하고 리포지토리에 저장
      */
-    public SseEmitter createEmitter(String key) {
+    public EmitterDto createEmitter(String key) {
         String emitterId = makeTimeIncludeId(key);
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
         emitterRepository.save(emitterId, emitter);
@@ -42,7 +43,7 @@ public class SseProvider {
         // 연결이 이뤄진 후 하나의 데이터도 전송되지 않는다면, 유효 시간이 끝나면 503이 응답되는 문제가 있음.
         sendToClient(emitter, emitterId, EVENT_NAME_CONNECT, SseConnectResponse.connected());
 
-        return emitter;
+        return new EmitterDto(emitterId, emitter);
     }
 
     /**
@@ -57,13 +58,13 @@ public class SseProvider {
         // 현재 연결된 모든 emitter에 전송
         String searchPrefix = key + ID_DELIMITER;
         Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
-        emitters.forEach((emitterId, emitter) -> sendToClient(emitter, eventId, eventName, data));
+        emitters.forEach((emitterId, emitter) -> sendToClient(emitter, emitterId, eventName, data));
     }
 
     /**
      * 재연결 시 캐시에서 찾아 미전송 데이터 전송
      */
-    public boolean recoverEvents(SseEmitter target, String key, String lastEventId) {
+    public boolean recoverEvents(SseEmitter target, String emitterId, String key, String lastEventId) {
         // 해당 유저의 모든 캐시 조회
         String searchPrefix = key + ID_DELIMITER;
         Map<String, Object> events = emitterRepository.findAllEventCacheStartWithById(searchPrefix);
@@ -75,7 +76,7 @@ public class SseProvider {
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
                     SseEvent sseEvent = (SseEvent) entry.getValue();
-                    sendToClient(target, entry.getKey(), sseEvent.name(), sseEvent.data());
+                    sendToClient(target, emitterId, sseEvent.name(), sseEvent.data());
                     isRecovered.set(true);
                 });
 
