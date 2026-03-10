@@ -19,6 +19,7 @@ public class UserQuizMapper {
         int availableQuizCount = userEntity.getAvailableQuizCount();
         int targetQuizSetCount = 0;
         int completedQuizSetCount = 0;
+        boolean isCompleted = false;
 
         Goal currentGoal = userEntity.getCurrentGoal();
         if (currentGoal != null) {
@@ -27,6 +28,7 @@ public class UserQuizMapper {
             completedQuizSetCount = (currentGoal.getCompletedQuizSetCount() != null)
                     ? currentGoal.getCompletedQuizSetCount()
                     : 0;
+            isCompleted = currentGoal.isCompleted();
         }
 
         if (userEntity.getRole() == Role.ADMIN) {
@@ -43,6 +45,7 @@ public class UserQuizMapper {
                 .availableQuizCount(availableQuizCount)
                 .targetQuizSetCount(targetQuizSetCount)
                 .completedQuizSetCount(completedQuizSetCount)
+                .isCompleted(isCompleted)
                 .build();
     }
 }
