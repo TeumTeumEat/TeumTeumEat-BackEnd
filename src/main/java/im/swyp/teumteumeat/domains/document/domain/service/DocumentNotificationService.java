@@ -2,7 +2,7 @@ package im.swyp.teumteumeat.domains.document.domain.service;
 
 import im.swyp.teumteumeat.domains.category.application.dto.response.DocumentStatusResponse;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
-import im.swyp.teumteumeat.global.sse.NotificationService;
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;

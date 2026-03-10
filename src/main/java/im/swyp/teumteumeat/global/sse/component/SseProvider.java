@@ -1,7 +1,8 @@
-package im.swyp.teumteumeat.global.sse;
+package im.swyp.teumteumeat.global.sse.component;
 
 import im.swyp.teumteumeat.global.sse.dto.EmitterDto;
 import im.swyp.teumteumeat.global.sse.dto.SseConnectResponse;
+import im.swyp.teumteumeat.global.sse.repository.EmitterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

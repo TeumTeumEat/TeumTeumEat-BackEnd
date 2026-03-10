@@ -1,5 +1,6 @@
-package im.swyp.teumteumeat.global.sse;
+package im.swyp.teumteumeat.global.sse.service;
 
+import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import im.swyp.teumteumeat.global.sse.dto.EmitterDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
