@@ -47,6 +47,12 @@ public class CategoryDocumentUseCase {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
+        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 문서가 있는지 확인
+        CategoryDocument unsolvedDocument = getNextDocument(goal, userId);
+        if (unsolvedDocument != null) {
+            throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+        }
+
         // 새 문서 생성 (무조건)
         CategoryDocument targetDocument = createNewDailyDocument(goal);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
