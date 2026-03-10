@@ -65,9 +65,9 @@ public class DocumentSummaryUseCase {
 
         UserEntity user = userService.getUserById(userId);
         boolean isAdmin = user.getRole() == Role.ADMIN;
+        boolean outOfQuota = !user.canSolveDailyQuiz();
 
-        boolean realHasSolvedToday = userQuizService.hasSolvedQuizTodayByGoal(userId, goalId);
-        boolean hasSolvedToday = !isAdmin && realHasSolvedToday;
+        boolean hasSolvedToday = !isAdmin && outOfQuota;
 
         boolean isSolvedThisDocument = userQuizService.getConsumedPdfDocumentIds(userId).contains(documentId);
 
@@ -124,9 +124,9 @@ public class DocumentSummaryUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
-        // 2. 요약글 생성 1회 제한 확인 (오늘 이미 학습했는지) - ADMIN 제외
+        // 2. 쿼타 확인 - ADMIN 제외
         UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizTodayByGoal(userId, goalId)) {
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
