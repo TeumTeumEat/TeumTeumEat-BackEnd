@@ -19,7 +19,6 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
@@ -51,7 +50,6 @@ public class QuizUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
-    private final UserQuizService userQuizService;
     private final DocumentSummaryRepository documentSummaryRepository;
 
     // 카테고리 기반 퀴즈
@@ -104,7 +102,7 @@ public class QuizUseCase {
 
         UserEntity user = userService.getUserById(userId);
         if (user.getRole() != Role.ADMIN
-                && userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
+                && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
@@ -248,7 +246,7 @@ public class QuizUseCase {
         }
 
         UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizTodayByGoal(userId, goal.getId())) {
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
