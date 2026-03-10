@@ -41,7 +41,7 @@ public class SseProvider {
 
         // 503 에러를 방지하기 위한 더미 이벤트 전송
         // 연결이 이뤄진 후 하나의 데이터도 전송되지 않는다면, 유효 시간이 끝나면 503이 응답되는 문제가 있음.
-        sendToClient(emitter, emitterId, EVENT_NAME_CONNECT, SseConnectResponse.connected());
+        sendToClient(emitter, emitterId, emitterId, EVENT_NAME_CONNECT, SseConnectResponse.connected());
 
         return new EmitterDto(emitterId, emitter);
     }
@@ -58,7 +58,7 @@ public class SseProvider {
         // 현재 연결된 모든 emitter에 전송
         String searchPrefix = key + ID_DELIMITER;
         Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithById(searchPrefix);
-        emitters.forEach((emitterId, emitter) -> sendToClient(emitter, emitterId, eventName, data));
+        emitters.forEach((emitterId, emitter) -> sendToClient(emitter, emitterId, eventId, eventName, data));
     }
 
     /**
@@ -75,8 +75,9 @@ public class SseProvider {
                 .filter(entry -> lastEventId.compareTo(entry.getKey()) < 0)
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
+                    String eventId = entry.getKey();
                     SseEvent sseEvent = (SseEvent) entry.getValue();
-                    sendToClient(target, emitterId, sseEvent.name(), sseEvent.data());
+                    sendToClient(target, emitterId, eventId, sseEvent.name(), sseEvent.data());
                     isRecovered.set(true);
                 });
 
@@ -95,16 +96,16 @@ public class SseProvider {
 
     /* HELPER METHOD */
     // 실제 SseEmitter를 통해 데이터를 전송
-    private void sendToClient(SseEmitter emitter, String id, String eventName, Object data) {
+    private void sendToClient(SseEmitter emitter, String emitterId, String eventId, String eventName, Object data) {
         try {
             emitter.send(SseEmitter.event()
-                    .id(id)
+                    .id(eventId)
                     .name(eventName)
                     .data(data)
             );
         } catch (IOException e) {
-            emitterRepository.deleteById(id);
-            log.warn("SSE Connection Disconnected. id: {}", id);
+            emitterRepository.deleteById(emitterId);
+            log.warn("SSE Connection Disconnected. id: {}", emitterId);
         }
     }
 
