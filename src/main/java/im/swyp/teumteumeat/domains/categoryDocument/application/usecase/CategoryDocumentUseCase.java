@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @UseCase
@@ -47,10 +47,15 @@ public class CategoryDocumentUseCase {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 문서가 있는지 확인
-        CategoryDocument unsolvedDocument = getNextDocument(goal, userId);
-        if (unsolvedDocument != null) {
-            throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
+        if (user.getRole() != Role.ADMIN) {
+            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+            if (activeDocument != null) {
+                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+                if (!isConsumed) {
+                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                }
+            }
         }
 
         // 새 문서 생성 (무조건)
@@ -70,14 +75,11 @@ public class CategoryDocumentUseCase {
         boolean hasSolvedToday = !isAdmin && outOfQuota;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        // 단순 조회: 푼 지 안 푼 지 모르는 유저의 활성화된 최신 문서를 조회
-        CategoryDocument targetDocument = getNextDocument(goal, userId);
+        // 단순 조회: 가장 최근에 발급받은(생성된) 문서를 우선 반환
+        CategoryDocument targetDocument = getCurrentActiveDocument(goal, userId);
 
         if (targetDocument == null) {
-            // 풀 수 있는 남은 안 푼 문서가 없다면 (모두 풀었다면)
-            // 오늘 생성된/또는 가장 최근에 가장 마지막으로 생성된 문서를 보여줌
-            targetDocument = categoryDocumentService.getLatestDocumentByGoalId(goal.getId())
-                    .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
 
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
@@ -93,10 +95,12 @@ public class CategoryDocumentUseCase {
         boolean hasSolvedToday = user.getRole() != Role.ADMIN && outOfQuota;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        CategoryDocument nextDoc = getNextDocument(goal, userId);
+        CategoryDocument activeDoc = getCurrentActiveDocument(goal, userId);
+        boolean isUnsolved = activeDoc != null
+                && !userQuizService.getConsumedDocumentIds(userId).contains(activeDoc.getId());
 
         // 오늘 쿼타가 남아있고 안 풀은 문서가 없다면 -> 새로 생성
-        if (!outOfQuota && nextDoc == null) {
+        if (!outOfQuota && !isUnsolved) {
             try {
                 createNewDailyDocument(goal);
             } catch (Exception e) {
@@ -127,23 +131,27 @@ public class CategoryDocumentUseCase {
         return goal;
     }
 
-    private CategoryDocument getNextDocument(Goal goal, Long userId) {
-        List<CategoryDocument> documents = new ArrayList<>(
-                categoryDocumentService.getDocumentsByGoalId(goal.getId()));
+    private CategoryDocument getCurrentActiveDocument(Goal goal, Long userId) {
+        // 1. 유저가 직접 생성한 최신 문서가 있는지 확인
+        Optional<CategoryDocument> latestDocOpt = categoryDocumentService.getLatestDocumentByGoalId(goal.getId());
+        if (latestDocOpt.isPresent()) {
+            return latestDocOpt.get(); // 가장 최근 생성 문서를 우선으로
+        }
 
+        // 2. 만약 직접 생성한 문서가 없다면, 초기 학습 상태이므로 공용 문서 중 아직 안 푼 가장 첫 번째 문서를 찾음
         boolean isDefaultPrompt = goal.getPrompt() == null || goal.getPrompt().isBlank();
         if (isDefaultPrompt) {
             List<CategoryDocument> commonDocuments = categoryDocumentService
                     .getCommonDocuments(goal.getCategory().getId());
-            documents.addAll(commonDocuments);
+            List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
+
+            return commonDocuments.stream()
+                    .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                    .findFirst()
+                    .orElse(null);
         }
 
-        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
-
-        return documents.stream()
-                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
-                .findFirst()
-                .orElse(null);
+        return null;
     }
 
     private CategoryDocument createNewDailyDocument(Goal goal) {
