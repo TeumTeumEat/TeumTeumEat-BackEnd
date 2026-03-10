@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-        @Operation(summary = "오늘의 카테고리 요약글 생성 및 조회", description = "오늘 학습할 카테고리 요약글을 생성하거나 조회합니다. (1일 1회 제한)")
+        @Operation(summary = "오늘의 카테고리 요약글 생성 및 조회", description = "오늘 학습할 카테고리 요약글을 생성하거나 조회합니다. (광고 시청에 따른 퀴즈 풀이 허용 횟수 적용)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 및 조회 성공"))
         ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
                         @PathVariable Long categoryId,
