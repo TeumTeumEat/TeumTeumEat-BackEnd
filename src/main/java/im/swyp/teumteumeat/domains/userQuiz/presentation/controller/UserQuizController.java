@@ -8,8 +8,6 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizGuideRe
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
-import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -33,7 +31,6 @@ import java.util.List;
 public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
-    private final UserService userService;
 
     // 유저가 퀴즈를 푸는 기능
     @Override
@@ -95,41 +92,8 @@ public class UserQuizController implements UserQuizApi {
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
             @AuthenticationPrincipal CustomUserDetails user) {
-        boolean hasSolvedToday = userQuizUseCase.hasSolvedAnyQuizToday(user.getUserId());
-        boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
-        boolean hasGeneratedContent = userQuizUseCase.hasCreatedDocumentToday(user.getUserId());
-        boolean isQuizGuideSeen = userQuizUseCase.isQuizGuideSeen(user.getUserId());
 
-        im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity userEntity = userService
-                .getUserById(user.getUserId());
-        int availableQuizCount = userEntity.getAvailableQuizCount();
-        int targetQuizSetCount = 0;
-        int completedQuizSetCount = 0;
-
-        Goal currentGoal = userEntity.getCurrentGoal();
-        if (currentGoal != null) {
-            targetQuizSetCount = (currentGoal.getTargetQuizSetCount() != null) ? currentGoal.getTargetQuizSetCount()
-                    : 0;
-            completedQuizSetCount = (currentGoal.getCompletedQuizSetCount() != null)
-                    ? currentGoal.getCompletedQuizSetCount()
-                    : 0;
-        }
-
-        if (userEntity.getRole() == im.swyp.teumteumeat.domains.user.domain.constant.Role.ADMIN) {
-            hasSolvedToday = false;
-            hasGeneratedContent = false;
-            availableQuizCount = 999;
-        }
-
-        UserQuizStatusResponse response = UserQuizStatusResponse.builder()
-                .hasSolvedToday(hasSolvedToday)
-                .isFirstTime(!hasSolvedEver)
-                .hasCreatedToday(hasGeneratedContent)
-                .isQuizGuideSeen(isQuizGuideSeen)
-                .availableQuizCount(availableQuizCount)
-                .targetQuizSetCount(targetQuizSetCount)
-                .completedQuizSetCount(completedQuizSetCount)
-                .build();
+        UserQuizStatusResponse response = userQuizUseCase.getUserQuizStatus(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }

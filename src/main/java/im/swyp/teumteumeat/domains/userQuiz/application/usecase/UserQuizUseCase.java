@@ -13,6 +13,8 @@ import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.mapper.UserQuizMapper;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -50,6 +52,7 @@ public class UserQuizUseCase {
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
+    private final UserQuizMapper userQuizMapper;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -175,6 +178,22 @@ public class UserQuizUseCase {
             Long quizId) {
         Quiz quiz = quizService.getQuizById(quizId);
         return quizMapper.toQuestionResponse(quiz);
+    }
+
+    public UserQuizStatusResponse getUserQuizStatus(Long userId) {
+        boolean hasSolvedToday = hasSolvedAnyQuizToday(userId);
+        boolean hasSolvedEver = hasSolvedAnyQuizEver(userId);
+        boolean hasGeneratedContent = hasCreatedDocumentToday(userId);
+        boolean isQuizGuideSeen = isQuizGuideSeen(userId);
+
+        UserEntity userEntity = userService.getUserById(userId);
+
+        return userQuizMapper.toStatusResponse(
+                userEntity,
+                hasSolvedToday,
+                hasSolvedEver,
+                hasGeneratedContent,
+                isQuizGuideSeen);
     }
 
     public boolean hasSolvedAnyQuizToday(Long userId) {
