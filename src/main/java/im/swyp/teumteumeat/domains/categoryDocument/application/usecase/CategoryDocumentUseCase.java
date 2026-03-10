@@ -74,10 +74,9 @@ public class CategoryDocumentUseCase {
         CategoryDocument targetDocument = getNextDocument(goal, userId);
 
         if (targetDocument == null) {
-            // 풀 수 있는 남은 안 푼 문서가 없다면 에러 반환 (대신 예외로 404를 치거나 빈 응답)
-            // 오늘 생성된 최신 1개를 그냥 보여주기로 함
-            targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                    .reduce((first, second) -> second)
+            // 풀 수 있는 남은 안 푼 문서가 없다면 (모두 풀었다면)
+            // 오늘 생성된/또는 가장 최근에 가장 마지막으로 생성된 문서를 보여줌
+            targetDocument = categoryDocumentService.getLatestDocumentByGoalId(goal.getId())
                     .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
         }
 
