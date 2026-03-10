@@ -40,21 +40,15 @@ public class CategoryDocumentUseCase {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
-        UserEntity user = userService.getUserWithCurrentGoal(userId);
-        Goal goal = user.getCurrentGoal();
-
-        if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
-            throw new BaseException(CommonResponseCode.NOT_FOUND);
-        }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
+        Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserById(userId);
 
         if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        CategoryDocument targetDocument = getNextDocumentOrCreate(goal, userId);
+        // 새 문서 생성 (무조건)
+        CategoryDocument targetDocument = createNewDailyDocument(goal);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
@@ -70,44 +64,15 @@ public class CategoryDocumentUseCase {
         boolean hasSolvedToday = !isAdmin && outOfQuota;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        CategoryDocument targetDocument;
+        // 단순 조회: 푼 지 안 푼 지 모르는 유저의 활성화된 최신 문서를 조회
+        CategoryDocument targetDocument = getNextDocument(goal, userId);
 
-        if (isAdmin) {
-            // ADMIN 로직: 오늘 생성된 최신 문서를 확인 (DB 직접 조회)
-            CategoryDocument todayDoc = categoryDocumentService.getLatestDocumentByGoalId(goal.getId())
-                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                    .orElse(null);
-
-            if (todayDoc != null) {
-                // 오늘 생성된 게 있다 -> 풀었는지 확인
-                boolean isSolved = userQuizService.getConsumedDocumentIds(userId).contains(todayDoc.getId());
-                if (isSolved) {
-                    // 풀었음 -> 새로 생성 (무한 루프)
-                    targetDocument = createNewDailyDocument(goal);
-                } else {
-                    // 안 풀었음 -> 기존 유지
-                    targetDocument = todayDoc;
-                }
-            } else {
-                // 오늘 생성된 게 없음 -> 생성
-                targetDocument = createNewDailyDocument(goal);
-            }
-        } else {
-            // 일반 유저 로직
-            targetDocument = getNextDocument(goal, userId);
-
-            if (targetDocument == null) {
-                // 아직 오늘의 요약글이 없고, 할당량이 남아있다면 -> 새로 생성
-                if (!outOfQuota) {
-                    targetDocument = createNewDailyDocument(goal);
-                } else {
-                    // 이미 오늘 할당량을 다 풀었으면, 오늘 생성된 마지막 문서를 반환 (단순 조회용)
-                    targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                            .reduce((first, second) -> second)
-                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-                }
-            }
+        if (targetDocument == null) {
+            // 풀 수 있는 남은 안 푼 문서가 없다면 에러 반환 (대신 예외로 404를 치거나 빈 응답)
+            // 오늘 생성된 최신 1개를 그냥 보여주기로 함
+            targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
+                    .reduce((first, second) -> second)
+                    .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
         }
 
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
@@ -157,14 +122,6 @@ public class CategoryDocumentUseCase {
         return goal;
     }
 
-    private CategoryDocument getNextDocumentOrCreate(Goal goal, Long userId) {
-        CategoryDocument targetDocument = getNextDocument(goal, userId);
-        if (targetDocument == null) {
-            targetDocument = createNewDailyDocument(goal);
-        }
-        return targetDocument;
-    }
-
     private CategoryDocument getNextDocument(Goal goal, Long userId) {
         List<CategoryDocument> documents = new ArrayList<>(
                 categoryDocumentService.getDocumentsByGoalId(goal.getId()));
@@ -189,24 +146,9 @@ public class CategoryDocumentUseCase {
 
         // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
         return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // 락 내부에서 이중 체크 (Double-Check) - ADMIN은 예외 (무조건 생성)
-            boolean isAdmin = goal.getUser().getRole() == Role.ADMIN;
-            if (!isAdmin) {
-                CategoryDocument unsolvedDoc = getNextDocument(goal, goal.getUser().getId());
-                if (unsolvedDoc != null) {
-                    return unsolvedDoc;
-                }
-            }
+            // 무조건 생성
             return createDocumentInternal(goal);
-        }).orElseGet(() -> {
-            // 락 획득 실패 (Timeout 30s) -> 재조회 시도
-            CategoryDocument unsolvedDoc = getNextDocument(goal, goal.getUser().getId());
-            if (unsolvedDoc != null) {
-                return unsolvedDoc;
-            }
-            // 30초나 기다렸는데도 문서가 없고 락도 못 얻음 -> 서버 에러
-            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
-        });
+        }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {
