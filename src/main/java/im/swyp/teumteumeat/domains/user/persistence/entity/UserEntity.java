@@ -15,6 +15,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -74,6 +75,40 @@ public class UserEntity extends BaseEntity {
     private boolean pushEnabled;
 
     private boolean quizGuideSeen;
+
+    @Column(name = "available_quiz_count", columnDefinition = "int default 1")
+    private Integer availableQuizCount;
+
+    @Column(name = "last_quiz_count_reset_date")
+    private LocalDate lastQuizCountResetDate;
+
+    public void resetAvailableQuizCountIfNeed() {
+        LocalDate today = LocalDate.now();
+        if (lastQuizCountResetDate == null || !lastQuizCountResetDate.isEqual(today)) {
+            this.availableQuizCount = 1; // Default daily quota
+            this.lastQuizCountResetDate = today;
+        }
+    }
+
+    public int getAvailableQuizCount() {
+        resetAvailableQuizCountIfNeed();
+        return this.availableQuizCount != null ? this.availableQuizCount : 0;
+    }
+
+    public boolean canSolveDailyQuiz() {
+        return getAvailableQuizCount() > 0;
+    }
+
+    public void consumeQuizCount() {
+        if (canSolveDailyQuiz()) {
+            this.availableQuizCount--;
+        }
+    }
+
+    public void addAvailableQuizCount(int count) {
+        resetAvailableQuizCountIfNeed();
+        this.availableQuizCount = (this.availableQuizCount != null ? this.availableQuizCount : 0) + count;
+    }
 
     public void completeQuizGuide() {
         this.quizGuideSeen = true;
