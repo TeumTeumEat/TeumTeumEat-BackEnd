@@ -8,6 +8,8 @@ import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizGuideRe
 import im.swyp.teumteumeat.domains.userQuiz.application.usecase.UserQuizUseCase;
 import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -23,7 +25,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import java.util.List;
 
 @RestController
@@ -32,7 +33,7 @@ import java.util.List;
 public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
-    private final im.swyp.teumteumeat.domains.user.domain.service.UserService userService;
+    private final UserService userService;
 
     // 유저가 퀴즈를 푸는 기능
     @Override
@@ -75,6 +76,22 @@ public class UserQuizController implements UserQuizApi {
     }
 
     @Override
+    @PostMapping("/complete-set")
+    public ResponseEntity<ApiResponse<Void>> completeQuizSet(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userQuizUseCase.completeQuizSet(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
+    }
+
+    @Override
+    @PostMapping("/ad-reward")
+    public ResponseEntity<ApiResponse<Void>> claimAdReward(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userQuizUseCase.claimAdReward(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
+    }
+
+    @Override
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
             @AuthenticationPrincipal CustomUserDetails user) {
@@ -85,9 +102,23 @@ public class UserQuizController implements UserQuizApi {
 
         im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity userEntity = userService
                 .getUserById(user.getUserId());
+        int availableQuizCount = userEntity.getAvailableQuizCount();
+        int targetQuizSetCount = 0;
+        int completedQuizSetCount = 0;
+
+        Goal currentGoal = userEntity.getCurrentGoal();
+        if (currentGoal != null) {
+            targetQuizSetCount = (currentGoal.getTargetQuizSetCount() != null) ? currentGoal.getTargetQuizSetCount()
+                    : 0;
+            completedQuizSetCount = (currentGoal.getCompletedQuizSetCount() != null)
+                    ? currentGoal.getCompletedQuizSetCount()
+                    : 0;
+        }
+
         if (userEntity.getRole() == im.swyp.teumteumeat.domains.user.domain.constant.Role.ADMIN) {
             hasSolvedToday = false;
             hasGeneratedContent = false;
+            availableQuizCount = 999;
         }
 
         UserQuizStatusResponse response = UserQuizStatusResponse.builder()
@@ -95,6 +126,9 @@ public class UserQuizController implements UserQuizApi {
                 .isFirstTime(!hasSolvedEver)
                 .hasCreatedToday(hasGeneratedContent)
                 .isQuizGuideSeen(isQuizGuideSeen)
+                .availableQuizCount(availableQuizCount)
+                .targetQuizSetCount(targetQuizSetCount)
+                .completedQuizSetCount(completedQuizSetCount)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
