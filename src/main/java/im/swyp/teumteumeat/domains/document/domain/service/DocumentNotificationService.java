@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.global.sse.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +24,14 @@ public class DocumentNotificationService {
 
         String key = notificationService.generateKey(document.getUser().getId(), document.getId());
         notificationService.send(key, SSE_EVENT_NAME, DocumentStatusResponse.from(document));
+    }
+
+    public void sendSseEventToTarget(SseEmitter target, String emitterId, Document document) {
+        if (document.getUser() == null) return;
+
+        String key = notificationService.generateKey(document.getUser().getId(), document.getId());
+        String eventId = key + ":" + System.currentTimeMillis();
+
+        notificationService.sendToTarget(target, emitterId, eventId, SSE_EVENT_NAME, DocumentStatusResponse.from(document));
     }
 }

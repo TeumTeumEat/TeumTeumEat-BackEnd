@@ -94,9 +94,8 @@ public class SseProvider {
                 .collect(Collectors.joining(ID_DELIMITER));
     }
 
-    /* HELPER METHOD */
     // 실제 SseEmitter를 통해 데이터를 전송
-    private void sendToClient(SseEmitter emitter, String emitterId, String eventId, String eventName, Object data) {
+    public void sendToClient(SseEmitter emitter, String emitterId, String eventId, String eventName, Object data) {
         try {
             emitter.send(SseEmitter.event()
                     .id(eventId)
@@ -109,6 +108,7 @@ public class SseProvider {
         }
     }
 
+    /* HELPER METHOD */
     private String makeTimeIncludeId(String key) {
         return key + ID_DELIMITER + System.currentTimeMillis();
     }

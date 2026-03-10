@@ -10,6 +10,7 @@ import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentPartMapper;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.document.domain.event.DocumentSseEvent;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentNotificationService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
@@ -40,6 +41,7 @@ public class DocumentUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final NotificationService notificationService;
+    private final DocumentNotificationService documentNotificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -181,7 +183,10 @@ public class DocumentUseCase {
         return notificationService.subscribe(
                 lastEventId,
                 // 신규 구독이거나 재전송이 되지 않았을 때만 최신 상태를 반환
-                () -> eventPublisher.publishEvent(new DocumentSseEvent(document)),
+                (dto) -> {
+                    String emitterId = dto.id();
+                    documentNotificationService.sendSseEventToTarget(dto.emitter(), emitterId, document);
+                },
                 userId,
                 documentId);
     }
