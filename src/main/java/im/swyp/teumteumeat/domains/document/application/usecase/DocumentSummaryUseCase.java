@@ -60,7 +60,7 @@ public class DocumentSummaryUseCase {
         boolean outOfQuota = !user.canSolveDailyQuiz();
         boolean hasSolvedToday = user.getRole() != Role.ADMIN && outOfQuota;
 
-        // 단순 조회 로직: 가장 최신의 요약본만 찾아서 반환 (자동 생성 안 함)
+        // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
         Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
         DocumentSummary summary = latestSummaryOpt.orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
@@ -87,7 +87,23 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        // 3. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
+        // 3. 아직 해당 문서에 대해 풀지 않은(미해결) 최신 요약글이 있는지 확인
+        if (user.getRole() != Role.ADMIN) {
+            Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+            if (latestSummaryOpt.isPresent()) {
+                DocumentSummary latestSummary = latestSummaryOpt.get();
+                boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
+                        .anyMatch(uq -> uq.getQuiz() != null &&
+                                uq.getQuiz().getDocumentSummary() != null &&
+                                uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+
+                if (!isConsumed) {
+                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                }
+            }
+        }
+
+        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
         DocumentSummary summary = documentSummaryService.generateSummary(document);
         quizUseCase.createQuizzesForPdfDocument(document, summary);
 
