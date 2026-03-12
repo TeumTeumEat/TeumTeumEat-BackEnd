@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.document.persistence.entity;
 
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static im.swyp.teumteumeat.global.common.CommonResponseCode.FORBIDDEN;
 
@@ -44,6 +47,9 @@ public class Document extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private FileStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private DocumentErrorType errorReason;
 
     private Integer totalParts;
 
@@ -88,6 +94,12 @@ public class Document extends BaseEntity {
         }
     }
 
+    public void validateBelongTo(Long goalId) {
+        if (this.goal == null || !this.goal.getId().equals(goalId)) {
+            throw new BaseException(DocumentResponseCode.INVALID_DOCUMENT_GOAL_ASSOCIATION);
+        }
+    }
+
     public void updateUser(UserEntity user) {
         this.user = user;
     }
@@ -98,6 +110,16 @@ public class Document extends BaseEntity {
 
     public void updateStatus(FileStatus status) {
         this.status = status;
+        if (status != FileStatus.FAILED) {
+            this.errorReason = null;
+        }
+    }
+
+    public void updateStatusToFailed(DocumentErrorType reason) {
+        Objects.requireNonNull(reason);
+
+        this.status = FileStatus.FAILED;
+        this.errorReason = reason;
     }
 
     public void updateRawContent(String rawContent) {

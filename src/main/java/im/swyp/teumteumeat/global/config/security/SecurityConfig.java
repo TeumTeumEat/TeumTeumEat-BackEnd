@@ -9,6 +9,7 @@ import im.swyp.teumteumeat.global.security.filter.JwtExceptionFilter;
 import im.swyp.teumteumeat.global.security.handler.OAuth2FailureHandler;
 import im.swyp.teumteumeat.global.security.handler.OAuth2SuccessHandler;
 import im.swyp.teumteumeat.global.security.service.CustomOAuth2UserService;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,6 +58,7 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                                 .authorizeHttpRequests(authorize -> authorize
+                                                .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                                                 .requestMatchers(WHITELIST).permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2Login(configurer -> configurer

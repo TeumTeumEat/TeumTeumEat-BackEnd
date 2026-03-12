@@ -9,11 +9,14 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.common.CreatedResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/goals/{goalId}/documents")
@@ -30,6 +33,20 @@ public class DocumentController implements DocumentApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         Long savedId = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
+    }
+
+    @Override
+    @GetMapping(value = "/{documentId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            HttpServletResponse response) {
+
+        // Nginx 버퍼링 방지 설정
+        response.setHeader("X-Accel-Buffering", "no");
+        return documentUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
     }
 
     @Override

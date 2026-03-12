@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.application.usecase;
 
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
@@ -8,8 +9,9 @@ import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentRes
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentPartMapper;
 import im.swyp.teumteumeat.domains.document.domain.constant.FileStatus;
+import im.swyp.teumteumeat.domains.document.domain.event.DocumentSseEvent;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentNotificationService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
-
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentPart;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
@@ -17,8 +19,12 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.text.Normalizer;
 import java.util.Comparator;
@@ -34,6 +40,9 @@ public class DocumentUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
+    private final NotificationService notificationService;
+    private final DocumentNotificationService documentNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long uploadDocument(Long userId, Long goalId, DocumentCreateRequest request) {
@@ -84,6 +93,8 @@ public class DocumentUseCase {
             // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
         }
+        // PROCESSING 또는 COMPLETED 알림을 전송
+        eventPublisher.publishEvent(new DocumentSseEvent(document));
     }
 
     @Transactional
@@ -109,6 +120,8 @@ public class DocumentUseCase {
             // documentSummaryService.generateSummaryAsync(document.getId());
             document.updateStatus(FileStatus.COMPLETED);
             document.getParts().clear();
+            // 완료 알림을 전송
+            eventPublisher.publishEvent(new DocumentSseEvent(document));
         }
     }
 
@@ -129,6 +142,7 @@ public class DocumentUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+        document.validateBelongTo(goalId);
 
         return DocumentMapper.fromDocument(document);
     }
@@ -150,7 +164,38 @@ public class DocumentUseCase {
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
+        document.validateBelongTo(goalId);
 
         documentService.deleteDocument(documentId);
+    }
+
+    public SseEmitter subscribe(Long userId, Long goalId, Long documentId, @Nullable String lastEventId) {
+        // 목표 인가
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        // 문서 인가
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+        document.validateBelongTo(goalId);
+
+        // SSE 구독
+        return notificationService.subscribe(
+                lastEventId,
+                // 신규 구독이거나 재전송이 되지 않았을 때만 최신 상태를 반환
+                (dto) -> {
+                    String emitterId = dto.id();
+                    documentNotificationService.sendSseEventToTarget(dto.emitter(), emitterId, document);
+                },
+                userId,
+                documentId);
+    }
+
+    @Transactional
+    public void handleOcrFailure(String fileKey, DocumentErrorType errorType) {
+        documentService.getDocumnetByFileKeyOptional(fileKey).ifPresent(document -> {
+            document.updateStatusToFailed(errorType);
+            eventPublisher.publishEvent(new DocumentSseEvent(document));
+        });
     }
 }

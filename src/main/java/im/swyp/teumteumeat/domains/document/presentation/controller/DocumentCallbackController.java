@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.presentation.controller;
 
+import im.swyp.teumteumeat.domains.category.domain.constant.DocumentErrorType;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrInitRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.request.OcrPartRequest;
 import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
@@ -29,7 +30,17 @@ public class DocumentCallbackController implements DocumentCallbackApi {
             @RequestBody OcrInitRequest request
     ) {
         validateToken(token);
-        documentUseCase.setParts(request);
+
+        try {
+            if (Boolean.FALSE.equals(request.success())) {
+                documentUseCase.handleOcrFailure(request.fileKey(), request.reason());
+                return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+            }
+            documentUseCase.setParts(request);
+        } catch (Exception e) {
+            documentUseCase.handleOcrFailure(request.fileKey(), DocumentErrorType.SERVER_ERROR);
+            throw e;
+        }
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -40,7 +51,17 @@ public class DocumentCallbackController implements DocumentCallbackApi {
             @RequestBody OcrPartRequest request
     ) {
         validateToken(token);
-        documentUseCase.saveParts(request);
+
+        try {
+            if (Boolean.FALSE.equals(request.success())) {
+                documentUseCase.handleOcrFailure(request.fileKey(), request.reason());
+                return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+            }
+            documentUseCase.saveParts(request);
+        } catch (Exception e) {
+            documentUseCase.handleOcrFailure(request.fileKey(), DocumentErrorType.SERVER_ERROR);
+            throw e;
+        }
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
