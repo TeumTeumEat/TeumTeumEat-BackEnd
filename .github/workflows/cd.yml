@@ -42,7 +42,7 @@ jobs:
           mkdir -p configs/
           
           echo "${{ secrets.ENV }}" | base64 --decode > configs/.env
-          echo "${{ secrets.APPLE_P8 }}" | base64 --decode > configs/AuthKey_Q3BP7MWHVD.p8
+          echo "${{ secrets.APPLE_P8 }}" | base64 --decode > configs/appleAuthKey.p8
           echo "${{ secrets.FIREBASE_KEY }}" | base64 --decode > configs/firebaseKey.json
           echo "" >> configs/.env
           echo "SPRING_PROFILE=${{ vars.SPRING_PROFILE }}" >> configs/.env
