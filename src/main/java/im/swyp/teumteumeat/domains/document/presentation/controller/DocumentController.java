@@ -44,8 +44,6 @@ public class DocumentController implements DocumentApi {
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
             HttpServletResponse response) {
 
-        // Nginx 버퍼링 방지 설정
-        response.setHeader("X-Accel-Buffering", "no");
         return documentUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
     }
 

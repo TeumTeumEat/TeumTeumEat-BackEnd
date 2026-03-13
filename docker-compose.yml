@@ -2,6 +2,9 @@ services:
   spring-blue:
     image: ghcr.io/teumteumeat/teumteumeat-backend:develop
     container_name: spring-blue
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     networks:
@@ -19,6 +22,9 @@ services:
   spring-green:
     image: ghcr.io/teumteumeat/teumteumeat-backend:develop
     container_name: spring-green
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8081:8080"
     networks:
@@ -64,6 +70,12 @@ services:
       - backend
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 5s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
 
   prometheus:
     image: prom/prometheus:latest
@@ -77,13 +89,13 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    depends_on:
+      - prometheus
 #    user: "$UID:$GID"
     ports:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
     networks:
       - backend
 
