@@ -76,8 +76,7 @@ public class UserEntity extends BaseEntity {
 
     private boolean quizGuideSeen;
 
-    @Column(name = "available_quiz_count", columnDefinition = "int default 1")
-    private Integer availableQuizCount;
+    private int availableQuizCount = 1;
 
     @Column(name = "last_quiz_count_reset_date")
     private LocalDate lastQuizCountResetDate;
@@ -92,7 +91,7 @@ public class UserEntity extends BaseEntity {
 
     public int getAvailableQuizCount() {
         resetAvailableQuizCountIfNeed();
-        return this.availableQuizCount != null ? this.availableQuizCount : 0;
+        return this.availableQuizCount;
     }
 
     public boolean canSolveDailyQuiz() {
@@ -107,7 +106,7 @@ public class UserEntity extends BaseEntity {
 
     public void addAvailableQuizCount(int count) {
         resetAvailableQuizCountIfNeed();
-        this.availableQuizCount = (this.availableQuizCount != null ? this.availableQuizCount : 0) + count;
+        this.availableQuizCount += count;
     }
 
     public void completeQuizGuide() {
