@@ -86,35 +86,6 @@ public class CategoryDocumentUseCase {
     }
 
     @Transactional
-    public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
-        UserEntity user = userService.getUserById(userId);
-
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        boolean outOfQuota = !user.canSolveDailyQuiz();
-        boolean hasSolvedToday = user.getRole() != Role.ADMIN && outOfQuota;
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-
-        CategoryDocument activeDoc = getCurrentActiveDocument(goal, userId);
-        boolean isUnsolved = activeDoc != null
-                && !userQuizService.getConsumedDocumentIds(userId).contains(activeDoc.getId());
-
-        // 오늘 쿼타가 남아있고 안 풀은 문서가 없다면 -> 새로 생성
-        if (!outOfQuota && !isUnsolved) {
-            try {
-                createNewDailyDocument(goal);
-            } catch (Exception e) {
-                // 이미 생성되었거나 락 획득 실패 등은 무시하고 조회 진행
-            }
-            documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        }
-
-        return documents.stream()
-                .map(doc -> CategoryDocumentResponse.from(doc, hasSolvedToday, isFirstTime))
-                .toList();
-    }
-
-    @Transactional
     public void createDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
         createDocumentInternal(goal);
