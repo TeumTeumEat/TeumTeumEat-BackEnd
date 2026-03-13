@@ -77,7 +77,7 @@ public class UserQuizController implements UserQuizApi {
     public ResponseEntity<ApiResponse<Void>> completeQuizSet(
             @AuthenticationPrincipal CustomUserDetails user) {
         userQuizUseCase.completeQuizSet(user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
     @Override
@@ -85,7 +85,7 @@ public class UserQuizController implements UserQuizApi {
     public ResponseEntity<ApiResponse<Void>> claimAdReward(
             @AuthenticationPrincipal CustomUserDetails user) {
         userQuizUseCase.claimAdReward(user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, null));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
     @Override
