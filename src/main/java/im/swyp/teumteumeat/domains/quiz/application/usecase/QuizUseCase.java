@@ -283,6 +283,10 @@ public class QuizUseCase {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
+        if (goal.isCompleted()) {
+            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+
         UserEntity user = userService.getUserById(userId);
         if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
