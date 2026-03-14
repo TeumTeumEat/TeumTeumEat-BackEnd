@@ -56,6 +56,15 @@ public class Goal extends BaseEntity {
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryDocument> categoryDocuments = new ArrayList<>();
 
+    @Column(columnDefinition = "int default 0")
+    private Integer targetQuizSetCount;
+
+    @Column(columnDefinition = "int default 0")
+    private Integer completedQuizSetCount;
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean isCompleted;
+
     @Builder
     private Goal(
             UserEntity user,
@@ -63,13 +72,17 @@ public class Goal extends BaseEntity {
             LocalDate endDate,
             Difficulty difficulty,
             String prompt,
-            Category category) {
+            Category category,
+            Integer targetQuizSetCount) {
         this.user = user;
         this.type = type;
         this.endDate = endDate;
         this.difficulty = difficulty;
         this.prompt = prompt;
         this.category = category;
+        this.targetQuizSetCount = targetQuizSetCount != null ? targetQuizSetCount : 0;
+        this.completedQuizSetCount = 0;
+        this.isCompleted = false;
     }
 
     public void validateOwner(Long userId) {
@@ -85,5 +98,16 @@ public class Goal extends BaseEntity {
         this.endDate = (endDate != null) ? endDate : this.endDate;
         this.difficulty = (difficulty != null) ? difficulty : this.difficulty;
         this.prompt = (prompt != null) ? prompt : this.prompt;
+    }
+
+    public void incrementCompletedQuizSetCount() {
+        if (!this.isCompleted) {
+            this.completedQuizSetCount = (this.completedQuizSetCount != null ? this.completedQuizSetCount : 0) + 1;
+
+            int target = this.targetQuizSetCount != null ? this.targetQuizSetCount : 0;
+            if (this.completedQuizSetCount >= target && target > 0) {
+                this.isCompleted = true;
+            }
+        }
     }
 }

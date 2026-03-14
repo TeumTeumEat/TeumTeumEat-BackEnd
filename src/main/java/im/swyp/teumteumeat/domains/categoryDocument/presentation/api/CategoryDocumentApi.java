@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-        @Operation(summary = "오늘의 카테고리 요약글 생성 및 조회", description = "오늘 학습할 카테고리 요약글을 생성하거나 조회합니다. (1일 1회 제한)")
+        @Operation(summary = "일일 카테고리 요약글 생성 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (광고 시청 등을 통해 얻은 퀴즈 풀이 가능 횟수 1회 차감)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 및 조회 성공"))
         ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "일일 카테고리 자료 상세 조회", description = "오늘 부여된 카테고리 자료를 조회합니다. (퀴즈 풀이 전용)")
+        @Operation(summary = "일일 카테고리 요약글 단순 조회 (이어 읽기)", description = "유저가 최근에 발급받아 현재 진행 중인 카테고리 요약글을 횟수 차감 없이 그대로 다시 조회합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<CategoryDocumentResponse>> getDailyDocument(
                         @PathVariable Long categoryId,

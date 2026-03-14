@@ -7,5 +7,9 @@ public record UserQuizStatusResponse(
                 boolean hasSolvedToday,
                 boolean isFirstTime,
                 boolean hasCreatedToday,
-                boolean isQuizGuideSeen) {
+                boolean isQuizGuideSeen,
+                int availableQuizCount,
+                int targetQuizSetCount,
+                int completedQuizSetCount,
+                boolean isCompleted) {
 }

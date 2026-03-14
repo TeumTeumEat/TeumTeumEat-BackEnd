@@ -19,7 +19,6 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
@@ -51,7 +50,6 @@ public class QuizUseCase {
     private final DocumentService documentService;
     private final UserService userService;
     private final GoalService goalService;
-    private final UserQuizService userQuizService;
     private final DocumentSummaryRepository documentSummaryRepository;
 
     // 카테고리 기반 퀴즈
@@ -91,22 +89,8 @@ public class QuizUseCase {
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
-        // Goal 조회
-        Goal goal = document.getGoal();
-        if (goal == null) {
-            // 문서에 Goal이 없으면(재사용된 공용 문서 등), 해당 유저의 최신 Goal을 조회하여 난이도 등을 결정
-            goal = goalService.findLatestGoal(userId, document.getCategory().getId());
-        }
-
-        if (goal.getEndDate().isBefore(java.time.LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
-        UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN
-                && userQuizService.hasSolvedQuizToday(userId, document.getCategory().getId())) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
+        // Goal 조회 및 검증
+        Goal goal = validateGoal(document.getGoal(), userId, document.getCategory().getId());
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
@@ -241,16 +225,7 @@ public class QuizUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        Goal goal = document.getGoal();
-
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
-        UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizTodayByGoal(userId, goal.getId())) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
+        validateGoal(document.getGoal(), userId, null);
 
         // 최신 DocumentSummary 조회
         DocumentSummary summary = documentSummaryRepository.findLatestByDocumentId(documentId)
@@ -295,6 +270,29 @@ public class QuizUseCase {
         } catch (Exception e) {
             return 10; // 유저 조회 실패 등 예외 시 기본값
         }
+    }
+
+    // 퀴즈 생성 전 Goal 및 퀴즈 풀이 소진 여부 검증
+    private Goal validateGoal(Goal goal, Long userId, Long categoryId) {
+        if (goal == null) {
+            // 재사용된 공용 문서 등 Goal이 없는 경우, 해당 유저의 최신 Goal로 결정
+            goal = goalService.findLatestGoal(userId, categoryId);
+        }
+
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+
+        if (goal.isCompleted()) {
+            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+
+        UserEntity user = userService.getUserById(userId);
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        return goal;
     }
 
     private String truncateTopic(String topic) {

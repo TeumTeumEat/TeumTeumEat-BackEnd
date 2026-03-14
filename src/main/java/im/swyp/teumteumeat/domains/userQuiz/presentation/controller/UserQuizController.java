@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import java.util.List;
 
 @RestController
@@ -32,7 +31,6 @@ import java.util.List;
 public class UserQuizController implements UserQuizApi {
 
     private final UserQuizUseCase userQuizUseCase;
-    private final im.swyp.teumteumeat.domains.user.domain.service.UserService userService;
 
     // 유저가 퀴즈를 푸는 기능
     @Override
@@ -75,27 +73,27 @@ public class UserQuizController implements UserQuizApi {
     }
 
     @Override
+    @PostMapping("/complete-set")
+    public ResponseEntity<ApiResponse<Void>> completeQuizSet(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userQuizUseCase.completeQuizSet(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @PostMapping("/ad-reward")
+    public ResponseEntity<ApiResponse<Void>> claimAdReward(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userQuizUseCase.claimAdReward(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
             @AuthenticationPrincipal CustomUserDetails user) {
-        boolean hasSolvedToday = userQuizUseCase.hasSolvedAnyQuizToday(user.getUserId());
-        boolean hasSolvedEver = userQuizUseCase.hasSolvedAnyQuizEver(user.getUserId());
-        boolean hasGeneratedContent = userQuizUseCase.hasCreatedDocumentToday(user.getUserId());
-        boolean isQuizGuideSeen = userQuizUseCase.isQuizGuideSeen(user.getUserId());
 
-        im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity userEntity = userService
-                .getUserById(user.getUserId());
-        if (userEntity.getRole() == im.swyp.teumteumeat.domains.user.domain.constant.Role.ADMIN) {
-            hasSolvedToday = false;
-            hasGeneratedContent = false;
-        }
-
-        UserQuizStatusResponse response = UserQuizStatusResponse.builder()
-                .hasSolvedToday(hasSolvedToday)
-                .isFirstTime(!hasSolvedEver)
-                .hasCreatedToday(hasGeneratedContent)
-                .isQuizGuideSeen(isQuizGuideSeen)
-                .build();
+        UserQuizStatusResponse response = userQuizUseCase.getUserQuizStatus(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }

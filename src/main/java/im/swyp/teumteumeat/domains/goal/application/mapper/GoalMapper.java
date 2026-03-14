@@ -21,6 +21,7 @@ public class GoalMapper {
             Category category,
             LocalDate startDate) {
         LocalDate endDate = DateParser.calculateEndDate(startDate, request.studyPeriod());
+        int targetQuizSetCount = (int) ChronoUnit.DAYS.between(startDate, endDate);
 
         return Goal.builder()
                 .user(user)
@@ -29,6 +30,7 @@ public class GoalMapper {
                 .difficulty(request.difficulty())
                 .prompt(request.prompt())
                 .category(category)
+                .targetQuizSetCount(targetQuizSetCount)
                 .build();
     }
 
@@ -50,9 +52,9 @@ public class GoalMapper {
                 .startDate(startDate)
                 .endDate(endDate)
                 .isExpired(endDate.isBefore(LocalDate.now()))
+                .isCompleted(goal.isCompleted())
                 .studyPeriod(studyPeriod)
                 .difficulty(goal.getDifficulty())
-                .prompt(goal.getPrompt())
                 .prompt(goal.getPrompt())
                 .fileName(fileName)
                 .documentId(documentId)

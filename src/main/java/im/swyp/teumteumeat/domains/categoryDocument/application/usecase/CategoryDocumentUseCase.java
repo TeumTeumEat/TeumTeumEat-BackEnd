@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @UseCase
@@ -40,21 +40,26 @@ public class CategoryDocumentUseCase {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
-        UserEntity user = userService.getUserWithCurrentGoal(userId);
-        Goal goal = user.getCurrentGoal();
+        Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserById(userId);
 
-        if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
-            throw new BaseException(CommonResponseCode.NOT_FOUND);
-        }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
-        if (user.getRole() != Role.ADMIN && userQuizService.hasSolvedQuizToday(userId, categoryId)) {
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        CategoryDocument targetDocument = getNextDocumentOrCreate(goal, userId);
+        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
+        if (user.getRole() != Role.ADMIN) {
+            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+            if (activeDocument != null) {
+                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+                if (!isConsumed) {
+                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                }
+            }
+        }
+
+        // 새 문서 생성 (무조건)
+        CategoryDocument targetDocument = createNewDailyDocument(goal);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
@@ -65,80 +70,19 @@ public class CategoryDocumentUseCase {
         Goal goal = getValidGoal(userId, categoryId);
         UserEntity user = userService.getUserById(userId);
 
-        boolean realHasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
+        boolean outOfQuota = !user.canSolveDailyQuiz();
         boolean isAdmin = user.getRole() == Role.ADMIN;
-        boolean hasSolvedToday = !isAdmin && realHasSolvedToday;
+        boolean hasSolvedToday = !isAdmin && outOfQuota;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        CategoryDocument targetDocument;
+        // 단순 조회: 가장 최근에 발급받은(생성된) 문서를 우선 반환
+        CategoryDocument targetDocument = getCurrentActiveDocument(goal, userId);
 
-        if (isAdmin) {
-            // ADMIN 로직: 오늘 생성된 최신 문서를 확인 (DB 직접 조회)
-            CategoryDocument todayDoc = categoryDocumentService.getLatestDocumentByGoalId(goal.getId())
-                    .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                    .orElse(null);
-
-            if (todayDoc != null) {
-                // 오늘 생성된 게 있다 -> 풀었는지 확인
-                boolean isSolved = userQuizService.getConsumedDocumentIds(userId).contains(todayDoc.getId());
-                if (isSolved) {
-                    // 풀었음 -> 새로 생성 (무한 루프)
-                    targetDocument = createNewDailyDocument(goal);
-                } else {
-                    // 안 풀었음 -> 기존 유지
-                    targetDocument = todayDoc;
-                }
-            } else {
-                // 오늘 생성된 게 없음 -> 생성
-                targetDocument = createNewDailyDocument(goal);
-            }
-        } else {
-            // 일반 유저 로직
-            targetDocument = getNextDocument(goal, userId);
-
-            if (targetDocument == null) {
-                // 아직 오늘의 요약글이 없고, 오늘 퀴즈도 푼 적 없다면 -> 새로 생성
-                if (!realHasSolvedToday) {
-                    targetDocument = createNewDailyDocument(goal);
-                } else {
-                    // 이미 오늘 문제를 풀었으면, 오늘 생성된 문서를 반환 (단순 조회용)
-                    targetDocument = categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                            .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                            .findFirst()
-                            .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-                }
-            }
+        if (targetDocument == null) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
 
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
-    }
-
-    @Transactional
-    public List<CategoryDocumentResponse> getDocuments(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
-        UserEntity user = userService.getUserById(userId);
-
-        List<CategoryDocument> documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        boolean realHasSolvedToday = userQuizService.hasSolvedQuizToday(userId, categoryId);
-        boolean hasSolvedToday = user.getRole() != Role.ADMIN && realHasSolvedToday;
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-
-        boolean hasTodayDocument = !documents.isEmpty() &&
-                documents.get(documents.size() - 1).getCreatedDate().toLocalDate().isEqual(LocalDate.now());
-
-        // 오늘 생성된 자료가 없고, 오늘 퀴즈도 푼 적 없다면 -> 생성
-        if (!realHasSolvedToday && !hasTodayDocument) {
-            try {
-                createNewDailyDocument(goal);
-            } catch (Exception e) {
-                // 이미 생성되었거나 락 획득 실패 등은 무시하고 조회 진행
-            }
-            documents = categoryDocumentService.getDocumentsByGoalId(goal.getId());
-        }
-
-        return documents.stream()
-                .map(doc -> CategoryDocumentResponse.from(doc, hasSolvedToday, isFirstTime))
-                .toList();
     }
 
     @Transactional
@@ -155,61 +99,43 @@ public class CategoryDocumentUseCase {
         if (goal.getEndDate().isBefore(LocalDate.now())) {
             throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
+        if (goal.isCompleted()) {
+            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
         return goal;
     }
 
-    private CategoryDocument getNextDocumentOrCreate(Goal goal, Long userId) {
-        CategoryDocument targetDocument = getNextDocument(goal, userId);
-        if (targetDocument == null) {
-            targetDocument = createNewDailyDocument(goal);
+    private CategoryDocument getCurrentActiveDocument(Goal goal, Long userId) {
+        // 1. 유저가 직접 생성한 최신 문서가 있는지 확인
+        Optional<CategoryDocument> latestDocOpt = categoryDocumentService.getLatestDocumentByGoalId(goal.getId());
+        if (latestDocOpt.isPresent()) {
+            return latestDocOpt.get(); // 가장 최근 생성 문서를 우선으로
         }
-        return targetDocument;
-    }
 
-    private CategoryDocument getNextDocument(Goal goal, Long userId) {
-        List<CategoryDocument> documents = new ArrayList<>(
-                categoryDocumentService.getDocumentsByGoalId(goal.getId()));
-
+        // 2. 만약 직접 생성한 문서가 없다면, 초기 학습 상태이므로 공용 문서 중 아직 안 푼 가장 첫 번째 문서를 찾음
         boolean isDefaultPrompt = goal.getPrompt() == null || goal.getPrompt().isBlank();
         if (isDefaultPrompt) {
             List<CategoryDocument> commonDocuments = categoryDocumentService
                     .getCommonDocuments(goal.getCategory().getId());
-            documents.addAll(commonDocuments);
+            List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
+
+            return commonDocuments.stream()
+                    .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
+                    .findFirst()
+                    .orElse(null);
         }
 
-        List<Long> consumedDocumentIds = userQuizService.getConsumedDocumentIds(userId);
-
-        return documents.stream()
-                .filter(doc -> !consumedDocumentIds.contains(doc.getId()))
-                .findFirst()
-                .orElse(null);
+        return null;
     }
 
     private CategoryDocument createNewDailyDocument(Goal goal) {
-        String lockKey = "lock:category_document:generation:" + goal.getId() + ":" + LocalDate.now();
+        String lockKey = "lock:category_document:generation:" + goal.getId();
 
         // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
         return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // 락 내부에서 이중 체크 (Double-Check) - ADMIN은 예외 (무조건 생성)
-            boolean isAdmin = goal.getUser().getRole() == Role.ADMIN;
-            if (!isAdmin && categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                        .findFirst()
-                        .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-            }
+            // 무조건 생성
             return createDocumentInternal(goal);
-        }).orElseGet(() -> {
-            // 락 획득 실패 (Timeout 30s) -> 재조회 시도
-            if (categoryDocumentService.existsByGoalIdAndDate(goal.getId(), LocalDate.now())) {
-                return categoryDocumentService.getDocumentsByGoalId(goal.getId()).stream()
-                        .filter(d -> d.getCreatedDate().toLocalDate().isEqual(LocalDate.now()))
-                        .findFirst()
-                        .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
-            }
-            // 30초나 기다렸는데도 문서가 없고 락도 못 얻음 -> 서버 에러
-            throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
-        });
+        }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
     }
 
     private CategoryDocument createDocumentInternal(Goal goal) {

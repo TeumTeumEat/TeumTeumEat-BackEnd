@@ -4,13 +4,17 @@ import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocum
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.UserQuizStatusResponse;
+import im.swyp.teumteumeat.domains.userQuiz.application.mapper.UserQuizMapper;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
@@ -21,6 +25,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.transaction.annotation.Propagation;
@@ -47,6 +52,7 @@ public class UserQuizUseCase {
     private final GoalService goalService;
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
+    private final UserQuizMapper userQuizMapper;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -174,6 +180,22 @@ public class UserQuizUseCase {
         return quizMapper.toQuestionResponse(quiz);
     }
 
+    public UserQuizStatusResponse getUserQuizStatus(Long userId) {
+        boolean hasSolvedToday = hasSolvedAnyQuizToday(userId);
+        boolean hasSolvedEver = hasSolvedAnyQuizEver(userId);
+        boolean hasGeneratedContent = hasCreatedDocumentToday(userId);
+        boolean isQuizGuideSeen = isQuizGuideSeen(userId);
+
+        UserEntity userEntity = userService.getUserById(userId);
+
+        return userQuizMapper.toStatusResponse(
+                userEntity,
+                hasSolvedToday,
+                hasSolvedEver,
+                hasGeneratedContent,
+                isQuizGuideSeen);
+    }
+
     public boolean hasSolvedAnyQuizToday(Long userId) {
         return userQuizService.hasSolvedAnyQuizToday(userId);
     }
@@ -193,8 +215,33 @@ public class UserQuizUseCase {
         user.completeQuizGuide();
     }
 
+    @Transactional
+    public void completeQuizSet(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+            throw new BaseException(
+                    QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        if (user.getRole() != Role.ADMIN) {
+            user.consumeQuizCount();
+        }
+
+        Goal currentGoal = user.getCurrentGoal();
+        if (currentGoal != null && !currentGoal.isCompleted()) {
+            currentGoal.incrementCompletedQuizSetCount();
+        }
+    }
+
     public boolean isQuizGuideSeen(Long userId) {
         UserEntity user = userService.getUserById(userId);
         return user.isQuizGuideSeen();
+    }
+
+    @Transactional
+    public void claimAdReward(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        user.addAvailableQuizCount(1);
     }
 }
