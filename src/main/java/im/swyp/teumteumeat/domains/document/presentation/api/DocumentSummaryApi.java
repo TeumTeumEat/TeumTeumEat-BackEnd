@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/api/v1/goals/{goalId}/documents")
 public interface DocumentSummaryApi {
 
-        @Operation(summary = "PDF 요약글 및 퀴즈 생성 (학습 시작)", description = "PDF의 새로운 요약본과 퀴즈를 생성합니다. (광고 시청 등을 통해 얻은 퀴즈 풀이 가능 횟수 1회 차감)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 성공"))
-        ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
+        @Operation(summary = "PDF 요약글 및 퀴즈 생성 (학습 시작)", description = "PDF의 새로운 요약본과 퀴즈를 생성합니다. (결과는 비동기로 SSE를 통해 전달됨)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 요청 성공 (결과는 비동기 SSE 알림)"))
+        ResponseEntity<ApiResponse<Void>> createSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
