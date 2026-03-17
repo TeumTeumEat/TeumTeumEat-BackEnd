@@ -51,6 +51,9 @@ public class UserQuizController implements UserQuizApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         List<QuizSetResponse> response = userQuizUseCase.getQuizzesForSolving(documentId, user.getUserId(),
                 documentType);
+        if (response.isEmpty()) {
+            return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+        }
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

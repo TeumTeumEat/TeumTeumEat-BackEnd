@@ -10,6 +10,7 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.userQuiz.application.dto.event.UserQuizGenerationEvent;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
@@ -26,17 +27,25 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -53,6 +62,8 @@ public class UserQuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SseProvider sseProvider;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -99,6 +110,10 @@ public class UserQuizUseCase {
             quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
         } else {
             quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
+            // getPrioritizedQuizzes에서 빈 리스트가 돌아왔을 경우
+            if (quizzesUnsolved.isEmpty()) {
+                return Collections.emptyList();
+            }
         }
 
         // 퀴즈 수가 여전히 부족하면(아예 없거나) -> 생성 로직
@@ -114,8 +129,8 @@ public class UserQuizUseCase {
                 boolean hasCustomPrompt = goal.getPrompt() != null && !goal.getPrompt().isBlank();
 
                 if (hasCustomPrompt) {
-                    quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
-                    quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
+                    eventPublisher.publishEvent(new UserQuizGenerationEvent(documentId, userId, quizCount));
+                    return Collections.emptyList();
                 }
             }
         }
@@ -143,28 +158,46 @@ public class UserQuizUseCase {
 
         // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
-            String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
-
-            priorityQuizzes = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-                // 이중 체크(Double-Check): 락 획득 후 다시 한 번 개수 확인
-                List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                        targetDifficulty, targetTopic, quizCount);
-
-                if (currentQuizzes.size() < quizCount) {
-                    int remainingCount = quizCount - currentQuizzes.size();
-                    quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
-
-                    // 재생성 후 최종 조회
-                    return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                            targetDifficulty, targetTopic, quizCount);
-                }
-                return currentQuizzes;
-            }).orElse(priorityQuizzes);
+             int remainingCount = quizCount - priorityQuizzes.size();
+             eventPublisher.publishEvent(new UserQuizGenerationEvent(documentId, userId, remainingCount));
+             return Collections.emptyList();
         }
 
         // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족
         // -> 위 getQuizzesForSolving에서 createQuizzesForDocument()를 호출하여 추가 생성
         return priorityQuizzes;
+    }
+
+    @Async
+    @EventListener
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void handleUserQuizGenerationEvent(im.swyp.teumteumeat.domains.userQuiz.application.dto.event.UserQuizGenerationEvent event) {
+        String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
+
+        try {
+            distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+                quizUseCase.createQuizzesForDocument(event.documentId(), event.userId(), event.quizCount());
+                return null;
+            });
+            
+            // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
+            int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
+            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(), totalQuizCount);
+            
+            if (quizzesUnsolved.isEmpty()) {
+                // getPrioritizedQuizzes 방식으로 시도
+                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null, null, totalQuizCount);
+            }
+
+            List<QuizSetResponse> responseList = quizzesUnsolved.stream()
+                    .map(quizMapper::toQuestionResponse)
+                    .toList();
+
+            sseProvider.sendEvent(event.userId().toString(), "QUIZ_GENERATED", responseList);
+        } catch (Exception e) {
+            log.error("유저 퀴즈 생성 실패 userId: {}", event.userId(), e);
+            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
+        }
     }
 
     private String truncateTopic(String topic) {
