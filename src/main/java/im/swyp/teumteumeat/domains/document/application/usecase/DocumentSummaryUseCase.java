@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.document.application.usecase;
 
+import im.swyp.teumteumeat.domains.document.application.dto.event.DocumentSummaryGenerationEvent;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
@@ -20,12 +21,19 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,6 +46,8 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SseProvider sseProvider;
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -70,9 +80,9 @@ public class DocumentSummaryUseCase {
         return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
     }
 
-    // 문서 요약 및 상세 조회 (학습 시 사용 되는 메서드)
-    @Transactional
-    public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
+    //  pdf 요약글 생성 (학습 시 사용 되는 메서드)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void createSummaryAsync(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
@@ -109,12 +119,25 @@ public class DocumentSummaryUseCase {
             }
         }
 
-        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
-        DocumentSummary summary = documentSummaryService.generateSummary(document);
-        quizUseCase.createQuizzesForPdfDocument(document, summary);
-
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+        // 요약글 생성 이벤트 publish
+        eventPublisher.publishEvent(new DocumentSummaryGenerationEvent(userId, goal, document, isFirstTime));
+    }
 
-        return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
+    @Async
+    @EventListener
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void handleDocumentSummaryGenerationEvent(DocumentSummaryGenerationEvent event) {
+        // 요약글 생성 후 퀴즈 생성
+        try {
+            DocumentSummary summary = documentSummaryService.generateSummary(event.document());
+            quizUseCase.createQuizzesForPdfDocument(event.document(), summary);
+
+            DocumentDetailResponse response = DocumentMapper.toDocumentDetailResponse(event.document(), summary, false, event.isFirstTime());
+            sseProvider.sendEvent(event.userId().toString(), "DOCUMENT_GENERATED", response);
+        } catch (Exception e) {
+            log.error("PDF 요약글 생성 실패 userId: {}", event.userId(), e);
+            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "PDF 요약글 생성에 실패했습니다.");
+        }
     }
 }
