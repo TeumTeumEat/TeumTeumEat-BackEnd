@@ -12,6 +12,8 @@ import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.quiz.application.dto.event.DocumentQuizGenerationEvent;
+import im.swyp.teumteumeat.domains.quiz.application.dto.event.QuizGenerationEvent;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
@@ -22,8 +24,14 @@ import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
+import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
@@ -37,6 +45,7 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -51,6 +60,8 @@ public class QuizUseCase {
     private final UserService userService;
     private final GoalService goalService;
     private final DocumentSummaryRepository documentSummaryRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SseProvider sseProvider;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -73,6 +84,25 @@ public class QuizUseCase {
     public QuizListResponse.QuizDto getQuiz(Long quizId) {
         Quiz quiz = quizService.getQuizById(quizId);
         return quizMapper.toDto(quiz);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void createQuizzesForDocumentAsync(Long documentId, Long userId) {
+        eventPublisher.publishEvent(new QuizGenerationEvent(documentId, userId));
+    }
+
+    @Async
+    @EventListener
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void handleQuizGenerationEvent(QuizGenerationEvent event) {
+        try {
+            createQuizzesForDocument(event.documentId(), event.userId());
+            QuizListResponse response = getQuizzesByCategoryDocumentId(event.documentId());
+            sseProvider.sendEvent(event.userId().toString(), "QUIZ_GENERATED", response);
+        } catch(Exception e) {
+            log.error("퀴즈 생성 실패", e);
+            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "퀴즈 생성에 실패했습니다.");
+        }
     }
 
     // 퀴즈 세트 생성 (CategoryDocument) - 기본 (이동시간 기준)
@@ -232,6 +262,25 @@ public class QuizUseCase {
                 .orElseThrow(() -> new BaseException(QuizResponseCode.NOT_FOUND_QUIZ)); // or appropriate error
 
         createQuizzesForPdfDocument(document, summary);
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public void createQuizzesForPdfDocumentByIdAsync(Long documentId, Long userId) {
+        eventPublisher.publishEvent(new DocumentQuizGenerationEvent(documentId, userId));
+    }
+
+    @org.springframework.scheduling.annotation.Async
+    @org.springframework.context.event.EventListener
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public void handlePdfQuizGenerationEvent(DocumentQuizGenerationEvent event) {
+        try {
+            createQuizzesForPdfDocumentById(event.documentId(), event.userId());
+            QuizListResponse response = getQuizzesByDocumentId(event.documentId());
+            sseProvider.sendEvent(event.userId().toString(), "QUIZ_GENERATED", response);
+        } catch(Exception e) {
+            log.error("Failed to generate PDF quizzes async", e);
+            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "PDF 퀴즈 생성에 실패했습니다.");
+        }
     }
 
     @Transactional

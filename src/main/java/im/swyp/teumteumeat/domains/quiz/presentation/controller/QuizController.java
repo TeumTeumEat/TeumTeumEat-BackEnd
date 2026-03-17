@@ -70,8 +70,8 @@ public class QuizController implements QuizApi {
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        quizUseCase.createQuizzesForDocument(documentId, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        quizUseCase.createQuizzesForDocumentAsync(documentId, user.getUserId());
+        return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
     // PDF 문서에 대한 퀴즈 생성
@@ -83,8 +83,8 @@ public class QuizController implements QuizApi {
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
 
-        quizUseCase.createQuizzesForPdfDocumentById(documentId, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        quizUseCase.createQuizzesForPdfDocumentByIdAsync(documentId, user.getUserId());
+        return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
     // 해당 퀴즈 삭제
