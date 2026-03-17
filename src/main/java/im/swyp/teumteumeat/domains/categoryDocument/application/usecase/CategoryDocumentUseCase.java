@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
+import im.swyp.teumteumeat.domains.categoryDocument.application.dto.event.CategoryDocumentGenerationEvent;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
@@ -17,8 +18,13 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,9 +44,11 @@ public class CategoryDocumentUseCase {
     private final UserQuizService userQuizService;
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SseProvider sseProvider;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
+    public void generateDocumentAsync(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
         UserEntity user = userService.getUserById(userId);
 
@@ -58,11 +67,26 @@ public class CategoryDocumentUseCase {
             }
         }
 
-        // 새 문서 생성 (무조건)
-        CategoryDocument targetDocument = createNewDailyDocument(goal);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+        
+        // 요약글 생성 이벤트 publish
+        eventPublisher.publishEvent(new CategoryDocumentGenerationEvent(categoryId, userId, goal, isFirstTime));
+    }
 
-        return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
+    @Async
+    @EventListener
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void handleDocumentGenerationEvent(CategoryDocumentGenerationEvent event) {
+        try {
+            // 요약글 생성
+            CategoryDocument targetDocument = createNewDailyDocument(event.goal());
+            CategoryDocumentResponse response = CategoryDocumentResponse.from(targetDocument, false, event.isFirstTime());
+            
+            sseProvider.sendEvent(event.userId().toString(), "DOCUMENT_GENERATED", response);
+        } catch (Exception e) {
+            log.error("카테고리 요약글 생성 실패 userId: {}", event.userId(), e);
+            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "요약글 생성에 실패했습니다.");
+        }
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
