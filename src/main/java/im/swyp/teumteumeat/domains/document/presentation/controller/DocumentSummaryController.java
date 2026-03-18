@@ -19,6 +19,17 @@ public class DocumentSummaryController implements DocumentSummaryApi {
     private final DocumentSummaryUseCase documentSummaryUseCase;
 
     @Override
+    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribe(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            jakarta.servlet.http.HttpServletResponse response) {
+        return documentSummaryUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
+    }
+
+    @Override
     @PostMapping("/{goalId}/documents/{documentId}/summary")
     public ResponseEntity<ApiResponse<Void>> createSummary(
             @PathVariable Long goalId,

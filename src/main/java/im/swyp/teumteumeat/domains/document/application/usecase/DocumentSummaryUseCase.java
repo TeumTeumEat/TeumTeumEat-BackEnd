@@ -21,7 +21,6 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.global.sse.component.SseProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,6 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
+
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @UseCase
@@ -47,7 +49,22 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
     private final ApplicationEventPublisher eventPublisher;
-    private final SseProvider sseProvider;
+    private final NotificationService notificationService;
+
+    public SseEmitter subscribe(Long userId, Long goalId, Long documentId, String lastEventId) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+        document.validateBelongTo(goalId);
+
+        return notificationService.subscribe(
+                lastEventId,
+                (dto) -> {},
+                userId,
+                documentId);
+    }
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -128,16 +145,17 @@ public class DocumentSummaryUseCase {
     @EventListener
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleDocumentSummaryGenerationEvent(DocumentSummaryGenerationEvent event) {
+        String key = notificationService.generateKey(event.userId(), event.document().getId());
         // 요약글 생성 후 퀴즈 생성
         try {
             DocumentSummary summary = documentSummaryService.generateSummary(event.document());
             quizUseCase.createQuizzesForPdfDocument(event.document(), summary);
 
             DocumentDetailResponse response = DocumentMapper.toDocumentDetailResponse(event.document(), summary, false, event.isFirstTime());
-            sseProvider.sendEvent(event.userId().toString(), "DOCUMENT_GENERATED", response);
+            notificationService.send(key, "DOCUMENT_GENERATED", response);
         } catch (Exception e) {
             log.error("PDF 요약글 생성 실패 userId: {}", event.userId(), e);
-            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "PDF 요약글 생성에 실패했습니다.");
+            notificationService.send(key, "GENERATION_ERROR", "PDF 요약글 생성에 실패했습니다.");
         }
     }
 }
