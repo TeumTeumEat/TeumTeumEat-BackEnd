@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class DocumentSummaryController implements DocumentSummaryApi {
     private final DocumentSummaryUseCase documentSummaryUseCase;
 
     @Override
-    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribe(
             @PathVariable Long goalId,
             @PathVariable Long documentId,

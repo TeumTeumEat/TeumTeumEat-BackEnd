@@ -6,16 +6,14 @@ import im.swyp.teumteumeat.domains.quiz.presentation.api.QuizApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 
 @RestController
@@ -74,6 +72,18 @@ public class QuizController implements QuizApi {
         return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 
+    @Override
+    @GetMapping(value = "categories/{categoryId}/documents/{documentId}/quizzes/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public SseEmitter subscribeToCategoryQuiz(
+            @PathVariable Long categoryId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            HttpServletResponse response) {
+        return quizUseCase.subscribe(user.getUserId(), documentId, lastEventId);
+    }
+
     // PDF 문서에 대한 퀴즈 생성
     @Override
     @PostMapping("goals/{goalId}/documents/{documentId}/quizzes")
@@ -85,6 +95,18 @@ public class QuizController implements QuizApi {
 
         quizUseCase.createQuizzesForPdfDocumentByIdAsync(documentId, user.getUserId());
         return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @GetMapping(value = "goals/{goalId}/documents/{documentId}/quizzes/sse", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribeToPdfQuiz(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            jakarta.servlet.http.HttpServletResponse response) {
+        return quizUseCase.subscribe(user.getUserId(), documentId, lastEventId);
     }
 
     // 해당 퀴즈 삭제
