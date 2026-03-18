@@ -53,11 +53,11 @@ public class CategoryDocumentUseCase {
     public SseEmitter subscribe(Long userId, Long categoryId, String lastEventId) {
         categoryService.getCategoryById(categoryId);
 
-        // SSE 구독
         return notificationService.subscribe(
                 lastEventId,
                 (dto) -> {
-                    // Cache Miss 시 별도로 보낼 초기 데이터는 없음
+                    String eventId = dto.id() + ":" + System.currentTimeMillis();
+                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "DOCUMENT_PROCESSING", "안내서 생성을 진행 중입니다.");
                 },
                 userId,
                 categoryId);

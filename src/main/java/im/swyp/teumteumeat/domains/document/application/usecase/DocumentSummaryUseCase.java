@@ -61,8 +61,12 @@ public class DocumentSummaryUseCase {
 
         return notificationService.subscribe(
                 lastEventId,
-                (dto) -> {},
+                (dto) -> {
+                    String eventId = dto.id() + ":" + System.currentTimeMillis();
+                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "SUMMARY_PROCESSING", "PDF 구조화 및 요약 생성 작업을 진행 중입니다.");
+                },
                 userId,
+                goalId,
                 documentId);
     }
 

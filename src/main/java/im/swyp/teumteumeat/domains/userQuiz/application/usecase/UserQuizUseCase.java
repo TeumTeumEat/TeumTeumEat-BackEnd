@@ -73,7 +73,10 @@ public class UserQuizUseCase {
         // SSE 구독
         return notificationService.subscribe(
                 lastEventId,
-                (dto) -> {},
+                (dto) -> {
+                    String eventId = dto.id() + ":" + System.currentTimeMillis();
+                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "QUIZ_PROCESSING", "유저 퀴즈 생성을 진행 중입니다.");
+                },
                 userId,
                 documentId);
     }
