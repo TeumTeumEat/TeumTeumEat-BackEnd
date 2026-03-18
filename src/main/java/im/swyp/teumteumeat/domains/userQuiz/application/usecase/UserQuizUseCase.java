@@ -184,7 +184,7 @@ public class UserQuizUseCase {
     @Async
     @EventListener
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void handleUserQuizGenerationEvent(im.swyp.teumteumeat.domains.userQuiz.application.dto.event.UserQuizGenerationEvent event) {
+    public void handleUserQuizGenerationEvent(UserQuizGenerationEvent event) {
         String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
         String sseKey = notificationService.generateKey(event.userId(), event.documentId());
 
