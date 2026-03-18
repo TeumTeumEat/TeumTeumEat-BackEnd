@@ -27,7 +27,7 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.global.sse.component.SseProvider;
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @UseCase
@@ -63,7 +64,19 @@ public class UserQuizUseCase {
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
     private final ApplicationEventPublisher eventPublisher;
-    private final SseProvider sseProvider;
+    private final NotificationService notificationService;
+
+    public SseEmitter subscribe(Long userId, Long documentId, String lastEventId) {
+        // validate document
+        categoryDocumentService.getDocumentById(documentId);
+
+        // SSE 구독
+        return notificationService.subscribe(
+                lastEventId,
+                (dto) -> {},
+                userId,
+                documentId);
+    }
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -173,6 +186,7 @@ public class UserQuizUseCase {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleUserQuizGenerationEvent(im.swyp.teumteumeat.domains.userQuiz.application.dto.event.UserQuizGenerationEvent event) {
         String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
+        String sseKey = notificationService.generateKey(event.userId(), event.documentId());
 
         try {
             distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
@@ -193,10 +207,10 @@ public class UserQuizUseCase {
                     .map(quizMapper::toQuestionResponse)
                     .toList();
 
-            sseProvider.sendEvent(event.userId().toString(), "QUIZ_GENERATED", responseList);
+            notificationService.send(sseKey, "QUIZ_GENERATED", responseList);
         } catch (Exception e) {
             log.error("유저 퀴즈 생성 실패 userId: {}", event.userId(), e);
-            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
+            notificationService.send(sseKey, "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
         }
     }
 
