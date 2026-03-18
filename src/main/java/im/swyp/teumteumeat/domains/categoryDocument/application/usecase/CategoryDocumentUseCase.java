@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
+import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.event.CategoryDocumentGenerationEvent;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -18,7 +19,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
-import im.swyp.teumteumeat.global.sse.component.SseProvider;
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,10 +44,24 @@ public class CategoryDocumentUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final UserService userService;
     private final UserQuizService userQuizService;
+    private final CategoryService categoryService;
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
+    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
-    private final SseProvider sseProvider;
+
+    public SseEmitter subscribe(Long userId, Long categoryId, String lastEventId) {
+        categoryService.getCategoryById(categoryId);
+
+        // SSE 구독
+        return notificationService.subscribe(
+                lastEventId,
+                (dto) -> {
+                    // Cache Miss 시 별도로 보낼 초기 데이터는 없음
+                },
+                userId,
+                categoryId);
+    }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void generateDocumentAsync(Long categoryId, Long userId) {
@@ -77,15 +93,16 @@ public class CategoryDocumentUseCase {
     @EventListener
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleDocumentGenerationEvent(CategoryDocumentGenerationEvent event) {
+        String key = notificationService.generateKey(event.userId(), event.categoryId());
         try {
             // 요약글 생성
             CategoryDocument targetDocument = createNewDailyDocument(event.goal());
             CategoryDocumentResponse response = CategoryDocumentResponse.from(targetDocument, false, event.isFirstTime());
             
-            sseProvider.sendEvent(event.userId().toString(), "DOCUMENT_GENERATED", response);
+            notificationService.send(key, "DOCUMENT_GENERATED", response);
         } catch (Exception e) {
             log.error("카테고리 요약글 생성 실패 userId: {}", event.userId(), e);
-            sseProvider.sendEvent(event.userId().toString(), "GENERATION_ERROR", "요약글 생성에 실패했습니다.");
+            notificationService.send(key, "GENERATION_ERROR", "요약글 생성에 실패했습니다.");
         }
     }
 
@@ -196,4 +213,5 @@ public class CategoryDocumentUseCase {
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
     }
+
 }
