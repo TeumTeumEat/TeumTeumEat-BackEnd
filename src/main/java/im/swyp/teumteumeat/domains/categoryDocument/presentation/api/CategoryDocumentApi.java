@@ -21,6 +21,13 @@ public interface CategoryDocumentApi {
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
+        @Operation(summary = "카테고리 생성 SSE 구독", description = "생성 비동기 처리 결과를 받기 위한 SSE 스트림에 연결합니다.")
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribe(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
+                        @org.springframework.web.bind.annotation.RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+                        jakarta.servlet.http.HttpServletResponse response);
+
         @Operation(summary = "일일 카테고리 요약글 단순 조회 (이어 읽기)", description = "유저가 최근에 발급받아 현재 진행 중인 카테고리 요약글을 횟수 차감 없이 그대로 다시 조회합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<CategoryDocumentResponse>> getDailyDocument(

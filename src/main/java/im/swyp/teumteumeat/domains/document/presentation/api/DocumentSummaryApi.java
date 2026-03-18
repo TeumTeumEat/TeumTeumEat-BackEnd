@@ -26,6 +26,14 @@ public interface DocumentSummaryApi {
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
+        @Operation(summary = "PDF 요약글 생성 SSE 구독", description = "생성 비동기 처리 결과를 받기 위한 SSE 스트림에 연결합니다.")
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribe(
+                        @PathVariable Long goalId,
+                        @PathVariable Long documentId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
+                        @org.springframework.web.bind.annotation.RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+                        jakarta.servlet.http.HttpServletResponse response);
+
         @Operation(summary = "PDF 요약글 단순 조회 (이어 읽기)", description = "가장 최근에 생성되어 진행 중인 PDF 요약글을 횟수 차감 없이 그대로 다시 조회합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
