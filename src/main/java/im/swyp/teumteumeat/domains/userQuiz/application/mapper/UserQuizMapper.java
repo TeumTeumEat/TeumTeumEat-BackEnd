@@ -43,6 +43,7 @@ public class UserQuizMapper {
                 .hasCreatedToday(hasGeneratedContent)
                 .isQuizGuideSeen(isQuizGuideSeen)
                 .availableQuizCount(availableQuizCount)
+                .dailyAdRewardCount(userEntity.getDailyAdRewardCount())
                 .targetQuizSetCount(targetQuizSetCount)
                 .completedQuizSetCount(completedQuizSetCount)
                 .isCompleted(isCompleted)
