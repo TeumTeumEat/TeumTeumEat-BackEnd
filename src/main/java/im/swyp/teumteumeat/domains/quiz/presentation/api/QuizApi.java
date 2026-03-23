@@ -63,12 +63,12 @@ public interface QuizApi {
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "PDF 문서에 대한 퀴즈 생성 SSE 구독", description = "비동기 PDF 퀴즈 생성 결과를 받기 위한 SSE 스트림에 연결합니다.")
-        org.springframework.web.servlet.mvc.method.annotation.SseEmitter subscribeToPdfQuiz(
+        SseEmitter subscribeToPdfQuiz(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
-                        @org.springframework.web.bind.annotation.RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-                        jakarta.servlet.http.HttpServletResponse response);
+                        @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+                        HttpServletResponse response);
 
         @Operation(summary = "퀴즈 삭제", description = "관리자(ADMIN)만 삭제할 수 있습니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "삭제 성공"))
