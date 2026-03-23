@@ -292,6 +292,6 @@ public class UserQuizUseCase {
     @Transactional
     public void claimAdReward(Long userId) {
         UserEntity user = userService.getUserById(userId);
-        user.addAvailableQuizCount(1);
+        user.claimAdReward();
     }
 }
