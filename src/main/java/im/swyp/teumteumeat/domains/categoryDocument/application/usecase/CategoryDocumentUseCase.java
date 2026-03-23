@@ -137,11 +137,11 @@ public class CategoryDocumentUseCase {
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
             throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
         return goal;
     }

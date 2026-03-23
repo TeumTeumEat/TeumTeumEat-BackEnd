@@ -75,11 +75,11 @@ public class DocumentSummaryUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
@@ -108,11 +108,11 @@ public class DocumentSummaryUseCase {
         goal.validateOwner(userId);
 
         // 1. Goal 만료 및 달성 확인
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         // 2. 쿼타 확인 - ADMIN 제외
