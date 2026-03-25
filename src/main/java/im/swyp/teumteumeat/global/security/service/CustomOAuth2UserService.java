@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.security.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -86,7 +87,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             String[] parts = jwtToken.split("\\.");
             java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
             String payload = new String(decoder.decode(parts[1]));
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> map = mapper.readValue(payload, Map.class);
             jwtClaims.putAll(map);
             return jwtClaims;
