@@ -16,9 +16,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 로그인 성공 이후 리소스 서버에서 사용자 정보(attributes)를 가져오는 클래스
@@ -29,6 +27,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     @Override
@@ -82,13 +81,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     public Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
-        Map<String, Object> jwtClaims = new java.util.HashMap<>();
+        Map<String, Object> jwtClaims = new HashMap<>();
         try {
             String[] parts = jwtToken.split("\\.");
-            java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
+            Base64.Decoder decoder = Base64.getUrlDecoder();
             String payload = new String(decoder.decode(parts[1]));
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> map = mapper.readValue(payload, Map.class);
+            Map<String, Object> map = objectMapper.readValue(payload, Map.class);
             jwtClaims.putAll(map);
             return jwtClaims;
         } catch (Exception e) {
