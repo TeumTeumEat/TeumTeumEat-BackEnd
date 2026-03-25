@@ -9,11 +9,15 @@ import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateReques
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.goal.application.mapper.GoalMapper;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.goal.domain.util.PromptValidator;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +34,7 @@ public class GoalUseCase {
     private final DocumentService documentService;
     private final CategoryService categoryService;
     private final UserService userService;
+    private final LLMService llmService;
 
     public GoalListResponse getGoals(Long userId) {
         UserEntity user = userService.getUserById(userId);
@@ -41,6 +46,9 @@ public class GoalUseCase {
     @Transactional
     public Long createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
+
+        // prompt 유효성 검증 (입력된 경우에만)
+        validatePromptIfPresent(request.prompt());
 
         Category category = null;
         if (request.categoryId() != null) {
@@ -74,7 +82,29 @@ public class GoalUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
+        // prompt 유효성 검증 (변경된 경우에만)
+        validatePromptIfPresent(request.prompt());
+
         goalService.updateGoal(goal, request);
+    }
+
+    /**
+     * prompt가 비어있지 않은 경우에만 2단계 검증 수행
+     * 1단계: 규칙 기반 1차 차단
+     * 2단계: LLM 기반 판단
+     */
+    private void validatePromptIfPresent(String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            return;
+        }
+        // 1단계: 규칙 기반 필터
+        if (PromptValidator.isBlocked(prompt)) {
+            throw new BaseException(GoalResponseCode.INVALID_PROMPT);
+        }
+        // 2단계: LLM 기반 분류
+        if (!llmService.validatePrompt(prompt)) {
+            throw new BaseException(GoalResponseCode.INVALID_PROMPT);
+        }
     }
 
     @Transactional

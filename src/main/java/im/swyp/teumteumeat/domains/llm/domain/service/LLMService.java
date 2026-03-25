@@ -54,6 +54,20 @@ public class LLMService {
         return callOpenAiApi(prompt, "당신은 요약 전문가입니다.", false);
     }
 
+    // 유저 프롬프트 검증 요청
+    public boolean validatePrompt(String userPrompt) {
+        String llmPrompt = String.format(DocumentPrompt.VALIDATE_PROMPT.getTemplate(), userPrompt);
+        try {
+            String response = callOpenAiApi(llmPrompt, "당신은 콘텐츠 적합성 판별 전문가입니다.", false);
+            return Boolean.parseBoolean(response.trim().toLowerCase());
+        } catch (Exception e) {
+            // LLM 호출 실패 시 fail-safe: 통과 처리 (서비스 가용성 우선)
+            log.warn("Prompt 유효성 검증 LLM 호출 실패 - fail-safe 통과 처리. prompt={}", userPrompt, e);
+            return true;
+        }
+    }
+
+
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
         // OpenAI API 호출 (RestClient 사용)
         RestClient restClient = RestClient.builder()
