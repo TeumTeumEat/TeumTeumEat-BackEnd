@@ -3,7 +3,7 @@ package im.swyp.teumteumeat.global.security.service;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import im.swyp.teumteumeat.global.security.dto.OAuth2Attributes;
+import im.swyp.teumteumeat.global.security.dto.attribute.OAuth2Attributes;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
