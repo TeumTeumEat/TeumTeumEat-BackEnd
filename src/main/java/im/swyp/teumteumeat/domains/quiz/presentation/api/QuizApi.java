@@ -8,12 +8,9 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Tag(name = "Quiz", description = "퀴즈 API")
 public interface QuizApi {
@@ -40,35 +37,19 @@ public interface QuizApi {
                         @PathVariable Long quizId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다. (결과는 비동기로 SSE를 통해 전달됨)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 요청 성공 (결과는 비동기 SSE 알림)"))
+        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다. (유저 Goal의 Prompt/Difficulty 반영)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성 SSE 구독", description = "비동기 퀴즈 생성 결과를 받기 위한 SSE 스트림에 연결합니다.")
-        SseEmitter subscribeToCategoryQuiz(
-                        @PathVariable Long categoryId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
-                        @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-                        HttpServletResponse response);
-
-        @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 생성(재생성)할 수 있습니다. (결과는 비동기로 SSE를 통해 전달됨)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 요청 성공 (결과는 비동기 SSE 알림)"))
+        @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 생성(재생성)할 수 있습니다.")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
-
-        @Operation(summary = "PDF 문서에 대한 퀴즈 생성 SSE 구독", description = "비동기 PDF 퀴즈 생성 결과를 받기 위한 SSE 스트림에 연결합니다.")
-        SseEmitter subscribeToPdfQuiz(
-                        @PathVariable Long goalId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user,
-                        @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-                        HttpServletResponse response);
 
         @Operation(summary = "퀴즈 삭제", description = "관리자(ADMIN)만 삭제할 수 있습니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "삭제 성공"))

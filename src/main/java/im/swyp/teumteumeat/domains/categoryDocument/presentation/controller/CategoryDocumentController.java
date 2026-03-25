@@ -6,14 +6,11 @@ import im.swyp.teumteumeat.domains.categoryDocument.presentation.api.CategoryDoc
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/categories")
@@ -22,19 +19,13 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     private final CategoryDocumentUseCase categoryDocumentUseCase;
 
-    @GetMapping(value = "/{categoryId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@PathVariable Long categoryId, @AuthenticationPrincipal CustomUserDetails user,
-                                @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId, HttpServletResponse response){
-        return categoryDocumentUseCase.subscribe(user.getUserId(), categoryId, lastEventId);
-    }
-
     @Override
     @PostMapping("/{categoryId}/documents/daily")
-    public ResponseEntity<ApiResponse<Void>> generateDocument(
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        categoryDocumentUseCase.generateDocumentAsync(categoryId, user.getUserId());
-        return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        CategoryDocumentResponse response = categoryDocumentUseCase.generateDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override
