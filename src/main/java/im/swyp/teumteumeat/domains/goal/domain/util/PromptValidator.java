@@ -13,9 +13,7 @@ public class PromptValidator {
 
     /** 차단 키워드 목록 (한국어 + 영어 Prompt Injection 패턴) */
     private static final List<String> BLOCKED_KEYWORDS = List.of(
-            // 지시 거부 계열
-            "하지마", "하지 마", "금지", "하면안돼", "하면 안 돼", "하지말아", "생성하지",
-            "만들지마", "만들지 마", "쓰지마", "쓰지 않", "넣지마", "넣지 마",
+            // 명령/지시 무력화 - 학습 맥락에서 절대 안 쓰이는 패턴
             "무시해", "무시하고", "잊어버려", "잊어",
             // Prompt Injection (영어)
             "ignore", "forget", "disregard", "override", "bypass",
