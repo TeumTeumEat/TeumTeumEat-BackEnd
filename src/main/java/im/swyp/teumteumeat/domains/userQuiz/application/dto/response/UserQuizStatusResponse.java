@@ -9,6 +9,8 @@ public record UserQuizStatusResponse(
                 boolean hasCreatedToday,
                 boolean isQuizGuideSeen,
                 int availableQuizCount,
+                int dailyAdRewardCount,
+                boolean canIssueCoupon,
                 int targetQuizSetCount,
                 int completedQuizSetCount,
                 boolean isCompleted) {

@@ -279,12 +279,12 @@ public class QuizUseCase {
             goal = goalService.findLatestGoal(userId, categoryId);
         }
 
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
-
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         UserEntity user = userService.getUserById(userId);

@@ -34,10 +34,12 @@ public class RestClientConfig {
     }
 
     @Bean
-    public RestClient openAirestClient() {
+    public RestClient openAiRestClient() {
         return RestClient.builder()
                 .baseUrl(openAiBaseUrl)
+                .requestFactory(customRequestFactory())
                 .defaultHeader("Authorization", "Bearer " + openAiApiKey)
+                .defaultHeader("Content-Type", "application/json")
                 .build();
     }
 

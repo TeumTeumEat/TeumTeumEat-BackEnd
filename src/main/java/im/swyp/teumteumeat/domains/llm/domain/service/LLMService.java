@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.http.MediaType;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LLMService {
 
@@ -28,6 +28,12 @@ public class LLMService {
     private String openAiModel;
 
     private final RestClient restClient;
+
+    public LLMService(@Qualifier("openAiRestClient") RestClient restClient,
+                      @Value("${spring.ai.openai.chat.options.model}") String openAiModel) {
+        this.restClient = restClient;
+        this.openAiModel = openAiModel;
+    }
 
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
