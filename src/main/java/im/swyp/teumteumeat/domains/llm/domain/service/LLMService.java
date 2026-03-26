@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -23,13 +24,10 @@ import java.util.Map;
 @Slf4j
 public class LLMService {
 
-    // OpenAI Config
-    @Value("${spring.ai.openai.api-key}")
-    private String openAiApiKey;
     @Value("${spring.ai.openai.chat.options.model}")
     private String openAiModel;
-    @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
-    private String openAiBaseUrl;
+
+    private final RestClient restClient;
 
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
@@ -67,14 +65,7 @@ public class LLMService {
         }
     }
 
-
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
-        // OpenAI API 호출 (RestClient 사용)
-        RestClient restClient = RestClient.builder()
-                .baseUrl(openAiBaseUrl)
-                .defaultHeader("Authorization", "Bearer " + openAiApiKey)
-                .build();
-
         try {
             // 요청 바디 구성
             Map<String, Object> requestBody = new java.util.HashMap<>();
