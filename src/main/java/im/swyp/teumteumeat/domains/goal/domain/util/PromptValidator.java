@@ -1,5 +1,7 @@
 package im.swyp.teumteumeat.domains.goal.domain.util;
 
+import org.springframework.util.StringUtils;
+
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -30,7 +32,7 @@ public class PromptValidator {
      *         false → 통과 (적합 가능성 있음, LLM 2단계 검증 필요)
      */
     public static boolean isBlocked(String prompt) {
-        if (prompt == null || prompt.isBlank()) {
+        if (!StringUtils.hasText(prompt)) {
             return false; // 빈 프롬프트는 "전반적인 내용"으로 처리되므로 검증 불필요
         }
 

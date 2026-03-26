@@ -20,6 +20,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -94,7 +95,7 @@ public class GoalUseCase {
      * 2단계: LLM 기반 판단
      */
     private void validatePromptIfPresent(String prompt) {
-        if (prompt == null || prompt.isBlank()) {
+        if (!StringUtils.hasText(prompt)) {
             return;
         }
         // 1단계: 규칙 기반 필터
