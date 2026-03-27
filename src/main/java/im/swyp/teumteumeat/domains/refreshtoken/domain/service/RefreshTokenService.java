@@ -24,10 +24,10 @@ public class RefreshTokenService {
     }
 
     public void deleteRefreshToken(Long userId, String refreshToken) {
-        refreshTokenRepository.findByRefreshToken(refreshToken)
+        refreshTokenRepository.findById(refreshToken)
                 .ifPresent(storedToken -> {
                     if (storedToken.getUserId().equals(userId)) {
-                        refreshTokenRepository.deleteByRefreshToken(refreshToken);
+                        refreshTokenRepository.deleteById(refreshToken);
                     }
                 });
     }
@@ -39,6 +39,6 @@ public class RefreshTokenService {
     }
 
     public boolean existRefreshToken(String refreshToken) {
-        return refreshTokenRepository.existsByRefreshToken(refreshToken);
+        return refreshTokenRepository.existsById(refreshToken);
     }
 }
