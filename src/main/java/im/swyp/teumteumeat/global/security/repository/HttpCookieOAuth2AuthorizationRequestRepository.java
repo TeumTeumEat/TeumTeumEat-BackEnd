@@ -40,6 +40,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         String redirectUriAfterLogin = request.getParameter(REDIRECT_URI_PARAM_COOKIE_NAME);
         if (StringUtils.isNotBlank(redirectUriAfterLogin)) {
             cookieUtils.addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUriAfterLogin, cookieExpireSeconds);
+        } else {
+            cookieUtils.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
         }
     }
 
@@ -47,9 +49,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
                                                                  HttpServletResponse response) {
         OAuth2AuthorizationRequest authorizationRequest = this.loadAuthorizationRequest(request);
-        if (authorizationRequest != null) {
-            removeAuthorizationRequestCookies(request, response);
-        }
+        removeAuthorizationRequestCookies(request, response);
         return authorizationRequest;
     }
 
