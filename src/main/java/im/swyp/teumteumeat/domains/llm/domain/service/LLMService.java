@@ -5,7 +5,6 @@ import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -56,19 +54,6 @@ public class LLMService {
                 DocumentPrompt.GENERATE_TITLE.getTemplate(), userGoal,
                 content);
         return callOpenAiApi(prompt, "당신은 요약 전문가입니다.", false);
-    }
-
-    // 유저 프롬프트 검증 요청
-    public boolean validatePrompt(String userPrompt) {
-        String llmPrompt = String.format(DocumentPrompt.VALIDATE_PROMPT.getTemplate(), userPrompt);
-        try {
-            String response = callOpenAiApi(llmPrompt, "당신은 콘텐츠 적합성 판별 전문가입니다.", false);
-            return Boolean.parseBoolean(response.trim().toLowerCase());
-        } catch (Exception e) {
-            // LLM 호출 실패 시 fail-safe: 통과 처리 (서비스 가용성 우선)
-            log.warn("Prompt 유효성 검증 LLM 호출 실패 - fail-safe 통과 처리. prompt={}", userPrompt, e);
-            return true;
-        }
     }
 
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {

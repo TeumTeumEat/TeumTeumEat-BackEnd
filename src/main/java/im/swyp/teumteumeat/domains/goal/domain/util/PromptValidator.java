@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * 사용자가 입력한 prompt에 대한 1단계 규칙 기반 필터.
+ * 사용자가 입력한 prompt에 대한 규칙 기반 키워드 필터.
  * 명백한 장난/무력화 시도를 LLM 호출 없이 빠르게 차단한다.
+ * 통과한 입력은 LLM 프롬프트 내 인라인 가이드라인으로 추가 처리된다.
  */
 public class PromptValidator {
 
@@ -29,7 +30,7 @@ public class PromptValidator {
 
     /**
      * @return true  → 차단 대상 (부적합)
-     *         false → 통과 (적합 가능성 있음, LLM 2단계 검증 필요)
+     *         false → 통과 (LLM 프롬프트 인라인 가이드라인으로 처리)
      */
     public static boolean isBlocked(String prompt) {
         if (!StringUtils.hasText(prompt)) {
