@@ -5,8 +5,8 @@ import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.http.MediaType;
@@ -19,17 +19,19 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LLMService {
 
-    // OpenAI Config
-    @Value("${spring.ai.openai.api-key}")
-    private String openAiApiKey;
     @Value("${spring.ai.openai.chat.options.model}")
     private String openAiModel;
-    @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
-    private String openAiBaseUrl;
+
+    private final RestClient restClient;
+
+    public LLMService(@Qualifier("openAiRestClient") RestClient restClient,
+                      @Value("${spring.ai.openai.chat.options.model}") String openAiModel) {
+        this.restClient = restClient;
+        this.openAiModel = openAiModel;
+    }
 
     public LLMResponse generateAnswer(String promptMessage) {
         // Prompt에 포맷 넣기
@@ -55,12 +57,6 @@ public class LLMService {
     }
 
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
-        // OpenAI API 호출 (RestClient 사용)
-        RestClient restClient = RestClient.builder()
-                .baseUrl(openAiBaseUrl)
-                .defaultHeader("Authorization", "Bearer " + openAiApiKey)
-                .build();
-
         try {
             // 요청 바디 구성
             Map<String, Object> requestBody = new java.util.HashMap<>();

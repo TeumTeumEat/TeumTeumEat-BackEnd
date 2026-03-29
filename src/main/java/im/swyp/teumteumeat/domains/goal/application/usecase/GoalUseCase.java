@@ -9,13 +9,17 @@ import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateReques
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
 import im.swyp.teumteumeat.domains.goal.application.mapper.GoalMapper;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
+import im.swyp.teumteumeat.domains.goal.domain.util.PromptValidator;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -41,6 +45,9 @@ public class GoalUseCase {
     @Transactional
     public Long createGoal(Long userId, GoalCreateRequest request) {
         UserEntity user = userService.getUserById(userId);
+
+        // prompt 유효성 검증 (입력된 경우에만)
+        validatePromptIfPresent(request.prompt());
 
         Category category = null;
         if (request.categoryId() != null) {
@@ -74,7 +81,23 @@ public class GoalUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
+        // prompt 유효성 검증 (변경된 경우에만)
+        validatePromptIfPresent(request.prompt());
+
         goalService.updateGoal(goal, request);
+    }
+
+    /**
+     * prompt가 비어있지 않은 경우에만 규칙 기반 키워드 필터 수행
+     */
+    private void validatePromptIfPresent(String prompt) {
+        if (!StringUtils.hasText(prompt)) {
+            return;
+        }
+        // 규칙 기반 키워드 필터
+        if (PromptValidator.isBlocked(prompt)) {
+            throw new BaseException(GoalResponseCode.INVALID_PROMPT);
+        }
     }
 
     @Transactional
