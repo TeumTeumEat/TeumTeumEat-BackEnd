@@ -15,7 +15,6 @@ import org.springframework.core.io.ResourceLoader;
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
 
-@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class FirebaseConfig {
@@ -31,8 +30,7 @@ public class FirebaseConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 Resource resource = resourceLoader.getResource(keyPath);
                 if (!resource.exists()) {
-                    log.warn("FCM 키 파일을 찾을 수 없습니다. 경로: {}", keyPath);
-                    throw new RuntimeException("FCM Key file not found");
+                    throw new RuntimeException("FCM Key file not found. keyPath: " + keyPath);
                 }
 
                 InputStream serviceAccount = resource.getInputStream();
