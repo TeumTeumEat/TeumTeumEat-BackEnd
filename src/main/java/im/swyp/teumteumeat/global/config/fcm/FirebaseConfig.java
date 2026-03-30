@@ -20,20 +20,17 @@ import java.io.InputStream;
 public class FirebaseConfig {
 
     @Value("${infra.fcm.key-path}")
-    private String keyPath;
-
-    private final ResourceLoader resourceLoader;
+    private Resource fcmKeyResource;
 
     @Bean
     public FirebaseMessaging firebaseMessaging() {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-                Resource resource = resourceLoader.getResource(keyPath);
-                if (!resource.exists()) {
-                    throw new RuntimeException("FCM Key file not found. keyPath: " + keyPath);
+                if (!fcmKeyResource.exists()) {
+                    throw new RuntimeException("FCM Key file not found. keyPath: " + fcmKeyResource.getURI());
                 }
 
-                InputStream serviceAccount = resource.getInputStream();
+                InputStream serviceAccount = fcmKeyResource.getInputStream();
 
                 FirebaseOptions options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
