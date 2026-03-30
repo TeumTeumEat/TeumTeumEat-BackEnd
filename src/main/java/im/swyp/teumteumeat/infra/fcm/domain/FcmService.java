@@ -16,6 +16,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmService {
 
+    private final FirebaseMessaging firebaseMessaging;
+
     /**
      * 푸쉬 알림 전송
      * @param token 디바이스 토큰
@@ -36,7 +38,7 @@ public class FcmService {
                     )
                     .putAllData((data != null) ? data : Collections.emptyMap())
                     .build();
-            FirebaseMessaging.getInstance().send(message);
+            firebaseMessaging.send(message);
         } catch (Exception e) {
             log.error("Error sending notification", e);
         }
