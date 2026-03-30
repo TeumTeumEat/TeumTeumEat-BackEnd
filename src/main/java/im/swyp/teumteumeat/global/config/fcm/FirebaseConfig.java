@@ -31,8 +31,8 @@ public class FirebaseConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 Resource resource = resourceLoader.getResource(keyPath);
                 if (!resource.exists()) {
-                    log.warn("FCM 키 파일을 찾을 수 없습니다. 경로: {}. 푸시 알림 기능이 비활성화됩니다.", keyPath);
-                    return null;
+                    log.warn("FCM 키 파일을 찾을 수 없습니다. 경로: {}", keyPath);
+                    throw new RuntimeException("FCM Key file not found");
                 }
 
                 InputStream serviceAccount = resource.getInputStream();
