@@ -30,13 +30,13 @@ public class FirebaseConfig {
                     throw new RuntimeException("FCM Key file not found. keyPath: " + fcmKeyResource.getURI());
                 }
 
-                InputStream serviceAccount = fcmKeyResource.getInputStream();
+                try (InputStream serviceAccount = fcmKeyResource.getInputStream()) {
+                    FirebaseOptions options = FirebaseOptions.builder()
+                            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                            .build();
 
-                FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                        .build();
-
-                FirebaseApp.initializeApp(options);
+                    FirebaseApp.initializeApp(options);
+                }
             }
             return FirebaseMessaging.getInstance();
         } catch (Exception e) {
