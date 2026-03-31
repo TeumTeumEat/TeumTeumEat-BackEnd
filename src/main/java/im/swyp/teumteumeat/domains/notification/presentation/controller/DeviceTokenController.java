@@ -32,10 +32,9 @@ public class DeviceTokenController implements DeviceTokenApi {
     @Override
     @DeleteMapping("/device-tokens")
     public ResponseEntity<ApiResponse<Void>> unregisterDeviceToken(
-            @RequestBody @Valid DeviceTokenRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid DeviceTokenRequest request
     ) {
-        deviceTokenUseCase.unregisterDeviceToken(user.getUserId(), request);
+        deviceTokenUseCase.unregisterDeviceToken(request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

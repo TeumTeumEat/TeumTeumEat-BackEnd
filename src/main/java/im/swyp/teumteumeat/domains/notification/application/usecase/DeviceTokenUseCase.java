@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.notification.application.usecase;
 
 import im.swyp.teumteumeat.domains.notification.application.mapper.DeviceTokenMapper;
+import im.swyp.teumteumeat.domains.notification.domain.constant.DeviceType;
 import im.swyp.teumteumeat.domains.notification.domain.service.DeviceTokenService;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
@@ -28,10 +29,10 @@ public class DeviceTokenUseCase {
     }
 
     @Transactional
-    public void unregisterDeviceToken(Long userId, @Valid DeviceTokenRequest request) {
-        UserEntity user = userService.getUserById(userId);
+    public void unregisterDeviceToken(@Valid DeviceTokenRequest request) {
         String token = request.token();
+        DeviceType deviceType = request.deviceType();
 
-        deviceTokenService.unregisterDeviceToken(user, token);
+        deviceTokenService.unregisterDeviceToken(token, deviceType);
     }
 }
