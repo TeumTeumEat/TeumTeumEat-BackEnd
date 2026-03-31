@@ -49,6 +49,7 @@ public class NotificationUseCase {
         String title = "틈틈잇 준비 완료!";
 
         List<Message> messagesToBatch = new ArrayList<>();
+        List<String> tokensToBatch = new ArrayList<>();
 
         for (UserEntity user : users) {
             int streak = streakMap.getOrDefault(user.getId(), 0);
@@ -65,10 +66,11 @@ public class NotificationUseCase {
                                 .build())
                         .build();
                 messagesToBatch.add(message);
+                tokensToBatch.add(deviceToken.getToken());
             }
         }
 
-        fcmService.sendBatchMessages(messagesToBatch, false);
+        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
     }
 
     @Transactional
@@ -76,6 +78,7 @@ public class NotificationUseCase {
         UserEntity user = userService.getUserById(userId);
 
         List<Message> messagesToBatch = new ArrayList<>();
+        List<String> tokensToBatch = new ArrayList<>();
         for (DeviceToken deviceToken : user.getDeviceTokens()) {
             Message message = Message.builder()
                     .setToken(deviceToken.getToken())
@@ -86,9 +89,10 @@ public class NotificationUseCase {
                     .putAllData((request.data() != null) ? request.data() : Collections.emptyMap())
                     .build();
             messagesToBatch.add(message);
+            tokensToBatch.add(deviceToken.getToken());
         }
 
-        fcmService.sendBatchMessages(messagesToBatch, false);
+        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
     }
 
     private String getMessageByUserStreak(int userStreak) {

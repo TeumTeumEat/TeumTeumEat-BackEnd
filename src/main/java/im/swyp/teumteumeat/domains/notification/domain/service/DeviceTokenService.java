@@ -5,7 +5,9 @@ import im.swyp.teumteumeat.domains.notification.domain.constant.DeviceType;
 import im.swyp.teumteumeat.domains.notification.persistence.repository.DeviceTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -37,5 +39,10 @@ public class DeviceTokenService {
 
     public void unregisterDeviceToken(String token, DeviceType deviceType) {
         deviceTokenRepository.deleteByTokenAndDeviceType(token, deviceType);
+    }
+
+    @Transactional
+    public void deleteInvalidTokens(List<String> tokens) {
+        deviceTokenRepository.deleteAllByTokenIn(tokens);
     }
 }
