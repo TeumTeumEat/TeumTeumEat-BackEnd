@@ -33,7 +33,17 @@ public class DocumentSummaryController implements DocumentSummaryApi {
 
     @Override
     @PostMapping("/{goalId}/documents/{documentId}/summary")
-    public ResponseEntity<ApiResponse<Void>> createSummary(
+    public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @PostMapping("/{goalId}/documents/{documentId}/summary/stream")
+    public ResponseEntity<ApiResponse<Void>> createSummaryStream(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {

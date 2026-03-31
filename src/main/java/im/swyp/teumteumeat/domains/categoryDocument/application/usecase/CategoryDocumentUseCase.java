@@ -64,6 +64,33 @@ public class CategoryDocumentUseCase {
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
+        Goal goal = getValidGoal(userId, categoryId);
+        UserEntity user = userService.getUserById(userId);
+
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
+        if (user.getRole() != Role.ADMIN) {
+            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+            if (activeDocument != null) {
+                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+                if (!isConsumed) {
+                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                }
+            }
+        }
+
+        // 새 문서 생성 (무조건)
+        CategoryDocument targetDocument = createNewDailyDocument(goal);
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void generateDocumentAsync(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
         UserEntity user = userService.getUserById(userId);

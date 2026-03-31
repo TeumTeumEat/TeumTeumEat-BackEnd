@@ -18,9 +18,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-        @Operation(summary = "일일 카테고리 요약글 생성 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (요청 접수 후 비동기로 생성되며 SSE로 결과가 전달됩니다.)")
+        @Operation(summary = "일일 카테고리 요약글 생성 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (요청 접수 후 동기로 생성됩니다.)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 성공"))
+        ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "일일 카테고리 요약글 생성 스트리밍 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (요청 접수 후 비동기로 생성되며 SSE로 결과가 전달됩니다.)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 요청 접수 성공 (결과는 SSE로 알림)"))
-        ResponseEntity<ApiResponse<Void>> generateDocument(
+        ResponseEntity<ApiResponse<Void>> generateDocumentStream(
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 

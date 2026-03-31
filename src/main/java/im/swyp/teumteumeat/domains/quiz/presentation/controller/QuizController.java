@@ -68,6 +68,17 @@ public class QuizController implements QuizApi {
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
+        quizUseCase.createQuizzesForDocument(documentId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @PostMapping("categories/{categoryId}/documents/{documentId}/quizzes/stream")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> createQuizzesStream(
+            @PathVariable Long categoryId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
         quizUseCase.createQuizzesForDocumentAsync(documentId, user.getUserId());
         return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -89,6 +100,18 @@ public class QuizController implements QuizApi {
     @PostMapping("goals/{goalId}/documents/{documentId}/quizzes")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        quizUseCase.createQuizzesForPdfDocumentById(documentId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @PostMapping("goals/{goalId}/documents/{documentId}/quizzes/stream")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> createQuizzesForPdfStream(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {

@@ -101,6 +101,54 @@ public class DocumentSummaryUseCase {
         return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
     }
 
+    // 문서 요약 및 상세 조회 (학습 시 사용 되는 메서드)
+    @Transactional
+    public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        // 1. Goal 만료 및 달성 확인
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+        if (goal.isCompleted()) {
+            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+
+        // 2. 쿼타 확인 - ADMIN 제외
+        UserEntity user = userService.getUserById(userId);
+        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        // 3. 아직 해당 문서에 대해 풀지 않은(미해결) 최신 요약글이 있는지 확인
+        if (user.getRole() != Role.ADMIN) {
+            Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+            if (latestSummaryOpt.isPresent()) {
+                DocumentSummary latestSummary = latestSummaryOpt.get();
+                boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
+                        .anyMatch(uq -> uq.getQuiz() != null &&
+                                uq.getQuiz().getDocumentSummary() != null &&
+                                uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+
+                if (!isConsumed) {
+                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                }
+            }
+        }
+
+        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
+        DocumentSummary summary = documentSummaryService.generateSummary(document);
+        quizUseCase.createQuizzesForPdfDocument(document, summary);
+
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
+    }
+
     //  pdf 요약글 생성 (학습 시 사용 되는 메서드)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createSummaryAsync(Long userId, Long goalId, Long documentId) {

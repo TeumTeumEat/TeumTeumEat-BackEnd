@@ -30,7 +30,16 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     @Override
     @PostMapping("/{categoryId}/documents/daily")
-    public ResponseEntity<ApiResponse<Void>> generateDocument(
+    public ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        CategoryDocumentResponse response = categoryDocumentUseCase.generateDocument(categoryId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @PostMapping("/{categoryId}/documents/daily/stream")
+    public ResponseEntity<ApiResponse<Void>> generateDocumentStream(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
         categoryDocumentUseCase.generateDocumentAsync(categoryId, user.getUserId());
