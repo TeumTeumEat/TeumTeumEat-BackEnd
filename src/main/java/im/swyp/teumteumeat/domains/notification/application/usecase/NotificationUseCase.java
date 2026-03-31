@@ -1,8 +1,9 @@
 package im.swyp.teumteumeat.domains.notification.application.usecase;
 
+import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.Notification;
 import im.swyp.teumteumeat.domains.notification.application.dto.request.NotificationRequest;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties.FixedStreakMessage;
-import im.swyp.teumteumeat.domains.notification.domain.service.DeviceTokenService;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -12,12 +13,10 @@ import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProp
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NotificationUseCase {
 
-    private final DeviceTokenService deviceTokenService;
     private final UserQuizService userQuizService;
     private final FcmService fcmService;
     private final UserService userService;
@@ -50,32 +48,47 @@ public class NotificationUseCase {
 
         String title = "틈틈잇 준비 완료!";
 
-        users.forEach(user -> {
-            String name = user.getName();
-            int streak = streakMap.getOrDefault(user.getId(), 0);
+        List<Message> messagesToBatch = new ArrayList<>();
 
-            String template = getMessageByUserStreak(streak);
-            String body = template
-                    .replace("{name}", name)
+        for (UserEntity user : users) {
+            int streak = streakMap.getOrDefault(user.getId(), 0);
+            String body = getMessageByUserStreak(streak)
+                    .replace("{name}", user.getName())
                     .replace("{streak}", String.valueOf(streak));
 
-            // 유저의 등록된 토큰을 모두 불러옴
-            List<DeviceToken> tokens = user.getDeviceTokens();
-            tokens.forEach(token -> {
-                // 알림 전송
-                fcmService.sendNotification(token.getToken(), title, body, null);
-            });
-        });
+            for (DeviceToken deviceToken : user.getDeviceTokens()) {
+                Message message = Message.builder()
+                        .setToken(deviceToken.getToken())
+                        .setNotification(Notification.builder()
+                                .setTitle(title)
+                                .setBody(body)
+                                .build())
+                        .build();
+                messagesToBatch.add(message);
+            }
+        }
+
+        fcmService.sendBatchMessages(messagesToBatch, false);
     }
 
+    @Transactional
     public void sendNotificationTest(NotificationRequest request, Long userId) {
-        List<DeviceToken> tokens = deviceTokenService.getAllTokenByUserId(userId);
-        tokens.forEach(token -> fcmService.sendNotification(
-                token.getToken(),
-                request.title(),
-                request.body(),
-                request.data()
-        ));
+        UserEntity user = userService.getUserById(userId);
+
+        List<Message> messagesToBatch = new ArrayList<>();
+        for (DeviceToken deviceToken : user.getDeviceTokens()) {
+            Message message = Message.builder()
+                    .setToken(deviceToken.getToken())
+                    .setNotification(Notification.builder()
+                            .setTitle(request.title())
+                            .setBody(request.body())
+                            .build())
+                    .putAllData((request.data() != null) ? request.data() : Collections.emptyMap())
+                    .build();
+            messagesToBatch.add(message);
+        }
+
+        fcmService.sendBatchMessages(messagesToBatch, false);
     }
 
     private String getMessageByUserStreak(int userStreak) {
