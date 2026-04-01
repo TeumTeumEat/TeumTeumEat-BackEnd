@@ -31,6 +31,7 @@ public class NotificationUseCase {
     private final UserService userService;
     private final NotificationProperties notificationProperties;
     private static final Random random = new Random();
+    private static final String PUSH_TITLE = "틈틈잇 준비 완료!";
 
     public void sendNotifications(LocalTime now, LocalTime minuteEnd) {
         // 시간 범위에 속하는 출퇴근 시간인 유저를 모두 불러옴
@@ -48,8 +49,6 @@ public class NotificationUseCase {
         List<Long> userIds = users.stream().map(UserEntity::getId).toList();
         Map<Long, Integer> streakMap = userQuizService.calculateStreaksForUsers(userIds);
 
-        String title = "틈틈잇 준비 완료!";
-
         users.forEach(user -> {
             String name = user.getName();
             int streak = streakMap.getOrDefault(user.getId(), 0);
@@ -63,7 +62,7 @@ public class NotificationUseCase {
             List<DeviceToken> tokens = user.getDeviceTokens();
             tokens.forEach(token -> {
                 // 알림 전송
-                fcmService.sendNotification(token.getToken(), title, body, null);
+                fcmService.sendNotification(token.getToken(), PUSH_TITLE, body, null);
             });
         });
     }
