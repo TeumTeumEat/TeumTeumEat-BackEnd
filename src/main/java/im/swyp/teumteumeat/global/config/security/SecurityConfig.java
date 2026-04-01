@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.global.security.filter.JwtAuthenticationFilter;
 import im.swyp.teumteumeat.global.security.filter.JwtExceptionFilter;
 import im.swyp.teumteumeat.global.security.handler.OAuth2FailureHandler;
 import im.swyp.teumteumeat.global.security.handler.OAuth2SuccessHandler;
+import im.swyp.teumteumeat.global.security.repository.HttpCookieOAuth2AuthorizationRequestRepository;
 import im.swyp.teumteumeat.global.security.service.CustomOAuth2UserService;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class SecurityConfig {
         private final OAuth2FailureHandler oauth2FailureHandler;
         private final CustomOAuth2AuthorizationRequestResolver customOAuth2AuthorizationRequestResolver;
         private final AppleUtil appleUtil;
-        private final im.swyp.teumteumeat.global.security.repository.HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+        private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

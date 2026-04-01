@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.global.security.dto;
 
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.global.security.dto.attribute.OAuth2Attributes;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
