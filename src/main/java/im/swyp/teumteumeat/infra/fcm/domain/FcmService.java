@@ -57,9 +57,8 @@ public class FcmService {
                 FirebaseMessagingException exception = res.getException();
                 MessagingErrorCode errorCode = exception.getMessagingErrorCode();
 
-                // 사용자가 앱을 삭제했거나 토큰이 유효하지 않은 경우 (404/400 계열)
-                if (errorCode == MessagingErrorCode.UNREGISTERED ||
-                        errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
+                // 사용자가 앱을 삭제했거나 토큰이 유효하지 않은 경우
+                if (errorCode == MessagingErrorCode.UNREGISTERED) {
 
                     String failedToken = originalTokens.get(i);
                     tokensToDelete.add(failedToken);
