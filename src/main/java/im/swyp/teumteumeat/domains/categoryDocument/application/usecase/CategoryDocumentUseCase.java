@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
 import im.swyp.teumteumeat.domains.category.domain.service.CategoryService;
-import im.swyp.teumteumeat.domains.categoryDocument.application.dto.event.CategoryDocumentGenerationEvent;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
@@ -91,7 +90,7 @@ public class CategoryDocumentUseCase {
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void generateDocumentAsync(Long categoryId, Long userId) {
+    public CategoryDocumentResponse generateDocumentAsync(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
         UserEntity user = userService.getUserById(userId);
 
@@ -164,11 +163,11 @@ public class CategoryDocumentUseCase {
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
             throw new BaseException(CommonResponseCode.NOT_FOUND);
         }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
+        }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
         return goal;
     }

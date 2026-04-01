@@ -89,7 +89,7 @@ public class Document extends BaseEntity {
     }
 
     public void validateOwner(Long userId) {
-        if (!this.user.getId().equals(userId)) {
+        if (userId == null || this.user == null || !userId.equals(this.user.getId())) {
             throw new BaseException(FORBIDDEN);
         }
     }

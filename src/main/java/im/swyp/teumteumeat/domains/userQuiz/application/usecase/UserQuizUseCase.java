@@ -10,7 +10,6 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.domains.userQuiz.application.dto.event.UserQuizGenerationEvent;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
@@ -145,8 +144,8 @@ public class UserQuizUseCase {
                 boolean hasCustomPrompt = goal.getPrompt() != null && !goal.getPrompt().isBlank();
 
                 if (hasCustomPrompt) {
-                    eventPublisher.publishEvent(new UserQuizGenerationEvent(documentId, userId, quizCount));
-                    return Collections.emptyList();
+                    quizUseCase.createQuizzesForDocument(documentId, userId, quizCount);
+                    quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
                 }
             }
         }
@@ -156,7 +155,9 @@ public class UserQuizUseCase {
                 .toList();
     }
 
-    private List<Quiz> fetchUnsolvedQuizzesByGoalAttributes(Long documentId, Long userId, int quizCount) {
+    private List<Quiz> getPrioritizedQuizzes(Long documentId, Long userId, int quizCount) {
+
+        // 우선 유저의 Goal (Difficulty, Prompt)과 일치하는 퀴즈 조회
         CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
         Goal goal = goalService.findLatestGoalWithCategory(userId, document.getCategory().getId());
 
@@ -165,21 +166,30 @@ public class UserQuizUseCase {
         boolean isDefaultPrompt = rawTopic == null || rawTopic.isBlank();
         String targetTopic = isDefaultPrompt ? "전반적인 내용" : rawTopic;
 
-        return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
-                targetDifficulty, targetTopic, quizCount);
-    }
-
-    private List<Quiz> getPrioritizedQuizzes(Long documentId, Long userId, int quizCount) {
-
         // 1단계: 조건에 맞는 퀴즈 조회
         // (프롬프트가 없는 경우: 기존에 생성된 "전반적인 내용" 퀴즈들을 최대한 활용)
-        List<Quiz> priorityQuizzes = fetchUnsolvedQuizzesByGoalAttributes(documentId, userId, quizCount);
+        List<Quiz> priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                targetDifficulty, targetTopic, quizCount);
 
         // 2-1. 부족한 경우 -> 부족한 만큼 추가 생성 시도 (다른 난이도/토픽 섞지 않음)
         if (priorityQuizzes.size() < quizCount) {
-             int remainingCount = quizCount - priorityQuizzes.size();
-             eventPublisher.publishEvent(new UserQuizGenerationEvent(documentId, userId, remainingCount));
-             return Collections.emptyList();
+            String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
+
+            priorityQuizzes = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+                // 이중 체크(Double-Check): 락 획득 후 다시 한 번 개수 확인
+                List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                        targetDifficulty, targetTopic, quizCount);
+
+                if (currentQuizzes.size() < quizCount) {
+                    int remainingCount = quizCount - currentQuizzes.size();
+                    quizUseCase.createQuizzesForDocument(documentId, userId, remainingCount);
+
+                    // 재생성 후 최종 조회
+                    return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                            targetDifficulty, targetTopic, quizCount);
+                }
+                return currentQuizzes;
+            }).orElse(priorityQuizzes);
         }
 
         // 2-2. 프롬프트가 '있는' 경우이고, 여전히 부족
@@ -202,9 +212,12 @@ public class UserQuizUseCase {
             
             // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
             int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
+            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(), totalQuizCount);
             
-            List<Quiz> quizzesUnsolved = fetchUnsolvedQuizzesByGoalAttributes(
-                    event.documentId(), event.userId(), totalQuizCount);
+            if (quizzesUnsolved.isEmpty()) {
+                // getPrioritizedQuizzes 방식으로 시도
+                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null, null, totalQuizCount);
+            }
 
             List<QuizSetResponse> responseList = quizzesUnsolved.stream()
                     .map(quizMapper::toQuestionResponse)
@@ -292,6 +305,6 @@ public class UserQuizUseCase {
     @Transactional
     public void claimAdReward(Long userId) {
         UserEntity user = userService.getUserById(userId);
-        user.addAvailableQuizCount(1);
+        user.claimAdReward();
     }
 }

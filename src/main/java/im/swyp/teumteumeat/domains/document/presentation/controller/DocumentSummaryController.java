@@ -47,8 +47,8 @@ public class DocumentSummaryController implements DocumentSummaryApi {
             @PathVariable Long goalId,
             @PathVariable Long documentId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        documentSummaryUseCase.createSummaryAsync(user.getUserId(), goalId, documentId);
-        return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK));
+        DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override

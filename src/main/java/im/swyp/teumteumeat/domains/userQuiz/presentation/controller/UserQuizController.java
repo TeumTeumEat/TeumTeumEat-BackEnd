@@ -11,14 +11,17 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -48,20 +51,7 @@ public class UserQuizController implements UserQuizApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         List<QuizSetResponse> response = userQuizUseCase.getQuizzesForSolving(documentId, user.getUserId(),
                 documentType);
-        if (response.isEmpty()) {
-            return ResponseEntity.accepted().body(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-        }
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Override
-    @GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(
-            @RequestParam Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user,
-            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-            HttpServletResponse response) {
-        return userQuizUseCase.subscribe(user.getUserId(), documentId, lastEventId);
     }
 
     // 퀴즈 1개 조회 (정답 미포함)

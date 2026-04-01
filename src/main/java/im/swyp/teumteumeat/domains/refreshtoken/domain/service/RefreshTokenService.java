@@ -24,7 +24,7 @@ public class RefreshTokenService {
     }
 
     public void deleteRefreshToken(Long userId, String refreshToken) {
-        refreshTokenRepository.findByRefreshToken(refreshToken)
+        refreshTokenRepository.findById(refreshToken)
                 .ifPresent(storedToken -> {
                     if (storedToken.getUserId().equals(userId)) {
                         refreshTokenRepository.deleteById(refreshToken);
@@ -35,9 +35,7 @@ public class RefreshTokenService {
     public void deleteAllRefreshToken(Long userId) {
         List<RefreshToken> tokens = refreshTokenRepository.findAllByUserId(userId);
 
-        if (!tokens.isEmpty()) {
-            refreshTokenRepository.deleteAll(tokens);
-        }
+        refreshTokenRepository.deleteAll(tokens);
     }
 
     public boolean existRefreshToken(String refreshToken) {

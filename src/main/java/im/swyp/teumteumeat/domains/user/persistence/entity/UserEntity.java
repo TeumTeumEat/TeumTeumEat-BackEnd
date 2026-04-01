@@ -3,10 +3,12 @@ package im.swyp.teumteumeat.domains.user.persistence.entity;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.utils.DatabaseEncryptionConverter;
 import jakarta.persistence.*;
@@ -20,7 +22,12 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @DynamicUpdate
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_social", columnNames = {"social_provider", "social_id"})
+        }
+)
 @Builder(access = AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -76,15 +83,22 @@ public class UserEntity extends BaseEntity {
 
     private boolean quizGuideSeen;
 
+    @Builder.Default
     private int availableQuizCount = 1;
 
     @Column(name = "last_quiz_count_reset_date")
     private LocalDate lastQuizCountResetDate;
 
+    @Builder.Default
+    @Column(name = "daily_ad_reward_count", columnDefinition = "int default 0")
+    private int dailyAdRewardCount = 0;
+
     public void resetAvailableQuizCountIfNeed() {
         LocalDate today = LocalDate.now();
+        // 하루 초기화
         if (lastQuizCountResetDate == null || !lastQuizCountResetDate.isEqual(today)) {
-            this.availableQuizCount = 1; // Default daily quota
+            this.availableQuizCount = 1; // 풀이 가능한 하루 퀴즈 세트 수를 기본 값으로 리셋
+            this.dailyAdRewardCount = 0; // 광고 보상 리셋
             this.lastQuizCountResetDate = today;
         }
     }
@@ -107,6 +121,16 @@ public class UserEntity extends BaseEntity {
     public void addAvailableQuizCount(int count) {
         resetAvailableQuizCountIfNeed();
         this.availableQuizCount += count;
+    }
+
+    public void claimAdReward() {
+        resetAvailableQuizCountIfNeed();
+        if (this.dailyAdRewardCount >= 10) {
+            throw new BaseException(
+                QuizResponseCode.DAILY_AD_REWARD_LIMIT_EXCEEDED);
+        }
+        this.dailyAdRewardCount++;
+        this.availableQuizCount++;
     }
 
     public void completeQuizGuide() {
