@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.global.config.properties.FrontendProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -14,7 +15,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-@lombok.extern.slf4j.Slf4j
+@Slf4j
 public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
     private final FrontendProperties frontendProperties;

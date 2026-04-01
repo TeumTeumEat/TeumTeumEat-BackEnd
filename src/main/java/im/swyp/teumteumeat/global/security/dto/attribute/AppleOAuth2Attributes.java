@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.global.security.dto;
+package im.swyp.teumteumeat.global.security.dto.attribute;
 
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 
