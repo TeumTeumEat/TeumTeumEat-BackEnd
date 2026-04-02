@@ -40,7 +40,7 @@ public class OAuth2UseCase {
         OidcPayload payload = oauthOidcHelper.getPayload(provider, request.idToken());
 
         String socialId = payload.sub();
-        String email = payload.email();
+        String email = StringUtils.hasText(request.email()) ? request.email() : payload.email();
         String name;
 
         if (provider.equals(SocialProvider.APPLE)) {
