@@ -22,11 +22,11 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     private final CategoryDocumentUseCase categoryDocumentUseCase;
 
-    @GetMapping(value = "/{categoryId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(@PathVariable Long categoryId, @AuthenticationPrincipal CustomUserDetails user,
-                                @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId, HttpServletResponse response){
-        return categoryDocumentUseCase.subscribe(user.getUserId(), categoryId, lastEventId);
-    }
+//    @GetMapping(value = "/{categoryId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public SseEmitter subscribe(@PathVariable Long categoryId, @AuthenticationPrincipal CustomUserDetails user,
+//                                @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId, HttpServletResponse response){
+//        return categoryDocumentUseCase.subscribe(user.getUserId(), categoryId, lastEventId);
+//    }
 
     @Override
     @PostMapping("/{categoryId}/documents/daily")
@@ -35,6 +35,14 @@ public class CategoryDocumentController implements CategoryDocumentApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         CategoryDocumentResponse response = categoryDocumentUseCase.generateDocument(categoryId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @PostMapping(value = "/{categoryId}/documents/daily/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter generateDocumentStream(
+            @PathVariable Long categoryId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return categoryDocumentUseCase.generateDocumentStream(categoryId, user.getUserId());
     }
 
     @Override

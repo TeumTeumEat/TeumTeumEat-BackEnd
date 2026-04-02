@@ -22,13 +22,12 @@ import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -47,20 +46,20 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
     private final NotificationService notificationService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final WebClient webClient;
 
-    public SseEmitter subscribe(Long userId, Long categoryId, String lastEventId) {
-        categoryService.getCategoryById(categoryId);
-
-        return notificationService.subscribe(
-                lastEventId,
-                (dto) -> {
-                    String eventId = dto.id() + ":" + System.currentTimeMillis();
-                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "DOCUMENT_PROCESSING", "안내서 생성을 진행 중입니다.");
-                },
-                userId,
-                categoryId);
-    }
+//    public SseEmitter subscribe(Long userId, Long categoryId, String lastEventId) {
+//        categoryService.getCategoryById(categoryId);
+//
+//        return notificationService.subscribe(
+//                lastEventId,
+//                (dto) -> {
+//                    String eventId = dto.id() + ":" + System.currentTimeMillis();
+//                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "DOCUMENT_PROCESSING", "안내서 생성을 진행 중입니다.");
+//                },
+//                userId,
+//                categoryId);
+//    }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
@@ -89,47 +88,22 @@ public class CategoryDocumentUseCase {
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public CategoryDocumentResponse generateDocumentAsync(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
-        UserEntity user = userService.getUserById(userId);
-
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
-
-        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
-        if (user.getRole() != Role.ADMIN) {
-            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
-            if (activeDocument != null) {
-                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
-                if (!isConsumed) {
-                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                }
-            }
-        }
-
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-        
-        // 요약글 생성 이벤트 publish
-        eventPublisher.publishEvent(new CategoryDocumentGenerationEvent(categoryId, userId, goal, isFirstTime));
-    }
-
-    @Async
-    @EventListener
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void handleDocumentGenerationEvent(CategoryDocumentGenerationEvent event) {
-        String key = notificationService.generateKey(event.userId(), event.categoryId());
+    public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
+        SseEmitter sseEmitter = new SseEmitter(180_000L);
         try {
-            // 요약글 생성
-            CategoryDocument targetDocument = createNewDailyDocument(event.goal());
-            CategoryDocumentResponse response = CategoryDocumentResponse.from(targetDocument, false, event.isFirstTime());
-            
-            notificationService.send(key, "DOCUMENT_GENERATED", response);
-        } catch (Exception e) {
-            log.error("카테고리 요약글 생성 실패 userId: {}", event.userId(), e);
-            notificationService.send(key, "GENERATION_ERROR", "요약글 생성에 실패했습니다.");
+            sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
+        } catch (IOException e) {
+            sseEmitter.completeWithError(e);
+            log.error("sse stream error: {}", e);
+            return sseEmitter;
         }
+
+        StringBuilder generatedContent = new StringBuilder();
+
+        webClient.post()
+                .uri()
+                .header()
+                .
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -239,5 +213,4 @@ public class CategoryDocumentUseCase {
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);
     }
-
 }

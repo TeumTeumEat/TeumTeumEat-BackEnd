@@ -4,14 +4,14 @@ import lombok.Builder;
 
 @Builder
 public record UserQuizStatusResponse(
-                boolean hasSolvedToday,
-                boolean isFirstTime,
-                boolean hasCreatedToday,
-                boolean isQuizGuideSeen,
-                int availableQuizCount,
-                int dailyAdRewardCount,
-                boolean canIssueCoupon,
-                int targetQuizSetCount,
-                int completedQuizSetCount,
-                boolean isCompleted) {
+        boolean hasSolvedToday,
+        boolean isFirstTime,
+        boolean hasCreatedToday,
+        boolean isQuizGuideSeen,
+        int availableQuizCount,
+        int dailyAdRewardCount,
+        boolean canIssueCoupon,
+        int targetQuizSetCount,
+        int completedQuizSetCount,
+        boolean isCompleted) {
 }

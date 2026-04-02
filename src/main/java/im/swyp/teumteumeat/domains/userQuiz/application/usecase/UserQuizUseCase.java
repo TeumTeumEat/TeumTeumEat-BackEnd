@@ -74,7 +74,8 @@ public class UserQuizUseCase {
                 lastEventId,
                 (dto) -> {
                     String eventId = dto.id() + ":" + System.currentTimeMillis();
-                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "QUIZ_PROCESSING", "유저 퀴즈 생성을 진행 중입니다.");
+                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "QUIZ_PROCESSING",
+                            "유저 퀴즈 생성을 진행 중입니다.");
                 },
                 userId,
                 documentId);
@@ -209,14 +210,16 @@ public class UserQuizUseCase {
                 quizUseCase.createQuizzesForDocument(event.documentId(), event.userId(), event.quizCount());
                 return null;
             });
-            
+
             // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
             int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
-            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(), totalQuizCount);
-            
+            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(),
+                    totalQuizCount);
+
             if (quizzesUnsolved.isEmpty()) {
                 // getPrioritizedQuizzes 방식으로 시도
-                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null, null, totalQuizCount);
+                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null,
+                        null, totalQuizCount);
             }
 
             List<QuizSetResponse> responseList = quizzesUnsolved.stream()
