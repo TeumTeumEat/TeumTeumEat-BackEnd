@@ -39,10 +39,15 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     @Override
     @PostMapping(value = "/{categoryId}/documents/daily/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter generateDocumentStream(
+    public ResponseEntity<SseEmitter> generateDocumentStream(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        return categoryDocumentUseCase.generateDocumentStream(categoryId, user.getUserId());
+        SseEmitter sseEmitter = categoryDocumentUseCase.generateDocumentStream(categoryId, user.getUserId());
+
+        // Nginx 등 프록시 서버가 스트리밍 데이터를 모아두지 않고 즉시 통과시키도록 헤더 추가
+        return ResponseEntity.ok()
+                .header("X-Accel-Buffering", "no")
+                .body(sseEmitter);
     }
 
     @Override
