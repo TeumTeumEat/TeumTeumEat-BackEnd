@@ -16,7 +16,7 @@ public class SignUpRequest {
 
             @Schema(description = "인증 코드 (Refresh Token 발급용)", example = "c8f2...") String authCode,
 
-            @Schema(description = "이메일", example = "teumteumeat@gmail.com (애플 회원가입 전용") String email
+            @Schema(description = "이메일", example = "teumteumeat@gmail.com (애플 회원가입 전용)") String email
     ) {
     }
 }
