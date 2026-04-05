@@ -198,40 +198,40 @@ public class UserQuizUseCase {
         return priorityQuizzes;
     }
 
-    @Async
-    @EventListener
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void handleUserQuizGenerationEvent(UserQuizGenerationEvent event) {
-        String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
-        String sseKey = notificationService.generateKey(event.userId(), event.documentId());
-
-        try {
-            distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-                quizUseCase.createQuizzesForDocument(event.documentId(), event.userId(), event.quizCount());
-                return null;
-            });
-
-            // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
-            int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
-            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(),
-                    totalQuizCount);
-
-            if (quizzesUnsolved.isEmpty()) {
-                // getPrioritizedQuizzes 방식으로 시도
-                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null,
-                        null, totalQuizCount);
-            }
-
-            List<QuizSetResponse> responseList = quizzesUnsolved.stream()
-                    .map(quizMapper::toQuestionResponse)
-                    .toList();
-
-            notificationService.send(sseKey, "QUIZ_GENERATED", responseList);
-        } catch (Exception e) {
-            log.error("유저 퀴즈 생성 실패 userId: {}", event.userId(), e);
-            notificationService.send(sseKey, "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
-        }
-    }
+//    @Async
+//    @EventListener
+//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+//    public void handleUserQuizGenerationEvent(UserQuizGenerationEvent event) {
+//        String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
+//        String sseKey = notificationService.generateKey(event.userId(), event.documentId());
+//
+//        try {
+//            distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+//                quizUseCase.createQuizzesForDocument(event.documentId(), event.userId(), event.quizCount());
+//                return null;
+//            });
+//
+//            // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
+//            int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
+//            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(),
+//                    totalQuizCount);
+//
+//            if (quizzesUnsolved.isEmpty()) {
+//                // getPrioritizedQuizzes 방식으로 시도
+//                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null,
+//                        null, totalQuizCount);
+//            }
+//
+//            List<QuizSetResponse> responseList = quizzesUnsolved.stream()
+//                    .map(quizMapper::toQuestionResponse)
+//                    .toList();
+//
+//            notificationService.send(sseKey, "QUIZ_GENERATED", responseList);
+//        } catch (Exception e) {
+//            log.error("유저 퀴즈 생성 실패 userId: {}", event.userId(), e);
+//            notificationService.send(sseKey, "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
+//        }
+//    }
 
     private String truncateTopic(String topic) {
         if (topic != null && topic.length() > 30) {
