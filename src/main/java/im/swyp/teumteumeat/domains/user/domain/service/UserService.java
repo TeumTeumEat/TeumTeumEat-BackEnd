@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.user.domain.service;
 
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
+import im.swyp.teumteumeat.domains.user.domain.constant.UserStatus;
 import im.swyp.teumteumeat.domains.user.persistence.entity.CommuteInfo;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
@@ -74,6 +75,12 @@ public class UserService {
         user.resetQuizGuide();
     }
 
+    @Transactional
+    public void completeSignup(Long userId) {
+        UserEntity user = getOrThrow(userId);
+        user.completeSignup();
+    }
+
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)
@@ -84,7 +91,8 @@ public class UserService {
         return userRepository.findBySocialProviderAndSocialId(provider, socialId);
     }
 
-    public UserEntity getOrSaveUser(String name, SocialProvider provider, String socialId, String email) {
+    @Transactional
+    public UserEntity getOrSaveUser(String name, SocialProvider provider, String socialId, String email, UserStatus status) {
         return userRepository
                 .findBySocialProviderAndSocialId(provider, socialId)
                 .orElseGet(() -> userRepository.save(
@@ -92,6 +100,9 @@ public class UserService {
                                 name,
                                 email,
                                 provider,
-                                socialId)));
+                                socialId,
+                                status
+                        )
+                ));
     }
 }
