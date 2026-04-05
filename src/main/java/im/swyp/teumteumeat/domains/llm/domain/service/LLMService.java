@@ -130,11 +130,15 @@ public class LLMService {
                     Map.of("role", "system", "content", systemRole),
                     Map.of("role", "user", "content", promptMessage)));
 
+            if (jsonMode) {
+                requestBody.put("response_format", Map.of("type", "json_object"));
+            }
+
             requestBody.put("stream", true);
 
             return webClient.post()
                     .uri("/chat/completions")
-                    .bodyValue(DocumentPrompt.GENERATE_DOCUMENT) // 프롬프트 DTO
+                    .bodyValue(requestBody) // 프롬프트 DTO
                     .retrieve()
                     .bodyToFlux(String.class) // 응답을 스트림(Flux)으로 받음
                     // "[DONE]" 등 불필요한 신호 필터링
