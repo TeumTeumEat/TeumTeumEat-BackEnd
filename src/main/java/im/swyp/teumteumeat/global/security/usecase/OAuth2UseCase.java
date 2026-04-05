@@ -63,7 +63,6 @@ public class OAuth2UseCase {
         if (user.getStatus() == UserStatus.PENDING) {
             if (request.termsAgreed()) {
                 userService.completeSignup(user.getId());
-                user.completeSignup();
             } else {
                 throw new BaseException(AuthResponseCode.NEED_REGISTER);
             }
