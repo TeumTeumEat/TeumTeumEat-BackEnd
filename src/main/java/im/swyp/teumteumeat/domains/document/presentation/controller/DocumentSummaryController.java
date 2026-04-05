@@ -20,16 +20,16 @@ public class DocumentSummaryController implements DocumentSummaryApi {
 
     private final DocumentSummaryUseCase documentSummaryUseCase;
 
-    @Override
-    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user,
-            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-            jakarta.servlet.http.HttpServletResponse response) {
-        return documentSummaryUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
-    }
+//    @Override
+//    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public SseEmitter subscribe(
+//            @PathVariable Long goalId,
+//            @PathVariable Long documentId,
+//            @AuthenticationPrincipal CustomUserDetails user,
+//            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+//            jakarta.servlet.http.HttpServletResponse response) {
+//        return documentSummaryUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
+//    }
 
     @Override
     @PostMapping("/{goalId}/documents/{documentId}/summary")
@@ -41,15 +41,15 @@ public class DocumentSummaryController implements DocumentSummaryApi {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
-    @Override
-    @PostMapping("/{goalId}/documents/{documentId}/summary/stream")
-    public ResponseEntity<ApiResponse<Void>> createSummaryStream(
-            @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
-        DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
+//    @Override
+//    @PostMapping("/{goalId}/documents/{documentId}/summary/stream")
+//    public ResponseEntity<ApiResponse<Void>> createSummaryStream(
+//            @PathVariable Long goalId,
+//            @PathVariable Long documentId,
+//            @AuthenticationPrincipal CustomUserDetails user) {
+//        DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
+//        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+//    }
 
     @Override
     @GetMapping("/{goalId}/documents/{documentId}/summary")
