@@ -214,9 +214,7 @@ public class CategoryDocumentUseCase {
         return llmPrompt;
     }
 
-    // 스트림이 끝나고 DB에 저장하기 위한 헬퍼 메서드 (트랜잭션을 위해)
-    @Transactional
-    public void saveDocumentAfterStream(Category category, Goal goal, String content) {
+    private void saveDocumentAfterStream(Category category, Goal goal, String content) {
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
@@ -233,26 +231,28 @@ public class CategoryDocumentUseCase {
         categoryDocumentService.saveDocument(document);
     }
 
-    public void checkUnsolvedQuota(Goal goal, Long userId) {
+    private void checkUnsolvedQuota(Goal goal, Long userId) {
         UserEntity user = userService.getUserById(userId);
 
-            if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-                throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        // 관리자는 쿼터 무제한
+        if (user.getRole() == Role.ADMIN) {
+            return;
+        }
+        // 오늘의 퀴즈 해결 가능 여부 확인
+        if (!user.canSolveDailyQuiz()) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+        // 안 푼 퀴즈가 존재하는지 검증
+        CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+        if (activeDocument != null) {
+            boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+            if (!isConsumed) {
+                throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
-
-            // 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
-            if (user.getRole() != Role.ADMIN) {
-                CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
-                if (activeDocument != null) {
-                    boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
-                    if (!isConsumed) {
-                        throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                    }
-                }
-            }
+        }
     }
 
-    public String processUserPrompt(Goal goal) {
+    private String processUserPrompt(Goal goal) {
         String prompt = goal.getPrompt();
         return (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
     }
