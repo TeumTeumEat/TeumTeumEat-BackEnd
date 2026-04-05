@@ -22,12 +22,6 @@ public class CategoryDocumentController implements CategoryDocumentApi {
 
     private final CategoryDocumentUseCase categoryDocumentUseCase;
 
-//    @GetMapping(value = "/{categoryId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public SseEmitter subscribe(@PathVariable Long categoryId, @AuthenticationPrincipal CustomUserDetails user,
-//                                @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId, HttpServletResponse response){
-//        return categoryDocumentUseCase.subscribe(user.getUserId(), categoryId, lastEventId);
-//    }
-
     @Override
     @PostMapping("/{categoryId}/documents/daily")
     public ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
