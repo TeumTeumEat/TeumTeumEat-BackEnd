@@ -46,10 +46,19 @@ public class CategoryDocumentUseCase {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
+        Category category = goal.getCategory();
         checkUnsolvedQuota(goal, userId);
 
-        // 새 문서 생성 (무조건)
-        CategoryDocument targetDocument = createNewDailyDocument(goal);
+        String lockKey = "lock:category_document:generation:" + goal.getId();
+        // 반환값을 직접 받기
+        CategoryDocument targetDocument = distributedLockFacade.tryExecuteWithLock(
+                lockKey, 30, 60, TimeUnit.SECONDS,
+                () -> {
+                    String llmPrompt = createLLMPrompt(goal, category);
+                    return createDocumentInternal(goal, category, llmPrompt);
+                }
+        ).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
+
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
@@ -123,7 +132,11 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void createDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
-        createDocumentInternal(goal);
+        Category category = goal.getCategory();
+
+        // 프롬프트 생성 로직
+        String llmPrompt = createLLMPrompt(goal, category);
+        createDocumentInternal(goal, category, llmPrompt);
     }
 
     // 목표 검증
@@ -165,35 +178,15 @@ public class CategoryDocumentUseCase {
         return null;
     }
 
-    // (Admin) 요약글 생성
-    private CategoryDocument createNewDailyDocument(Goal goal) {
-        String lockKey = "lock:category_document:generation:" + goal.getId();
-
-        // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
-        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // 무조건 생성
-            return createDocumentInternal(goal);
-        }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
-    }
-
     // 요약글 생성 내부 로직
-    private CategoryDocument createDocumentInternal(Goal goal) {
-        Category category = goal.getCategory();
-        String prompt = goal.getPrompt();
-        String topicInstruction = (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
-
-        // LLM을 통해 콘텐츠 생성
-        String path = category.getPath();
-        String description = category.getDescription() != null ? category.getDescription()
-                : path + " " + category.getName();
-
-        String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
-                path, description, topicInstruction);
+    private CategoryDocument createDocumentInternal(Goal goal, Category category, String llmPrompt) {
+        // CategoryDocument 생성
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
         // 제목 생성
+        String topicInstruction = processUserPrompt(goal);
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
 
         CategoryDocument document = CategoryDocument.builder()
@@ -209,8 +202,7 @@ public class CategoryDocumentUseCase {
 
     // LLM Prompt 생성
     private String createLLMPrompt(Goal goal, Category category) {
-        String prompt = goal.getPrompt();
-        String topicInstruction = (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
+        String topicInstruction = processUserPrompt(goal);
 
         String path = category.getPath();
         String description = category.getDescription() != null ? category.getDescription()
@@ -225,13 +217,11 @@ public class CategoryDocumentUseCase {
     // 스트림이 끝나고 DB에 저장하기 위한 헬퍼 메서드 (트랜잭션을 위해)
     @Transactional
     public void saveDocumentAfterStream(Category category, Goal goal, String content) {
-        String prompt = goal.getPrompt();
-        String topicInstruction = (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
-
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
-        // (비동기) 제목 생성
+        // 제목 생성
+        String topicInstruction = processUserPrompt(goal);
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
 
         CategoryDocument document = CategoryDocument.builder()
@@ -250,7 +240,7 @@ public class CategoryDocumentUseCase {
                 throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
             }
 
-            // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
+            // 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
             if (user.getRole() != Role.ADMIN) {
                 CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
                 if (activeDocument != null) {
@@ -260,6 +250,11 @@ public class CategoryDocumentUseCase {
                     }
                 }
             }
+    }
+
+    public String processUserPrompt(Goal goal) {
+        String prompt = goal.getPrompt();
+        return (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
     }
 
     // 요약글 삭제
