@@ -79,6 +79,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 oAuth2Attributes.getEmail(),
                                 oAuth2Attributes.getProvider(),
                                 oAuth2Attributes.getProviderId(),
+                                // 웹 진입점 이용약관 동의 없이 즉시 회원가입
                                 UserStatus.ACTIVE)));
     }
 
