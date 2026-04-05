@@ -46,22 +46,7 @@ public class CategoryDocumentUseCase {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
-        UserEntity user = userService.getUserById(userId);
-
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
-
-        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
-        if (user.getRole() != Role.ADMIN) {
-            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
-            if (activeDocument != null) {
-                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
-                if (!isConsumed) {
-                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                }
-            }
-        }
+        checkUnsolvedQuota(goal, userId);
 
         // 새 문서 생성 (무조건)
         CategoryDocument targetDocument = createNewDailyDocument(goal);
@@ -74,26 +59,11 @@ public class CategoryDocumentUseCase {
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
         SseEmitter sseEmitter = new SseEmitter(180_000L);
         try {
-            Goal goal = getValidGoal(userId, categoryId);
-            UserEntity user = userService.getUserById(userId);
-
             // 프론트에게 스트리밍 성공 이벤트 반환
             sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
 
-            if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-                throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-            }
-
-            // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
-            if (user.getRole() != Role.ADMIN) {
-                CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
-                if (activeDocument != null) {
-                    boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
-                    if (!isConsumed) {
-                        throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                    }
-                }
-            }
+            Goal goal = getValidGoal(userId, categoryId);
+            checkUnsolvedQuota(goal, userId);
 
             StringBuilder generatedContent = new StringBuilder();
 
@@ -271,6 +241,25 @@ public class CategoryDocumentUseCase {
                 .title(generatedTitle)
                 .build();
         categoryDocumentService.saveDocument(document);
+    }
+
+    public void checkUnsolvedQuota(Goal goal, Long userId) {
+        UserEntity user = userService.getUserById(userId);
+
+            if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+                throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+            }
+
+            // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
+            if (user.getRole() != Role.ADMIN) {
+                CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+                if (activeDocument != null) {
+                    boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+                    if (!isConsumed) {
+                        throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+                    }
+                }
+            }
     }
 
     // 요약글 삭제
