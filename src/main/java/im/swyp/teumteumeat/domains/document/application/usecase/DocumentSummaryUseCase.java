@@ -47,27 +47,6 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
-    private final ApplicationEventPublisher eventPublisher;
-    private final NotificationService notificationService;
-
-    public SseEmitter subscribe(Long userId, Long goalId, Long documentId, String lastEventId) {
-        Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-        document.validateBelongTo(goalId);
-
-        return notificationService.subscribe(
-                lastEventId,
-                (dto) -> {
-                    String eventId = dto.id() + ":" + System.currentTimeMillis();
-                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "SUMMARY_PROCESSING", "PDF 구조화 및 요약 생성 작업을 진행 중입니다.");
-                },
-                userId,
-                goalId,
-                documentId);
-    }
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -106,22 +85,42 @@ public class DocumentSummaryUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
-        // 1. Goal 만료 및 달성 확인
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
+        validateGoal(goal);
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        checkUnsolvedQuota(userId, documentId);
+
+        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
+        DocumentSummary summary = documentSummaryService.generateSummary(document);
+        quizUseCase.createQuizzesForPdfDocument(document, summary);
+
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+
+        return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
+    }
+
+//    public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
+//
+//    }
+
+    private void validateGoal(Goal goal) {
+        // Goal 달성 및 만료 확인
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
         }
+        if (goal.getEndDate().isBefore(LocalDate.now())) {
+            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
+        }
+    }
 
-        // 2. 쿼타 확인 - ADMIN 제외
+    private void checkUnsolvedQuota(Long userId, Long documentId) {
+        // 쿼타 확인 - ADMIN 제외
         UserEntity user = userService.getUserById(userId);
         if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
 
         // 3. 아직 해당 문서에 대해 풀지 않은(미해결) 최신 요약글이 있는지 확인
         if (user.getRole() != Role.ADMIN) {
@@ -138,75 +137,5 @@ public class DocumentSummaryUseCase {
                 }
             }
         }
-
-        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
-        DocumentSummary summary = documentSummaryService.generateSummary(document);
-        quizUseCase.createQuizzesForPdfDocument(document, summary);
-
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-
-        return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
     }
-
-//    //  pdf 요약글 생성 (학습 시 사용 되는 메서드)
-//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-//    public void createSummaryAsync(Long userId, Long goalId, Long documentId) {
-//        Goal goal = goalService.getGoalById(goalId);
-//        goal.validateOwner(userId);
-//
-//        // 1. Goal 만료 및 달성 확인
-//        if (goal.isCompleted()) {
-//            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-//        }
-//        if (goal.getEndDate().isBefore(LocalDate.now())) {
-//            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-//        }
-//
-//        // 2. 쿼타 확인 - ADMIN 제외
-//        UserEntity user = userService.getUserById(userId);
-//        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-//            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-//        }
-//
-//        Document document = documentService.getDocumentById(documentId);
-//        document.validateOwner(userId);
-//
-//        // 3. 아직 해당 문서에 대해 풀지 않은(미해결) 최신 요약글이 있는지 확인
-//        if (user.getRole() != Role.ADMIN) {
-//            Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
-//            if (latestSummaryOpt.isPresent()) {
-//                DocumentSummary latestSummary = latestSummaryOpt.get();
-//                boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
-//                        .anyMatch(uq -> uq.getQuiz() != null &&
-//                                uq.getQuiz().getDocumentSummary() != null &&
-//                                uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
-//
-//                if (!isConsumed) {
-//                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-//                }
-//            }
-//        }
-//
-//        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-//        // 요약글 생성 이벤트 publish
-//        eventPublisher.publishEvent(new DocumentSummaryGenerationEvent(userId, goal, document, isFirstTime));
-//    }
-//
-//    @Async
-//    @EventListener
-//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-//    public void handleDocumentSummaryGenerationEvent(DocumentSummaryGenerationEvent event) {
-//        String key = notificationService.generateKey(event.userId(), event.document().getId());
-//        // 요약글 생성 후 퀴즈 생성
-//        try {
-//            DocumentSummary summary = documentSummaryService.generateSummary(event.document());
-//            quizUseCase.createQuizzesForPdfDocument(event.document(), summary);
-//
-//            DocumentDetailResponse response = DocumentMapper.toDocumentDetailResponse(event.document(), summary, false, event.isFirstTime());
-//            notificationService.send(key, "DOCUMENT_GENERATED", response);
-//        } catch (Exception e) {
-//            log.error("PDF 요약글 생성 실패 userId: {}", event.userId(), e);
-//            notificationService.send(key, "GENERATION_ERROR", "PDF 요약글 생성에 실패했습니다.");
-//        }
-//    }
 }
