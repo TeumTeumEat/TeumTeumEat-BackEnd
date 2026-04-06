@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Service
 @Slf4j
@@ -72,19 +73,9 @@ public class LLMService {
     }
 
     private String callOpenAiApi(String promptMessage, String systemRole, boolean jsonMode) {
-        try {
-            // 요청 바디 구성
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", openAiModel);
-            requestBody.put("messages", List.of(
-                    Map.of("role", "system", "content", systemRole),
-                    Map.of("role", "user", "content", promptMessage)));
+        return executeWithExceptionHandling(() -> {
+            Map<String, Object> requestBody = createRequestBody(promptMessage, systemRole, jsonMode, false);
 
-            if (jsonMode) {
-                requestBody.put("response_format", Map.of("type", "json_object"));
-            }
-
-            // 요청 전송
             OpenAiResponse response = restClient.post()
                     .uri("/chat/completions")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -92,7 +83,6 @@ public class LLMService {
                     .retrieve()
                     .body(OpenAiResponse.class);
 
-            // 응답 추출
             if (response == null || response.choices() == null || response.choices().isEmpty()) {
                 throw new RuntimeException("OpenAI 응답이 비어있습니다.");
             }
@@ -101,40 +91,12 @@ public class LLMService {
             log.debug("AI Raw 응답: {}", content);
 
             return content;
-
-        } catch (HttpClientErrorException e) {
-            log.error("AI 요청 클라이언트 에러: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-            if (e.getStatusCode().value() == 429) {
-                throw new BaseException(LLMResponseCode.AI_QUOTA_EXCEEDED);
-            } else if (e.getStatusCode().value() >= 400 && e.getStatusCode().value() < 500) {
-                throw new BaseException(LLMResponseCode.AI_INVALID_REQUEST);
-            }
-            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED);
-
-        } catch (HttpServerErrorException e) {
-            log.error("AI 요청 서버 에러: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new BaseException(LLMResponseCode.AI_SERVER_ERROR);
-
-        } catch (Exception e) {
-            log.error("AI 요청 중 알 수 없는 에러 발생", e);
-            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED);
-        }
+        });
     }
 
     private Flux<String> callOpenAiApiStream(String promptMessage, String systemRole, boolean jsonMode) {
-        try {
-            // 요청 바디 구성
-            Map<String, Object> requestBody = new java.util.HashMap<>();
-            requestBody.put("model", openAiModel);
-            requestBody.put("messages", List.of(
-                    Map.of("role", "system", "content", systemRole),
-                    Map.of("role", "user", "content", promptMessage)));
-
-            if (jsonMode) {
-                requestBody.put("response_format", Map.of("type", "json_object"));
-            }
-
-            requestBody.put("stream", true);
+        return executeWithExceptionHandling(() -> {
+            Map<String, Object> requestBody = createRequestBody(promptMessage, systemRole, jsonMode, true);
 
             return webClient.post()
                     .uri("/chat/completions")
@@ -147,7 +109,30 @@ public class LLMService {
                     .map(this::extractContentFromChunk)
                     // 빈 문자열 무시
                     .filter(text -> text != null && !text.isEmpty());
+        });
+    }
 
+    private Map<String, Object> createRequestBody(String promptMessage, String systemRole, boolean jsonMode, boolean stream) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", openAiModel);
+        requestBody.put("messages", List.of(
+                Map.of("role", "system", "content", systemRole),
+                Map.of("role", "user", "content", promptMessage)));
+
+        if (jsonMode) {
+            requestBody.put("response_format", Map.of("type", "json_object"));
+        }
+
+        if (stream) {
+            requestBody.put("stream", true);
+        }
+
+        return requestBody;
+    }
+
+    private <T> T executeWithExceptionHandling(Supplier<T> apiCall) {
+        try {
+            return apiCall.get();
         } catch (HttpClientErrorException e) {
             log.error("AI 요청 클라이언트 에러: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
             if (e.getStatusCode().value() == 429) {
