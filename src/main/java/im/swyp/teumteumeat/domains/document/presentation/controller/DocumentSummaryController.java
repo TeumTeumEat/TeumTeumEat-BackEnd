@@ -20,17 +20,6 @@ public class DocumentSummaryController implements DocumentSummaryApi {
 
     private final DocumentSummaryUseCase documentSummaryUseCase;
 
-//    @Override
-//    @GetMapping(value = "/{goalId}/documents/{documentId}/summary/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public SseEmitter subscribe(
-//            @PathVariable Long goalId,
-//            @PathVariable Long documentId,
-//            @AuthenticationPrincipal CustomUserDetails user,
-//            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
-//            jakarta.servlet.http.HttpServletResponse response) {
-//        return documentSummaryUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
-//    }
-
     @Override
     @PostMapping("/{goalId}/documents/{documentId}/summary")
     public ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
@@ -41,15 +30,19 @@ public class DocumentSummaryController implements DocumentSummaryApi {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
-//    @Override
-//    @PostMapping("/{goalId}/documents/{documentId}/summary/stream")
-//    public ResponseEntity<ApiResponse<Void>> createSummaryStream(
-//            @PathVariable Long goalId,
-//            @PathVariable Long documentId,
-//            @AuthenticationPrincipal CustomUserDetails user) {
-//        DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
-//        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-//    }
+    @Override
+    @PostMapping(value = "/{goalId}/documents/{documentId}/summary/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> createSummaryStream(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        SseEmitter sseEmitter = documentSummaryUseCase.createSummaryStream(user.getUserId(), goalId, documentId);
+
+        // Nginx 등 프록시 서버가 스트리밍 데이터를 모아두지 않고 즉시 통과시키도록 헤더 추가
+        return ResponseEntity.ok()
+                .header("X-Accel-Buffering", "no")
+                .body(sseEmitter);
+    }
 
     @Override
     @GetMapping("/{goalId}/documents/{documentId}/summary")

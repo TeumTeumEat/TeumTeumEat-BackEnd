@@ -11,6 +11,8 @@ import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSumma
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
@@ -22,16 +24,14 @@ import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-import im.swyp.teumteumeat.global.sse.service.NotificationService;
+
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
@@ -47,6 +47,7 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
+    private final LLMService llmService;
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -93,7 +94,18 @@ public class DocumentSummaryUseCase {
         checkUnsolvedQuota(userId, documentId);
 
         // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
-        DocumentSummary summary = documentSummaryService.generateSummary(document);
+        boolean isAdmin = userService.getUserById(userId).getRole() == Role.ADMIN;
+        Optional<DocumentSummary> existingOpt = documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
+
+        DocumentSummary summary;
+        if (existingOpt.isPresent()) {
+            summary = existingOpt.get();
+        } else {
+            String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+            String summaryContent = llmService.generateContent(prompt);
+            summary = documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
+        }
+
         quizUseCase.createQuizzesForPdfDocument(document, summary);
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
@@ -101,9 +113,83 @@ public class DocumentSummaryUseCase {
         return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
     }
 
-//    public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
-//
-//    }
+    public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        validateGoal(goal);
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        checkUnsolvedQuota(userId, documentId);
+
+        SseEmitter sseEmitter = new SseEmitter(10 * 60 * 1000L); // 10분 설정
+        StringBuilder generatedContent = new StringBuilder();
+
+        try {
+            boolean isAdmin = userService.getUserById(userId).getRole() == Role.ADMIN;
+            Optional<DocumentSummary> existingOpt = documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
+
+            if (existingOpt.isPresent()) {
+                DocumentSummary existing = existingOpt.get();
+                sseEmitter.send(SseEmitter.event().name("message").data(existing.getSummary()));
+                sseEmitter.send(SseEmitter.event().name("title").data(existing.getTitle()));
+                sseEmitter.complete();
+                return sseEmitter;
+            }
+
+            String llmPrompt = String.format(im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+
+            // 한 글자씩 sse event로 전송
+            llmService.generateContentStream(llmPrompt)
+                    .subscribe(
+                            parsedText -> {
+                                try {
+                                    sseEmitter.send(SseEmitter.event().name("message").data(parsedText));
+                                    generatedContent.append(parsedText);
+                                } catch (IOException e) {
+                                    sseEmitter.completeWithError(e);
+                                }
+                            },
+                            error -> {
+                                log.error("LLM Stream Error: ", error);
+                                sseEmitter.completeWithError(error);
+                            },
+                            () -> {
+                                // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
+                                CompletableFuture.supplyAsync(() -> {
+                                            DocumentSummary savedSummary = documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent.toString());
+                                            
+                                            try {
+                                                quizUseCase.createQuizzesForPdfDocument(document, savedSummary);
+                                            } catch (Exception e) {
+                                                log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
+                                            }
+                                            
+                                            return savedSummary.getTitle();
+                                        })
+                                        .thenAccept(title -> {
+                                            try {
+                                                sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                                sseEmitter.complete();
+                                            } catch (IOException e) {
+                                                sseEmitter.completeWithError(e);
+                                            }
+                                        })
+                                        .exceptionally(e -> {
+                                            log.error("문서 저장 중 에러 발생!", e);
+                                            sseEmitter.completeWithError(e);
+                                            return null; // 에러 핸들링
+                                        });
+                            }
+                    );
+        } catch (Exception e) {
+            sseEmitter.completeWithError(e);
+        }
+
+        return sseEmitter;
+    }
 
     private void validateGoal(Goal goal) {
         // Goal 달성 및 만료 확인
