@@ -81,6 +81,7 @@ public class CategoryDocumentUseCase {
             Category category = goal.getCategory();
             String llmPrompt = createLLMPrompt(goal, category);
             String topicInstruction = processUserPrompt(goal);
+            String generatedTitle;
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
@@ -99,12 +100,18 @@ public class CategoryDocumentUseCase {
                             },
                             () -> {
                                 // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
-                                CompletableFuture.runAsync(() -> {
-                                            categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString());
+                                CompletableFuture.supplyAsync(() -> {
+                                            return categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString());
                                         })
-                                        .thenRun(() -> {
-                                            // 비동기 작업이 끝난 후 스트림 종료
-                                            sseEmitter.complete();
+                                        .thenAccept(title -> {
+                                            try {
+                                                // 제목 전송 (프론트엔드는 이 이벤트를 받아 UI의 제목 영역을 업데이트)
+                                                sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                                // 모든 데이터 전송 완료 후 스트림 종료
+                                                sseEmitter.complete();
+                                            } catch (IOException e) {
+                                                sseEmitter.completeWithError(e);
+                                            }
                                         })
                                         .exceptionally(e -> {
                                             log.error("문서 저장 중 에러 발생!", e);
