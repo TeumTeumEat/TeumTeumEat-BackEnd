@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @UseCase
@@ -64,22 +63,6 @@ public class UserQuizUseCase {
     private final UserQuizMapper userQuizMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
-
-    public SseEmitter subscribe(Long userId, Long documentId, String lastEventId) {
-        // validate document
-        categoryDocumentService.getDocumentById(documentId);
-
-        // SSE 구독
-        return notificationService.subscribe(
-                lastEventId,
-                (dto) -> {
-                    String eventId = dto.id() + ":" + System.currentTimeMillis();
-                    notificationService.sendToTarget(dto.emitter(), dto.id(), eventId, "QUIZ_PROCESSING",
-                            "유저 퀴즈 생성을 진행 중입니다.");
-                },
-                userId,
-                documentId);
-    }
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -197,41 +180,6 @@ public class UserQuizUseCase {
         // -> 위 getQuizzesForSolving에서 createQuizzesForDocument()를 호출하여 추가 생성
         return priorityQuizzes;
     }
-
-//    @Async
-//    @EventListener
-//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-//    public void handleUserQuizGenerationEvent(UserQuizGenerationEvent event) {
-//        String lockKey = "lock:quiz:generation:" + event.documentId() + ":" + event.userId();
-//        String sseKey = notificationService.generateKey(event.userId(), event.documentId());
-//
-//        try {
-//            distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-//                quizUseCase.createQuizzesForDocument(event.documentId(), event.userId(), event.quizCount());
-//                return null;
-//            });
-//
-//            // 생성이 끝나면 퀴즈를 다시 조회하여 SSE로 전송 (전체 개수 조회)
-//            int totalQuizCount = quizUseCase.calculateQuestionCount(event.userId());
-//            List<Quiz> quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(event.documentId(), event.userId(),
-//                    totalQuizCount);
-//
-//            if (quizzesUnsolved.isEmpty()) {
-//                // getPrioritizedQuizzes 방식으로 시도
-//                quizzesUnsolved = quizService.getUnsolvedQuizzesByAttributes(event.documentId(), event.userId(), null,
-//                        null, totalQuizCount);
-//            }
-//
-//            List<QuizSetResponse> responseList = quizzesUnsolved.stream()
-//                    .map(quizMapper::toQuestionResponse)
-//                    .toList();
-//
-//            notificationService.send(sseKey, "QUIZ_GENERATED", responseList);
-//        } catch (Exception e) {
-//            log.error("유저 퀴즈 생성 실패 userId: {}", event.userId(), e);
-//            notificationService.send(sseKey, "GENERATION_ERROR", "유저 퀴즈 생성에 실패했습니다.");
-//        }
-//    }
 
     private String truncateTopic(String topic) {
         if (topic != null && topic.length() > 30) {
