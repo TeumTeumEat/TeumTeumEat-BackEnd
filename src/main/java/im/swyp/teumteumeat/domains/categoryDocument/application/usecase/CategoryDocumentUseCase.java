@@ -81,7 +81,6 @@ public class CategoryDocumentUseCase {
             Category category = goal.getCategory();
             String llmPrompt = createLLMPrompt(goal, category);
             String topicInstruction = processUserPrompt(goal);
-            String generatedTitle;
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
