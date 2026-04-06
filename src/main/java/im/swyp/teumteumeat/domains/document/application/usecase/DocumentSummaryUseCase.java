@@ -91,11 +91,7 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        checkUnsolvedQuota(userId, documentId);
-
-        // 4. 학습하지 않았을 시 새로운 요약글 및 퀴즈 생성 (동기)
-        boolean isAdmin = userService.getUserById(userId).getRole() == Role.ADMIN;
-        Optional<DocumentSummary> existingOpt = documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
+        Optional<DocumentSummary> existingOpt = checkQuotaAndGetReusableSummary(userId, documentId);
 
         DocumentSummary summary;
         if (existingOpt.isPresent()) {
@@ -122,14 +118,11 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        checkUnsolvedQuota(userId, documentId);
-
         SseEmitter sseEmitter = new SseEmitter(10 * 60 * 1000L); // 10분 설정
         StringBuilder generatedContent = new StringBuilder();
 
         try {
-            boolean isAdmin = userService.getUserById(userId).getRole() == Role.ADMIN;
-            Optional<DocumentSummary> existingOpt = documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
+            Optional<DocumentSummary> existingOpt = checkQuotaAndGetReusableSummary(userId, documentId);
 
             if (existingOpt.isPresent()) {
                 DocumentSummary existing = existingOpt.get();
@@ -139,7 +132,7 @@ public class DocumentSummaryUseCase {
                 return sseEmitter;
             }
 
-            String llmPrompt = String.format(im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+            String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
@@ -201,15 +194,15 @@ public class DocumentSummaryUseCase {
         }
     }
 
-    private void checkUnsolvedQuota(Long userId, Long documentId) {
-        // 쿼타 확인 - ADMIN 제외
+    private Optional<DocumentSummary> checkQuotaAndGetReusableSummary(Long userId, Long documentId) {
         UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+
+        if (!isAdmin && !user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        // 3. 아직 해당 문서에 대해 풀지 않은(미해결) 최신 요약글이 있는지 확인
-        if (user.getRole() != Role.ADMIN) {
+        if (!isAdmin) {
             Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
             if (latestSummaryOpt.isPresent()) {
                 DocumentSummary latestSummary = latestSummaryOpt.get();
@@ -223,5 +216,7 @@ public class DocumentSummaryUseCase {
                 }
             }
         }
+
+        return documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
     }
 }
