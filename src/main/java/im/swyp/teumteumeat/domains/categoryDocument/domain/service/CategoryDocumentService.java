@@ -1,10 +1,13 @@
 package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 
+import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
+import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +25,7 @@ public class CategoryDocumentService {
 
     private final CategoryDocumentRepository categoryDocumentRepository;
 
-    public List<CategoryDocument> getDocumentsByGoalId(Long goalId) {
-        return categoryDocumentRepository.findAllByGoalId(goalId);
-    }
+    private final LLMService llmService;
 
     public Optional<CategoryDocument> getLatestDocumentByGoalId(Long goalId) {
         return categoryDocumentRepository.findTopByGoal_IdOrderByCreatedDateDesc(goalId);
@@ -32,12 +33,6 @@ public class CategoryDocumentService {
 
     public List<CategoryDocument> getCommonDocuments(Long categoryId) {
         return categoryDocumentRepository.findAllByCategoryIdAndGoalIsNull(categoryId);
-    }
-
-    public boolean existsByGoalIdAndDate(Long goalId, LocalDate date) {
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.atTime(LocalTime.MAX);
-        return categoryDocumentRepository.existsByGoalIdAndCreatedDateBetween(goalId, start, end);
     }
 
     public boolean hasDocumentCreatedToday(Long userId) {
@@ -57,14 +52,20 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public CategoryDocument createDocument(Goal goal, String content, String title) {
+    public void generateTitleandSaveDocument(Category category, Goal goal, String topicInstruction, String content) {
+        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
+        content = ContentUtils.truncateContentSafe(content);
+
+        String generatedTitle = llmService.generateTitle(content, topicInstruction);
+
         CategoryDocument document = CategoryDocument.builder()
-                .category(goal.getCategory())
+                .category(category)
                 .goal(goal)
                 .content(content)
-                .title(title)
+                .title(generatedTitle)
                 .build();
-        return categoryDocumentRepository.save(document);
+
+        saveDocument(document);
     }
 
     @Transactional

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -79,6 +80,7 @@ public class CategoryDocumentUseCase {
             // 프롬프트 생성 로직
             Category category = goal.getCategory();
             String llmPrompt = createLLMPrompt(goal, category);
+            String topicInstruction = processUserPrompt(goal);
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
@@ -96,10 +98,21 @@ public class CategoryDocumentUseCase {
                                 sseEmitter.completeWithError(error);
                             },
                             () -> {
-                                // 스트림 이후 요약글 처리 및 저장
-                                saveDocumentAfterStream(category, goal, generatedContent.toString());
-                                sseEmitter.complete();
+                                // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
+                                CompletableFuture.runAsync(() -> {
+                                            categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString());
+                                        })
+                                        .thenRun(() -> {
+                                            // 비동기 작업이 끝난 후 스트림 종료
+                                            sseEmitter.complete();
+                                        })
+                                        .exceptionally(e -> {
+                                            log.error("문서 저장 중 에러 발생!", e);
+                                            sseEmitter.completeWithError(e);
+                                            return null; // 에러 핸들링
+                                        });
                             }
+
                     );
         } catch (Exception e) {
             sseEmitter.completeWithError(e);
@@ -212,23 +225,6 @@ public class CategoryDocumentUseCase {
                 path, description, topicInstruction);
 
         return llmPrompt;
-    }
-
-    private void saveDocumentAfterStream(Category category, Goal goal, String content) {
-        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        content = ContentUtils.truncateContentSafe(content);
-
-        // 제목 생성
-        String topicInstruction = processUserPrompt(goal);
-        String generatedTitle = llmService.generateTitle(content, topicInstruction);
-
-        CategoryDocument document = CategoryDocument.builder()
-                .category(category)
-                .goal(goal)
-                .content(content)
-                .title(generatedTitle)
-                .build();
-        categoryDocumentService.saveDocument(document);
     }
 
     private void checkUnsolvedQuota(Goal goal, Long userId) {
