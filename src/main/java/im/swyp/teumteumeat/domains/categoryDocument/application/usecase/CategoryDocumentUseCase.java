@@ -19,14 +19,19 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,33 +43,91 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
 
+    // (User) 요약글 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
-        UserEntity user = userService.getUserById(userId);
+        Category category = goal.getCategory();
+        checkUnsolvedQuota(goal, userId);
 
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
-
-        // 1. 이미 사용자에게 할당되어 있으나, 아직 퀴즈를 풀지 않은 "최신/활성" 문서가 있는지 확인
-        if (user.getRole() != Role.ADMIN) {
-            CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
-            if (activeDocument != null) {
-                boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
-                if (!isConsumed) {
-                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+        String lockKey = "lock:category_document:generation:" + goal.getId();
+        // 반환값을 직접 받기
+        CategoryDocument targetDocument = distributedLockFacade.tryExecuteWithLock(
+                lockKey, 30, 60, TimeUnit.SECONDS,
+                () -> {
+                    String llmPrompt = createLLMPrompt(goal, category);
+                    return createDocumentInternal(goal, category, llmPrompt);
                 }
-            }
-        }
+        ).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
 
-        // 새 문서 생성 (무조건)
-        CategoryDocument targetDocument = createNewDailyDocument(goal);
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
+    // 비동기식 요약글 생성 (스트리밍)
+    public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
+        SseEmitter sseEmitter = new SseEmitter(180_000L);
+        try {
+            // 프론트에게 스트리밍 성공 이벤트 반환
+            sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
+
+            Goal goal = getValidGoal(userId, categoryId);
+            checkUnsolvedQuota(goal, userId);
+
+            StringBuilder generatedContent = new StringBuilder();
+
+            // 프롬프트 생성 로직
+            Category category = goal.getCategory();
+            String llmPrompt = createLLMPrompt(goal, category);
+            String topicInstruction = processUserPrompt(goal);
+
+            // 한 글자씩 sse event로 전송
+            llmService.generateContentStream(llmPrompt)
+                    .subscribe(
+                            parsedText -> {
+                                try {
+                                    sseEmitter.send(SseEmitter.event().name("message").data(parsedText));
+                                    generatedContent.append(parsedText);
+                                } catch (IOException e) {
+                                    sseEmitter.completeWithError(e);
+                                }
+                            },
+                            error -> {
+                                log.error("LLM Stream Error: ", error);
+                                sseEmitter.completeWithError(error);
+                            },
+                            () -> {
+                                // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
+                                CompletableFuture.supplyAsync(() -> {
+                                            return categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString());
+                                        })
+                                        .thenAccept(title -> {
+                                            try {
+                                                // 제목 전송 (프론트엔드는 이 이벤트를 받아 UI의 제목 영역을 업데이트)
+                                                sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                                // 모든 데이터 전송 완료 후 스트림 종료
+                                                sseEmitter.complete();
+                                            } catch (IOException e) {
+                                                sseEmitter.completeWithError(e);
+                                            }
+                                        })
+                                        .exceptionally(e -> {
+                                            log.error("문서 저장 중 에러 발생!", e);
+                                            sseEmitter.completeWithError(e);
+                                            return null; // 에러 핸들링
+                                        });
+                            }
+
+                    );
+        } catch (Exception e) {
+            sseEmitter.completeWithError(e);
+        }
+
+        return sseEmitter;
+    }
+
+    // (User) 요약글 조회
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
@@ -88,9 +151,14 @@ public class CategoryDocumentUseCase {
     @Transactional
     public void createDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
-        createDocumentInternal(goal);
+        Category category = goal.getCategory();
+
+        // 프롬프트 생성 로직
+        String llmPrompt = createLLMPrompt(goal, category);
+        createDocumentInternal(goal, category, llmPrompt);
     }
 
+    // 목표 검증
     private Goal getValidGoal(Long userId, Long categoryId) {
         Goal goal = userService.getUserWithCurrentGoal(userId).getCurrentGoal();
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
@@ -105,6 +173,7 @@ public class CategoryDocumentUseCase {
         return goal;
     }
 
+    // 공용 요약글 재사용
     private CategoryDocument getCurrentActiveDocument(Goal goal, Long userId) {
         // 1. 유저가 직접 생성한 최신 문서가 있는지 확인
         Optional<CategoryDocument> latestDocOpt = categoryDocumentService.getLatestDocumentByGoalId(goal.getId());
@@ -128,33 +197,15 @@ public class CategoryDocumentUseCase {
         return null;
     }
 
-    private CategoryDocument createNewDailyDocument(Goal goal) {
-        String lockKey = "lock:category_document:generation:" + goal.getId();
-
-        // 30초 대기: LLM 생성이 오래 걸리므로 대기 시간 확보
-        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
-            // 무조건 생성
-            return createDocumentInternal(goal);
-        }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
-    }
-
-    private CategoryDocument createDocumentInternal(Goal goal) {
-        Category category = goal.getCategory();
-        String prompt = goal.getPrompt();
-        String topicInstruction = (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
-
-        // LLM을 통해 콘텐츠 생성
-        String path = category.getPath();
-        String description = category.getDescription() != null ? category.getDescription()
-                : path + " " + category.getName();
-
-        String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
-                path, description, topicInstruction);
+    // 요약글 생성 내부 로직
+    private CategoryDocument createDocumentInternal(Goal goal, Category category, String llmPrompt) {
+        // CategoryDocument 생성
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
         // 제목 생성
+        String topicInstruction = processUserPrompt(goal);
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
 
         CategoryDocument document = CategoryDocument.builder()
@@ -168,6 +219,47 @@ public class CategoryDocumentUseCase {
         return document;
     }
 
+    // LLM Prompt 생성
+    private String createLLMPrompt(Goal goal, Category category) {
+        String topicInstruction = processUserPrompt(goal);
+
+        String path = category.getPath();
+        String description = category.getDescription() != null ? category.getDescription()
+                : path + " " + category.getName();
+
+        String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
+                path, description, topicInstruction);
+
+        return llmPrompt;
+    }
+
+    private void checkUnsolvedQuota(Goal goal, Long userId) {
+        UserEntity user = userService.getUserById(userId);
+
+        // 관리자는 쿼터 무제한
+        if (user.getRole() == Role.ADMIN) {
+            return;
+        }
+        // 오늘의 퀴즈 해결 가능 여부 확인
+        if (!user.canSolveDailyQuiz()) {
+            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+        // 안 푼 퀴즈가 존재하는지 검증
+        CategoryDocument activeDocument = getCurrentActiveDocument(goal, userId);
+        if (activeDocument != null) {
+            boolean isConsumed = userQuizService.getConsumedDocumentIds(userId).contains(activeDocument.getId());
+            if (!isConsumed) {
+                throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
+            }
+        }
+    }
+
+    private String processUserPrompt(Goal goal) {
+        String prompt = goal.getPrompt();
+        return (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
+    }
+
+    // 요약글 삭제
     @Transactional
     public void deleteDocument(Long documentId) {
         categoryDocumentService.deleteDocument(documentId);

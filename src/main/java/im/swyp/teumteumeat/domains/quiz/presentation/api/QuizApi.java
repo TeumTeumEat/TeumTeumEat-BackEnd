@@ -37,14 +37,14 @@ public interface QuizApi {
                         @PathVariable Long quizId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 생성합니다. (유저 Goal의 Prompt/Difficulty 반영)")
+        @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 동기로 생성합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzes(
                         @PathVariable Long categoryId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
-        @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 생성(재생성)할 수 있습니다.")
+        @Operation(summary = "PDF 문서에 대한 퀴즈 생성", description = "문서 소유자가 퀴즈를 동기로 생성(재생성)할 수 있습니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
         ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
                         @PathVariable Long goalId,

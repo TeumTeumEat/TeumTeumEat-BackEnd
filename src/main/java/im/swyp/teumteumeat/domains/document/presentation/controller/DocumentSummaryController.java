@@ -7,9 +7,11 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +28,20 @@ public class DocumentSummaryController implements DocumentSummaryApi {
             @AuthenticationPrincipal CustomUserDetails user) {
         DocumentDetailResponse response = documentSummaryUseCase.createSummary(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @PostMapping(value = "/{goalId}/documents/{documentId}/summary/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> createSummaryStream(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        SseEmitter sseEmitter = documentSummaryUseCase.createSummaryStream(user.getUserId(), goalId, documentId);
+
+        // Nginx 등 프록시 서버가 스트리밍 데이터를 모아두지 않고 즉시 통과시키도록 헤더 추가
+        return ResponseEntity.ok()
+                .header("X-Accel-Buffering", "no")
+                .body(sseEmitter);
     }
 
     @Override

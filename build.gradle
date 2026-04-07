@@ -78,6 +78,9 @@ dependencies {
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
+	// SSE streaming
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 // Spring AI BOM

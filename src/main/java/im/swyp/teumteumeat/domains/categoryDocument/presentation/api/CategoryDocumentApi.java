@@ -11,13 +11,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Tag(name = "CategoryDocument", description = "카테고리 자료(요약글) API")
 public interface CategoryDocumentApi {
 
-        @Operation(summary = "일일 카테고리 요약글 생성 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (광고 시청 등을 통해 얻은 퀴즈 풀이 가능 횟수 1회 차감)")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 및 조회 성공"))
+        @Operation(summary = "일일 카테고리 요약글 생성 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (요청 접수 후 동기로 생성됩니다.)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CategoryDocumentResponse.class, description = "생성 성공"))
         ResponseEntity<ApiResponse<CategoryDocumentResponse>> generateDocument(
+                        @PathVariable Long categoryId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+
+        @Operation(summary = "일일 카테고리 요약글 생성 스트리밍 (학습 시작)", description = "오늘 학습할 새로운 카테고리 요약글과 퀴즈를 생성합니다. (요청 접수 후 비동기로 생성되며 SSE로 결과가 전달됩니다.)")
+        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 요청 접수 성공 (결과는 SSE로 알림)"))
+        ResponseEntity<SseEmitter> generateDocumentStream(
                         @PathVariable Long categoryId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 

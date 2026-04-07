@@ -26,17 +26,25 @@ import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryD
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -53,6 +61,8 @@ public class UserQuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -99,6 +109,10 @@ public class UserQuizUseCase {
             quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
         } else {
             quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
+            // getPrioritizedQuizzes에서 빈 리스트가 돌아왔을 경우
+            if (quizzesUnsolved.isEmpty()) {
+                return Collections.emptyList();
+            }
         }
 
         // 퀴즈 수가 여전히 부족하면(아예 없거나) -> 생성 로직
