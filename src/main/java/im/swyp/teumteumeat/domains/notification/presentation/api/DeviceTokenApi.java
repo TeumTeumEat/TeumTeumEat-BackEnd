@@ -39,7 +39,6 @@ public interface DeviceTokenApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> unregisterDeviceToken(
-            @RequestBody @Valid DeviceTokenRequest deviceTokenRequest,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid DeviceTokenRequest deviceTokenRequest
     );
 }
