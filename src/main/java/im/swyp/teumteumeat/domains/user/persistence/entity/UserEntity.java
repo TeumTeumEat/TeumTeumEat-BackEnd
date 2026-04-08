@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.user.domain.constant.UserStatus;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import im.swyp.teumteumeat.global.exception.BaseException;
@@ -52,6 +53,9 @@ public class UserEntity extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "commute_info_id")
@@ -141,7 +145,7 @@ public class UserEntity extends BaseEntity {
         this.quizGuideSeen = false;
     }
 
-    public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId) {
+    public static UserEntity socialSignup(String name, String email, SocialProvider socialProvider, String socialId, UserStatus status) {
         return UserEntity.builder()
                 .name(name)
                 .email(email)
@@ -149,7 +153,12 @@ public class UserEntity extends BaseEntity {
                 .socialId(socialId)
                 .role(Role.USER)
                 .pushEnabled(true)
+                .status(status)
                 .build();
+    }
+
+    public void completeSignup() {
+        this.status = UserStatus.ACTIVE;
     }
 
     public void updateName(String name) {

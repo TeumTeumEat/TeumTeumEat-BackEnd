@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.global.security.usecase;
 
+import im.swyp.teumteumeat.domains.user.domain.constant.UserStatus;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
@@ -51,11 +52,21 @@ public class OAuth2UseCase {
 
         UserEntity user = userService.findBySocialProviderAndSocialId(provider, socialId)
                 .orElseGet(() -> {
-                    if (request.termsAgreed()) {
-                        return userService.getOrSaveUser(name, provider, socialId, email);
+                    UserStatus status = request.termsAgreed() ? UserStatus.ACTIVE : UserStatus.PENDING;
+                    UserEntity savedUser = userService.getOrSaveUser(name, provider, socialId, email, status);
+                    if (status == UserStatus.PENDING) {
+                        throw new BaseException(AuthResponseCode.NEED_REGISTER);
                     }
-                    throw new BaseException(AuthResponseCode.NEED_REGISTER);
+                    return savedUser;
                 });
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            if (request.termsAgreed()) {
+                userService.completeSignup(user.getId());
+            } else {
+                throw new BaseException(AuthResponseCode.NEED_REGISTER);
+            }
+        }
 
         if (StringUtils.hasText(request.authCode())) {
             String refreshToken = null;

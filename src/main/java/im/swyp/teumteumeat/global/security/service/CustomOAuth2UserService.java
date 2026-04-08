@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.global.security.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import im.swyp.teumteumeat.domains.user.domain.constant.UserStatus;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.user.persistence.repository.UserRepository;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -77,7 +78,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 oAuth2Attributes.getName(),
                                 oAuth2Attributes.getEmail(),
                                 oAuth2Attributes.getProvider(),
-                                oAuth2Attributes.getProviderId())));
+                                oAuth2Attributes.getProviderId(),
+                                // 웹 진입점 이용약관 동의 없이 즉시 회원가입
+                                UserStatus.ACTIVE)));
     }
 
     public Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
