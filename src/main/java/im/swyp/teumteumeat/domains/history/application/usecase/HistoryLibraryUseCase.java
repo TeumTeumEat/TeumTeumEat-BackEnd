@@ -81,10 +81,11 @@ public class HistoryLibraryUseCase {
                         : doc.getFileName();
                 String summary = (quiz.getDocumentSummary() != null) ? quiz.getDocumentSummary().getSummary() : null;
 
-                key = "DOC_" + doc.getId();
+                Long targetId = quiz.getDocumentSummary().getId();
+                key = "DOC_" + targetId;
                 if (!processedKeys.contains(key)) {
                     item = DailyHistoryResponse.builder()
-                            .id(doc.getId())
+                            .id(targetId)
                             .type(GoalType.DOCUMENT)
                             .title(title) // PDF 파일명 또는 요약 제목
                             .summarySnippet(getSnippet(summary))
@@ -145,7 +146,8 @@ public class HistoryLibraryUseCase {
             if (quiz.getDocument() != null) {
                 Document doc = quiz.getDocument();
                 categoryName = doc.getFileName(); // PDF는 카테고리 미정, 파일명으로 대체
-                uniqueKey = "DOC_" + doc.getId();
+                Long targetId = quiz.getDocumentSummary().getId();
+                uniqueKey = "DOC_" + targetId;
 
                 String title = (quiz.getDocumentSummary() != null && quiz.getDocumentSummary().getTitle() != null)
                         ? quiz.getDocumentSummary().getTitle()
@@ -154,7 +156,7 @@ public class HistoryLibraryUseCase {
 
                 if (!processedKeys.contains(uniqueKey)) {
                     item = DailyHistoryResponse.builder()
-                            .id(doc.getId())
+                            .id(targetId)
                             .type(GoalType.DOCUMENT)
                             .title(title)
                             .summarySnippet(getSnippet(summary))
@@ -206,8 +208,9 @@ public class HistoryLibraryUseCase {
         // 필터링 및 첫 번째 항목 찾기
         UserQuiz targetQuiz = quizzes.stream()
                 .filter(uq -> {
-                    if (type == GoalType.DOCUMENT)
-                        return uq.getQuiz().getDocument() != null && uq.getQuiz().getDocument().getId().equals(id);
+                    if (type == GoalType.DOCUMENT) {
+                        return uq.getQuiz().getDocumentSummary() != null && uq.getQuiz().getDocumentSummary().getId().equals(id);
+                    }
                     if (type == GoalType.CATEGORY)
                         return uq.getQuiz().getCategoryDocument() != null
                                 && uq.getQuiz().getCategoryDocument().getId().equals(id);
@@ -248,8 +251,9 @@ public class HistoryLibraryUseCase {
         List<HistoryQuizListResponse.HistoryQuizDto> quizDtos = quizzes
                 .stream()
                 .filter(uq -> {
-                    if (type == GoalType.DOCUMENT)
-                        return uq.getQuiz().getDocument() != null && uq.getQuiz().getDocument().getId().equals(id);
+                    if (type == GoalType.DOCUMENT) {
+                        return uq.getQuiz().getDocumentSummary() != null && uq.getQuiz().getDocumentSummary().getId().equals(id);
+                    }
                     if (type == GoalType.CATEGORY)
                         return uq.getQuiz().getCategoryDocument() != null
                                 && uq.getQuiz().getCategoryDocument().getId().equals(id);
