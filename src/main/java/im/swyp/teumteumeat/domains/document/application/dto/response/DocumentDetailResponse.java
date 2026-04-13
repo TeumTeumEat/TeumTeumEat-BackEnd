@@ -11,6 +11,8 @@ public record DocumentDetailResponse(
 
         @Schema(description = "문서 ID", example = "1") Long documentId,
 
+        @Schema(description = "요약글 ID (히스토리 조회용)", example = "1") Long documentSummaryId,
+
         @Schema(description = "파일명", example = "1강.pdf") String fileName,
 
         @Schema(description = "파일 Key", example = "1/sfwsw_1강.pdf") String fileKey,

@@ -64,8 +64,10 @@ public class DocumentMapper {
         String summaryContent = (documentSummary != null) ? documentSummary.getSummary() : null;
         String title = (documentSummary != null && documentSummary.getTitle() != null) ? documentSummary.getTitle()
                 : document.getTitle();
+        Long summaryId = (documentSummary != null) ? documentSummary.getId() : null;
         return DocumentDetailResponse.builder()
                 .documentId(document.getId())
+                .documentSummaryId(summaryId)
                 .fileName(document.getFileName())
                 .fileKey(document.getFileKey())
                 .title(title)
