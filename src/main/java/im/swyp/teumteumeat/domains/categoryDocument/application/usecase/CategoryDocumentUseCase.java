@@ -130,7 +130,7 @@ public class CategoryDocumentUseCase {
     // (User) 요약글 조회
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse getDailyDocument(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
+        Goal goal = getGoalForRead(userId, categoryId);
         UserEntity user = userService.getUserById(userId);
 
         boolean outOfQuota = !user.canSolveDailyQuiz();
@@ -158,7 +158,16 @@ public class CategoryDocumentUseCase {
         createDocumentInternal(goal, category, llmPrompt);
     }
 
-    // 목표 검증
+    // 단순 조회용 (완료 및 만료 검사 없음)
+    private Goal getGoalForRead(Long userId, Long categoryId) {
+        Goal goal = userService.getUserWithCurrentGoal(userId).getCurrentGoal();
+        if (goal == null || !goal.getCategory().getId().equals(categoryId)) {
+            throw new BaseException(CommonResponseCode.NOT_FOUND);
+        }
+        return goal;
+    }
+
+    // 목표 검증 (생성 및 제출용)
     private Goal getValidGoal(Long userId, Long categoryId) {
         Goal goal = userService.getUserWithCurrentGoal(userId).getCurrentGoal();
         if (goal == null || !goal.getCategory().getId().equals(categoryId)) {

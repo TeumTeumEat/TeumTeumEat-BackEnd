@@ -54,12 +54,7 @@ public class DocumentSummaryUseCase {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
 
-        if (goal.isCompleted()) {
-            throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-        }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
-        }
+        // 조회 시에는 완료되거나 만료된 목표여도 기존 데이터 조회를 허용합니다.
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
         Document document = documentService.getDocumentById(documentId);
