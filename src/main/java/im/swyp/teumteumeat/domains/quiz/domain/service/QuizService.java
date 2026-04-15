@@ -45,8 +45,8 @@ public class QuizService {
                                 org.springframework.data.domain.PageRequest.of(0, limit));
         }
 
-        public List<Quiz> getUnsolvedDocumentQuizzes(Long documentId, Long userId, int limit) {
-                return quizRepository.findUnsolvedDocumentQuizzes(documentId, userId,
+        public List<Quiz> getUnsolvedDocumentQuizzes(Long documentSummaryId, Long userId, int limit) {
+                return quizRepository.findUnsolvedByDocumentSummaryId(documentSummaryId, userId,
                                 org.springframework.data.domain.PageRequest.of(0, limit));
         }
 

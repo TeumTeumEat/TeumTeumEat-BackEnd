@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.userQuiz.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
@@ -106,7 +107,12 @@ public class UserQuizUseCase {
         // 사용자가 푼 적 없는 퀴즈만 제공
         List<Quiz> quizzesUnsolved;
         if (GoalType.DOCUMENT == documentType) {
-            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(documentId, userId, quizCount);
+            DocumentSummary latestSummary = documentSummaryService.getLatestSummaryByDocumentId(documentId)
+                    .orElse(null);
+            if (latestSummary == null) {
+                return Collections.emptyList();
+            }
+            quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(latestSummary.getId(), userId, quizCount);
         } else {
             quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
             // getPrioritizedQuizzes에서 빈 리스트가 돌아왔을 경우
