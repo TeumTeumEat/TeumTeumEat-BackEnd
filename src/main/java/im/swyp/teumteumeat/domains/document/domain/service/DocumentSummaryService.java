@@ -39,6 +39,10 @@ public class DocumentSummaryService {
         return documentSummaryRepository.findByDocumentIdAndCreatedDateBetween(documentId, start, end);
     }
 
+    public Optional<DocumentSummary> getLatestSummaryByDocumentId(Long documentId) {
+        return documentSummaryRepository.findLatestByDocumentId(documentId);
+    }
+
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public DocumentSummary generateTitleAndSaveSummary(Long documentId, String summaryContent) {
         String lockKey = "lock:document_summary:generation:" + documentId;
