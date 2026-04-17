@@ -31,14 +31,6 @@ public class DocumentSummaryService {
     private final DocumentRepository documentRepository;
     private final DistributedLockFacade distributedLockFacade;
 
-    public Optional<DocumentSummary> getExistingSummaryToday(Long documentId, boolean isAdmin) {
-        if (isAdmin) return Optional.empty();
-
-        LocalDateTime start = LocalDate.now().atStartOfDay();
-        LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
-        return documentSummaryRepository.findByDocumentIdAndCreatedDateBetween(documentId, start, end);
-    }
-
     public Optional<DocumentSummary> getLatestSummaryByDocumentId(Long documentId) {
         return documentSummaryRepository.findLatestByDocumentId(documentId);
     }
@@ -52,19 +44,13 @@ public class DocumentSummaryService {
             Document fetchedDocument = documentRepository.findWithGoalById(documentId)
                     .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
-            // 락 내부에서 이중 체크 (Double-Check)
-            LocalDateTime start = LocalDate.now().atStartOfDay();
-            LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+            // 최근 30초 내에 동일한 문서에 대해 요약본이 생성되었는지 검사 (더블클릭/중복 생성 방지)
+            LocalDateTime thirtySecondsAgo = LocalDateTime.now().minusSeconds(30);
+            Optional<DocumentSummary> recentSummary = documentSummaryRepository
+                    .findFirstByDocumentIdAndCreatedDateAfterOrderByIdDesc(documentId, thirtySecondsAgo);
 
-            boolean isAdmin = fetchedDocument.getUser()
-                    .getRole() == Role.ADMIN;
-
-            if (!isAdmin) {
-                Optional<DocumentSummary> existingSummary = documentSummaryRepository
-                        .findByDocumentIdAndCreatedDateBetween(documentId, start, end);
-                if (existingSummary.isPresent()) {
-                    return existingSummary.get(); // 이미 생성되었다면 기존 반환
-                }
+            if (recentSummary.isPresent()) {
+                throw new BaseException(CommonResponseCode.BAD_REQUEST);
             }
 
             // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
@@ -87,13 +73,7 @@ public class DocumentSummaryService {
                     .title(generatedTitle)
                     .build();
             return documentSummaryRepository.save(documentSummary);
-        }).orElseGet(() -> {
-            // 락 획득 실패 (Timeout 30s) -> 다른 스레드가 생성했는지 확인
-            LocalDateTime start = LocalDate.now().atStartOfDay();
-            LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
-            return documentSummaryRepository.findByDocumentIdAndCreatedDateBetween(documentId, start, end)
-                    .orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
-        });
+        }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
     }
 
     public boolean hasSummaryCreatedToday(Long userId) {
