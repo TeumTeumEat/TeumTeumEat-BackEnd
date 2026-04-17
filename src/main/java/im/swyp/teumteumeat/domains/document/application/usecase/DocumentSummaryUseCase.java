@@ -86,16 +86,11 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        Optional<DocumentSummary> existingOpt = checkQuotaAndGetReusableSummary(userId, documentId);
+        checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
-        DocumentSummary summary;
-        if (existingOpt.isPresent()) {
-            summary = existingOpt.get();
-        } else {
-            String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
-            String summaryContent = llmService.generateContent(prompt);
-            summary = documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
-        }
+        String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+        String summaryContent = llmService.generateContent(prompt);
+        DocumentSummary summary = documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
 
         quizUseCase.createQuizzesForPdfDocument(document, summary);
 
@@ -117,15 +112,7 @@ public class DocumentSummaryUseCase {
         StringBuilder generatedContent = new StringBuilder();
 
         try {
-            Optional<DocumentSummary> existingOpt = checkQuotaAndGetReusableSummary(userId, documentId);
-
-            if (existingOpt.isPresent()) {
-                DocumentSummary existing = existingOpt.get();
-                sseEmitter.send(SseEmitter.event().name("message").data(existing.getSummary()));
-                sseEmitter.send(SseEmitter.event().name("title").data(existing.getTitle()));
-                sseEmitter.complete();
-                return sseEmitter;
-            }
+            checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
             String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
 
@@ -191,7 +178,7 @@ public class DocumentSummaryUseCase {
         }
     }
 
-    private Optional<DocumentSummary> checkQuotaAndGetReusableSummary(Long userId, Long documentId) {
+    private void checkQuotaAndUnsolvedQuizzes(Long userId, Long documentId) {
         UserEntity user = userService.getUserById(userId);
         boolean isAdmin = user.getRole() == Role.ADMIN;
 
@@ -213,7 +200,5 @@ public class DocumentSummaryUseCase {
                 }
             }
         }
-
-        return documentSummaryService.getExistingSummaryToday(documentId, isAdmin);
     }
 }
