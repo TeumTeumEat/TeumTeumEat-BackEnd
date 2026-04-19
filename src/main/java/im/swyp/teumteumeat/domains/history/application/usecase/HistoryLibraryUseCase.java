@@ -89,6 +89,7 @@ public class HistoryLibraryUseCase {
                             .type(GoalType.DOCUMENT)
                             .title(title) // PDF 파일명 또는 요약 제목
                             .summarySnippet(getSnippet(summary))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -102,6 +103,7 @@ public class HistoryLibraryUseCase {
                             .title(doc.getTitle() != null ? doc.getTitle() : doc.getCategory().getName()) // 카테고리명 또는 요약
                                                                                                           // 제목
                             .summarySnippet(getSnippet(doc.getContent()))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -160,6 +162,7 @@ public class HistoryLibraryUseCase {
                             .type(GoalType.DOCUMENT)
                             .title(title)
                             .summarySnippet(getSnippet(summary))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -178,6 +181,7 @@ public class HistoryLibraryUseCase {
                             .type(GoalType.CATEGORY)
                             .title(doc.getTitle() != null ? doc.getTitle() : categoryName)
                             .summarySnippet(getSnippet(doc.getContent()))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }

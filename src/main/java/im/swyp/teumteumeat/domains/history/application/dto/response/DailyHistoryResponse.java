@@ -11,5 +11,6 @@ public record DailyHistoryResponse(
                 GoalType type, // DOCUMENT, CATEGORY
                 String title, // Category명 또는 Document 파일명
                 String summarySnippet, // 1~2 문장
+                Boolean isCompleted, // 목표 달성 여부
                 LocalDateTime lastStudiedAt) {
 }
