@@ -87,8 +87,10 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(targetId)
                             .type(GoalType.DOCUMENT)
+                            .goalId(doc.getGoal().getId())
                             .title(title) // PDF 파일명 또는 요약 제목
                             .summarySnippet(getSnippet(summary))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -99,9 +101,11 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
+                            .goalId(doc.getGoal().getId())
                             .title(doc.getTitle() != null ? doc.getTitle() : doc.getCategory().getName()) // 카테고리명 또는 요약
                                                                                                           // 제목
                             .summarySnippet(getSnippet(doc.getContent()))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -158,8 +162,10 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(targetId)
                             .type(GoalType.DOCUMENT)
+                            .goalId(doc.getGoal().getId())
                             .title(title)
                             .summarySnippet(getSnippet(summary))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -176,8 +182,10 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
+                            .goalId(doc.getGoal().getId())
                             .title(doc.getTitle() != null ? doc.getTitle() : categoryName)
                             .summarySnippet(getSnippet(doc.getContent()))
+                            .isCompleted(doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }

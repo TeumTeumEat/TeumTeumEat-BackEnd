@@ -31,7 +31,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
@@ -114,7 +113,8 @@ public class DocumentSummaryUseCase {
         try {
             checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
-            String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+            String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
+                    document.getRawContent());
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
@@ -134,33 +134,34 @@ public class DocumentSummaryUseCase {
                             () -> {
                                 // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
                                 CompletableFuture.supplyAsync(() -> {
-                                    return documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent.toString());
+                                    return documentSummaryService.generateTitleAndSaveSummary(documentId,
+                                            generatedContent.toString());
                                 })
-                                .thenAccept(savedSummary -> {
-                                    try {
-                                        sseEmitter.send(SseEmitter.event().name("title").data(savedSummary.getTitle()));
-                                        sseEmitter.complete();
-                                    } catch (IOException e) {
-                                        sseEmitter.completeWithError(e);
-                                    }
-                                    // 퀴즈 생성은 SSE 종료 여부와 상관 없이 비동기
-                                    CompletableFuture.runAsync(() -> {
-                                        try {
-                                            log.info("백그라운드에서 퀴즈 생성 시작 (문서 ID: {})", documentId);
-                                            quizUseCase.createQuizzesForPdfDocument(document, savedSummary);
-                                            log.info("백그라운드 퀴즈 생성 완료 (문서 ID: {})", documentId);
-                                        } catch (Exception e) {
-                                            log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
-                                        }
-                                    });
-                                })
-                                .exceptionally(e -> {
-                                    log.error("문서 저장 중 에러 발생!", e);
-                                    sseEmitter.completeWithError(e);
-                                    return null; // 에러 핸들링
-                                });
-                            }
-                    );
+                                        .thenAccept(savedSummary -> {
+                                            try {
+                                                sseEmitter.send(
+                                                        SseEmitter.event().name("title").data(savedSummary.getTitle()));
+                                                sseEmitter.complete();
+                                            } catch (IOException e) {
+                                                sseEmitter.completeWithError(e);
+                                            }
+                                            // 퀴즈 생성은 SSE 종료 여부와 상관 없이 비동기
+                                            CompletableFuture.runAsync(() -> {
+                                                try {
+                                                    log.info("백그라운드에서 퀴즈 생성 시작 (문서 ID: {})", documentId);
+                                                    quizUseCase.createQuizzesForPdfDocument(document, savedSummary);
+                                                    log.info("백그라운드 퀴즈 생성 완료 (문서 ID: {})", documentId);
+                                                } catch (Exception e) {
+                                                    log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
+                                                }
+                                            });
+                                        })
+                                        .exceptionally(e -> {
+                                            log.error("문서 저장 중 에러 발생!", e);
+                                            sseEmitter.completeWithError(e);
+                                            return null; // 에러 핸들링
+                                        });
+                            });
         } catch (Exception e) {
             sseEmitter.completeWithError(e);
         }
