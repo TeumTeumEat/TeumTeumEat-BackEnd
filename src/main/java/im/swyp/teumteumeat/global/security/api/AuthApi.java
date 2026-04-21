@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -12,7 +13,6 @@ import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -48,6 +48,6 @@ public interface AuthApi {
     )
     ResponseEntity<ApiResponse<Void>> logOut(
             @RequestParam(required = false) String refreshToken,
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     );
 }

@@ -5,11 +5,11 @@ import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.presentation.api.QuizApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -60,7 +60,7 @@ public class QuizController implements QuizApi {
     public ResponseEntity<ApiResponse<Void>> createQuizzes(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         quizUseCase.createQuizzesForDocument(documentId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -72,7 +72,7 @@ public class QuizController implements QuizApi {
     public ResponseEntity<ApiResponse<Void>> createQuizzesForPdf(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
 
         quizUseCase.createQuizzesForPdfDocumentById(documentId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));

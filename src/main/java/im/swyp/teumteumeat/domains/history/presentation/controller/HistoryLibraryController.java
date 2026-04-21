@@ -6,11 +6,11 @@ import im.swyp.teumteumeat.domains.history.application.usecase.HistoryLibraryUse
 import im.swyp.teumteumeat.domains.history.presentation.api.HistoryLibraryApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -29,7 +29,7 @@ public class HistoryLibraryController implements HistoryLibraryApi {
     public ResponseEntity<ApiResponse<CalendarResponse>> getCalendar(
             Integer year,
             Integer month,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         CalendarResponse response = historyLibraryUseCase.getCalendar(user.getUserId(), year, month);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -39,7 +39,7 @@ public class HistoryLibraryController implements HistoryLibraryApi {
     @GetMapping("/date/{date}")
     public ResponseEntity<ApiResponse<List<DailyHistoryResponse>>> getDailyHistory(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         List<DailyHistoryResponse> response = historyLibraryUseCase.getDailyHistory(user.getUserId(), date);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -48,7 +48,7 @@ public class HistoryLibraryController implements HistoryLibraryApi {
     @Override
     @GetMapping("/topics")
     public ResponseEntity<ApiResponse<List<TopicHistoryResponse>>> getTopicHistory(
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         List<TopicHistoryResponse> response = historyLibraryUseCase.getTopicHistory(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -60,7 +60,7 @@ public class HistoryLibraryController implements HistoryLibraryApi {
             @PathVariable GoalType type,
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         HistorySummaryResponse response = historyLibraryUseCase.getHistorySummary(user.getUserId(), type, id, date);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -72,7 +72,7 @@ public class HistoryLibraryController implements HistoryLibraryApi {
             @PathVariable GoalType type,
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         HistoryQuizListResponse response = historyLibraryUseCase.getHistoryQuizzes(user.getUserId(), type, id, date);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
