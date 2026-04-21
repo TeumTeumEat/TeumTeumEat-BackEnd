@@ -7,13 +7,11 @@ import im.swyp.teumteumeat.domains.category.application.usecase.CategoryUseCase;
 import im.swyp.teumteumeat.domains.category.presentation.api.CategoryApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
-import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
