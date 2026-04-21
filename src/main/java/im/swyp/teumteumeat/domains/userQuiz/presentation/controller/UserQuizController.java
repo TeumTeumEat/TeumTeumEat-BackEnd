@@ -58,8 +58,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse<QuizSetResponse>> getQuiz(
-            @PathVariable Long quizId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long quizId) {
         QuizSetResponse response = userQuizUseCase.getQuizForSolving(quizId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }

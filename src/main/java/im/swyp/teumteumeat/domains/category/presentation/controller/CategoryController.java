@@ -26,7 +26,6 @@ public class CategoryController implements CategoryApi {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<CategoryListResponse>> getCategories(
-            @AuthenticationPrincipal CustomUserDetails user
     ) {
         CategoryListResponse categories = categoryUseCase.getCategories();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, categories));
@@ -36,8 +35,7 @@ public class CategoryController implements CategoryApi {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createCategory(
-            @RequestBody @Valid CategoryCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryCreateRequest request
     ) {
         categoryUseCase.createCategory(request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
@@ -48,8 +46,7 @@ public class CategoryController implements CategoryApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
             @NotNull Long categoryId,
-            @RequestBody @Valid CategoryUpdateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryUpdateRequest request
     ) {
         categoryUseCase.updateCategory(categoryId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
@@ -59,8 +56,7 @@ public class CategoryController implements CategoryApi {
     @DeleteMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(
-            @NotNull Long categoryId,
-            @AuthenticationPrincipal CustomUserDetails user
+            @NotNull Long categoryId
     ) {
         categoryUseCase.deleteCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));

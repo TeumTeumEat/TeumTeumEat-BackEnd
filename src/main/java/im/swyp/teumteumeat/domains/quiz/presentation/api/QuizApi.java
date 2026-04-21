@@ -19,23 +19,20 @@ public interface QuizApi {
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizListResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<QuizListResponse>> getQuizzes(
                         @PathVariable Long categoryId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long documentId);
 
         @Operation(summary = "PDF 문서에 대한 퀴즈 목록 조회")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizListResponse.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<QuizListResponse>> getQuizzesOfDocument(
                         @PathVariable Long goalId,
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long documentId);
 
         @Operation(summary = "퀴즈 단일 조회")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizListResponse.QuizDto.class, description = "조회 성공"))
         ResponseEntity<ApiResponse<QuizListResponse.QuizDto>> getQuiz(
                         @PathVariable Long categoryId,
                         @PathVariable Long documentId,
-                        @PathVariable Long quizId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long quizId);
 
         @Operation(summary = "해당 카테고리 자료에 대한 퀴즈 생성", description = "사용자가 해당 카테고리 자료에 대한 퀴즈를 동기로 생성합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "생성 성공"))
@@ -56,7 +53,6 @@ public interface QuizApi {
         ResponseEntity<ApiResponse<Void>> deleteQuiz(
                         @PathVariable Long categoryId,
                         @PathVariable Long documentId,
-                        @PathVariable Long quizId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long quizId);
 
 }

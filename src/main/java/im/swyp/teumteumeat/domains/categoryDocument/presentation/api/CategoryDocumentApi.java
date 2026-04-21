@@ -43,6 +43,5 @@ public interface CategoryDocumentApi {
         @Operation(summary = "전체 카테고리 자료(요약글) 삭제", description = "관리자(ADMIN)만 삭제할 수 있습니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "삭제 성공"))
         ResponseEntity<ApiResponse<Void>> deleteDocument(
-                        @PathVariable Long documentId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long documentId);
 }

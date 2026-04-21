@@ -66,8 +66,7 @@ public class CategoryDocumentController implements CategoryDocumentApi {
     @DeleteMapping("/documents/{documentId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteDocument(
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long documentId) {
         categoryDocumentUseCase.deleteDocument(documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }

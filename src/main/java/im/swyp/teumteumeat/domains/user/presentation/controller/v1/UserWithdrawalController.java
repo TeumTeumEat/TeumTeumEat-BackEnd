@@ -24,8 +24,8 @@ public class UserWithdrawalController implements UserWithdrawalApi {
     @Override
     @DeleteMapping("/withdrawal")
     public ResponseEntity<ApiResponse<Void>> withdraw(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        userWithdrawalUseCase.withdraw(userDetails.getUserId());
+            @AuthenticationPrincipal CustomUserDetails user) {
+        userWithdrawalUseCase.withdraw(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

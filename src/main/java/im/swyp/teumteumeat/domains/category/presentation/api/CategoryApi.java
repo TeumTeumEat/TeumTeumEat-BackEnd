@@ -29,7 +29,6 @@ public interface CategoryApi {
             )
     )
     ResponseEntity<ApiResponse<CategoryListResponse>> getCategories(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
     );
 
     @Operation(
@@ -42,8 +41,7 @@ public interface CategoryApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> createCategory(
-            @RequestBody @Valid CategoryCreateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryCreateRequest request
     );
 
     @Operation(
@@ -57,8 +55,7 @@ public interface CategoryApi {
     )
     ResponseEntity<ApiResponse<Void>> updateCategory(
             @NotNull Long categoryId,
-            @RequestBody @Valid CategoryUpdateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryUpdateRequest request
     );
 
     @Operation(
@@ -71,7 +68,6 @@ public interface CategoryApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> deleteCategory(
-            @NotNull Long categoryId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @NotNull Long categoryId
     );
 }

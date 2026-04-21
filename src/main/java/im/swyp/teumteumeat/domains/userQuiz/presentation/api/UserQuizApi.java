@@ -42,8 +42,7 @@ public interface UserQuizApi {
         @Operation(summary = "퀴즈 1개 조회 (정답 미포함)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "조회 성공"))
         ResponseEntity<ApiResponse<QuizSetResponse>> getQuiz(
-                        @PathVariable Long quizId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
+                        @PathVariable Long quizId);
 
         @Operation(summary = "퀴즈 안내 가이드 확인 처리", description = "사용자가 퀴즈 안내 가이드를 확인했음(다시 보지 않기 등)을 저장하고 현재 상태를 반환합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = QuizGuideResponse.class, description = "처리 성공"))

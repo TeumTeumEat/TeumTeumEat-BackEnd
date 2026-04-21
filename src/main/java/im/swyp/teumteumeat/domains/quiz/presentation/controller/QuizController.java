@@ -25,8 +25,7 @@ public class QuizController implements QuizApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzes(
             @PathVariable Long categoryId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long documentId) {
         QuizListResponse response = quizUseCase.getQuizzesByCategoryDocumentId(documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -37,8 +36,7 @@ public class QuizController implements QuizApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<QuizListResponse>> getQuizzesOfDocument(
             @PathVariable Long goalId,
-            @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long documentId) {
         QuizListResponse response = quizUseCase.getQuizzesByDocumentId(documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -50,8 +48,7 @@ public class QuizController implements QuizApi {
     public ResponseEntity<ApiResponse<QuizListResponse.QuizDto>> getQuiz(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
-            @PathVariable Long quizId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long quizId) {
         QuizListResponse.QuizDto response = quizUseCase.getQuiz(quizId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -88,8 +85,7 @@ public class QuizController implements QuizApi {
     public ResponseEntity<ApiResponse<Void>> deleteQuiz(
             @PathVariable Long categoryId,
             @PathVariable Long documentId,
-            @PathVariable Long quizId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long quizId) {
         quizUseCase.deleteQuiz(quizId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
