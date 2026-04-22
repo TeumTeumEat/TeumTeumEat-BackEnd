@@ -1,6 +1,6 @@
-package im.swyp.teumteumeat.domains.history.application.mapper;
+package im.swyp.teumteumeat.domains.common.history.application.mapper;
 
-import im.swyp.teumteumeat.domains.history.application.dto.response.HistoryQuizListResponse;
+import im.swyp.teumteumeat.domains.common.history.application.dto.response.HistoryQuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;

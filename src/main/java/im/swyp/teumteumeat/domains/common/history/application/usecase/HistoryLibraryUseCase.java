@@ -1,17 +1,16 @@
-package im.swyp.teumteumeat.domains.history.application.usecase;
+package im.swyp.teumteumeat.domains.common.history.application.usecase;
 
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.common.history.application.dto.response.*;
+import im.swyp.teumteumeat.domains.common.history.application.mapper.HistoryMapper;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
-import im.swyp.teumteumeat.domains.history.application.dto.response.*;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
-
-import im.swyp.teumteumeat.domains.history.application.mapper.HistoryMapper;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.annotation.UseCase;
-import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,7 +1,7 @@
-package im.swyp.teumteumeat.domains.history.presentation.api;
+package im.swyp.teumteumeat.domains.common.history.presentation.api;
 
+import im.swyp.teumteumeat.domains.common.history.application.dto.response.*;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
-import im.swyp.teumteumeat.domains.history.application.dto.response.*;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;

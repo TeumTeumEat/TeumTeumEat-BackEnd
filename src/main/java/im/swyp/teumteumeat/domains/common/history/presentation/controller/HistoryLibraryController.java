@@ -1,9 +1,9 @@
-package im.swyp.teumteumeat.domains.history.presentation.controller;
+package im.swyp.teumteumeat.domains.common.history.presentation.controller;
 
+import im.swyp.teumteumeat.domains.common.history.application.dto.response.*;
+import im.swyp.teumteumeat.domains.common.history.application.usecase.HistoryLibraryUseCase;
+import im.swyp.teumteumeat.domains.common.history.presentation.api.HistoryLibraryApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
-import im.swyp.teumteumeat.domains.history.application.dto.response.*;
-import im.swyp.teumteumeat.domains.history.application.usecase.HistoryLibraryUseCase;
-import im.swyp.teumteumeat.domains.history.presentation.api.HistoryLibraryApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;

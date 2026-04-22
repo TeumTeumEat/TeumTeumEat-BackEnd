@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.history.application.dto.response;
+package im.swyp.teumteumeat.domains.common.history.application.dto.response;
 
 import lombok.Builder;
 
