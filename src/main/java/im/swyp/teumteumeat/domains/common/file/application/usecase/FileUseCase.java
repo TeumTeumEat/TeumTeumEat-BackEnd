@@ -1,12 +1,12 @@
-package im.swyp.teumteumeat.infra.file.application.usecase;
+package im.swyp.teumteumeat.domains.common.file.application.usecase;
 
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlRequest;
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.domains.common.file.application.mapper.FileMapper;
+import im.swyp.teumteumeat.domains.common.file.constant.FileResponseCode;
+import im.swyp.teumteumeat.domains.common.file.domain.service.FileStorageService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlRequest;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlResponse;
-import im.swyp.teumteumeat.infra.file.application.mapper.FileMapper;
-import im.swyp.teumteumeat.infra.file.constant.FileResponseCode;
-import im.swyp.teumteumeat.infra.file.domain.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 

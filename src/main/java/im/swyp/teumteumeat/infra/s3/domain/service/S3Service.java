@@ -1,6 +1,6 @@
 package im.swyp.teumteumeat.infra.s3.domain.service;
 
-import im.swyp.teumteumeat.infra.file.domain.service.FileStorageService;
+import im.swyp.teumteumeat.domains.common.file.domain.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

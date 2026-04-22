@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.infra.file.domain.service;
+package im.swyp.teumteumeat.domains.common.file.domain.service;
 
 import java.net.URL;
 

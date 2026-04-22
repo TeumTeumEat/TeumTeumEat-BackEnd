@@ -1,7 +1,6 @@
-package im.swyp.teumteumeat.infra.file.application.mapper;
+package im.swyp.teumteumeat.domains.common.file.application.mapper;
 
-
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlResponse;
 
 import java.net.URL;
 

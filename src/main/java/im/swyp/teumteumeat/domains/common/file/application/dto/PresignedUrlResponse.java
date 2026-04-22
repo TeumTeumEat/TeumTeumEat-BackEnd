@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.infra.file.application.dto;
+package im.swyp.teumteumeat.domains.common.file.application.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;

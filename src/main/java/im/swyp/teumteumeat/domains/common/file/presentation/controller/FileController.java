@@ -1,12 +1,12 @@
-package im.swyp.teumteumeat.infra.file.presentation.controller;
+package im.swyp.teumteumeat.domains.common.file.presentation.controller;
 
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlRequest;
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.domains.common.file.application.usecase.FileUseCase;
+import im.swyp.teumteumeat.domains.common.file.presentation.api.FileApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlRequest;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlResponse;
-import im.swyp.teumteumeat.infra.file.application.usecase.FileUseCase;
-import im.swyp.teumteumeat.infra.file.presentation.api.FileApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

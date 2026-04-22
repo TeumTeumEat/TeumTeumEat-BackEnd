@@ -1,11 +1,11 @@
-package im.swyp.teumteumeat.infra.file.presentation.api;
+package im.swyp.teumteumeat.domains.common.file.presentation.api;
 
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlRequest;
+import im.swyp.teumteumeat.domains.common.file.application.dto.PresignedUrlResponse;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlRequest;
-import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
