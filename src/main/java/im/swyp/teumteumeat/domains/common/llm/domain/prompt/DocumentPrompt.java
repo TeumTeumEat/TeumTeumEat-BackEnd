@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.llm.domain.prompt;
+package im.swyp.teumteumeat.domains.common.llm.domain.prompt;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

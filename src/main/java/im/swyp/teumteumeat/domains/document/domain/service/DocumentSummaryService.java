@@ -1,12 +1,11 @@
 package im.swyp.teumteumeat.domains.document.domain.service;
 
+import im.swyp.teumteumeat.domains.common.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
-import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepository;
+import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;

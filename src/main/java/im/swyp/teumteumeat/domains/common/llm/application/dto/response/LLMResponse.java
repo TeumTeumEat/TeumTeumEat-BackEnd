@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.domains.llm.application.dto.response;
+package im.swyp.teumteumeat.domains.common.llm.application.dto.response;
 
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import lombok.Builder;

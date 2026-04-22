@@ -1,16 +1,16 @@
-package im.swyp.teumteumeat.domains.llm.domain.service;
+package im.swyp.teumteumeat.domains.common.llm.domain.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
-import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
-import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.domains.common.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.common.llm.domain.constant.LLMResponseCode;
+import im.swyp.teumteumeat.domains.common.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
