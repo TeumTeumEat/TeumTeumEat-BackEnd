@@ -1,12 +1,12 @@
-package im.swyp.teumteumeat.infra.s3.application.usecase;
+package im.swyp.teumteumeat.infra.file.application.usecase;
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.infra.s3.application.mapper.S3Mapper;
-import im.swyp.teumteumeat.infra.s3.constant.FileResponseCode;
-import im.swyp.teumteumeat.infra.s3.domain.service.S3Service;
-import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlRequest;
-import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlRequest;
+import im.swyp.teumteumeat.infra.file.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.infra.file.application.mapper.FileMapper;
+import im.swyp.teumteumeat.infra.file.constant.FileResponseCode;
+import im.swyp.teumteumeat.infra.file.domain.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 
@@ -15,9 +15,9 @@ import java.util.Objects;
 
 @UseCase
 @RequiredArgsConstructor
-public class S3UseCase {
+public class FileUseCase {
 
-    private final S3Service s3Service;
+    private final FileStorageService fileStorageService;
 
     public PresignedUrlResponse generatePresignedUrl(
             PresignedUrlRequest request
@@ -25,11 +25,10 @@ public class S3UseCase {
         String fileName = request.fileName();
         validSupportedExtension(fileName);
 
-        String key = s3Service.createKey(fileName);
-        URL presignedUrl = s3Service.generatePresignedUrl(key);
-//        String fileUrl = s3Service.generateFileUrl(key);
+        String key = fileStorageService.generateFileKey(fileName);
+        URL presignedUrl = fileStorageService.getUploadUrl(key);
 
-        return S3Mapper.toPresignedUrlResponse(presignedUrl, key);
+        return FileMapper.toPresignedUrlResponse(presignedUrl, key);
     }
 
     // PDF 파일 확장자인지 검사

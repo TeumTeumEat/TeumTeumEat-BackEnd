@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.infra.s3.constant;
+package im.swyp.teumteumeat.infra.file.constant;
 
 import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import lombok.Getter;

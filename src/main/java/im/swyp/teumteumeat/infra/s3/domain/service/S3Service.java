@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.infra.s3.domain.service;
 
+import im.swyp.teumteumeat.infra.file.domain.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class S3Service {
+public class S3Service implements FileStorageService {
 
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 2;
     private static final String PATH_DELIMITER = "/";
@@ -28,17 +29,18 @@ public class S3Service {
     @Value("${infra.aws.region.static}")
     private String region;
 
-    public URL generatePresignedUrl(
-            String key
-    ) {
+    @Override
+    public URL getUploadUrl(String key) {
         return generatePresignedUrlInternal(key);
     }
 
-    public String createKey(String fileName) {
+    @Override
+    public String generateFileKey(String fileName) {
         return String.join(PATH_DELIMITER, PATH_PREFIX, createUniqueFileName(fileName));
     }
 
-    public String generateFileUrl(String key) {
+    @Override
+    public String getPublicUrl(String key) {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
     }
 
