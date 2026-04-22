@@ -1,4 +1,4 @@
-package im.swyp.teumteumeat.infra.fcm.domain;
+package im.swyp.teumteumeat.infra.fcm.domain.service;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
