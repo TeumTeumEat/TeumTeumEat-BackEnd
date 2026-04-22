@@ -1,41 +1,38 @@
 package im.swyp.teumteumeat.domains.quiz.application.usecase;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
-import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.common.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.common.llm.domain.prompt.QuizPrompt;
+import im.swyp.teumteumeat.domains.common.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
-
-import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
-import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
-import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
-import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
-import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
-import im.swyp.teumteumeat.domains.user.domain.service.UserService;
-import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
-import im.swyp.teumteumeat.global.annotation.UseCase;
-import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
-import java.util.function.BiConsumer;
-
-import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
+import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
+import im.swyp.teumteumeat.domains.user.domain.service.UserService;
+import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.exception.BaseException;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 @UseCase
 @RequiredArgsConstructor

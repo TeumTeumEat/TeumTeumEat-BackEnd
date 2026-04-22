@@ -4,8 +4,8 @@ import im.swyp.teumteumeat.domains.category.persistence.repository.CategoryRepos
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
-import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
-import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.common.llm.domain.prompt.DocumentPrompt;
+import im.swyp.teumteumeat.domains.common.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
