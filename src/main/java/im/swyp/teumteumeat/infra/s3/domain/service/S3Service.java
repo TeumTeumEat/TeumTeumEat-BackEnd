@@ -29,9 +29,10 @@ public class S3Service {
     private String region;
 
     public URL generatePresignedUrl(
-            String key
+            String key,
+            Long contentLength
     ) {
-        return generatePresignedUrlInternal(key);
+        return generatePresignedUrlInternal(key, contentLength);
     }
 
     public String createKey(String fileName) {
@@ -47,12 +48,18 @@ public class S3Service {
         return String.format("%s_%s", UUID.randomUUID(), originalFileName);
     }
 
-    private URL generatePresignedUrlInternal(String key) {
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
+    private URL generatePresignedUrlInternal(String key, Long contentLength) {
+        PutObjectRequest.Builder builder = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                .contentType("application/pdf")
-                .build();
+                .contentType("application/pdf");
+
+        //todo V1 Deprecated시 contentLength을 필수값으로 요구
+        if (contentLength != null) {
+            builder.contentLength(contentLength);
+        }
+
+        PutObjectRequest objectRequest = builder.build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(PRESIGNED_URL_EXPIRATION_MINUTES))
