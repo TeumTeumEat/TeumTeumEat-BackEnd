@@ -1,11 +1,13 @@
 package im.swyp.teumteumeat.infra.s3.presentation.api;
 
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlRequest;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlResponse;
+import im.swyp.teumteumeat.infra.s3.constant.FileResponseCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +27,10 @@ public interface S3Api {
             success = @ApiSuccessResponseExplanation(
                     responseClass = PresignedUrlResponse.class,
                     description = "발급 성공"
-            )
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = FileResponseCode.class, name = "NOT_SUPPORTED_EXTENSION")
+            }
     )
     ResponseEntity<ApiResponse<PresignedUrlResponse>> getPresignedUrl(
             @RequestBody @Valid PresignedUrlRequest request,

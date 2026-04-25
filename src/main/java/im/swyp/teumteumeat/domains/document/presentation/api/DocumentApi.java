@@ -3,6 +3,8 @@ package im.swyp.teumteumeat.domains.document.presentation.api;
 import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -45,7 +47,11 @@ public interface DocumentApi {
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "문서 단건 조회", description = "특정 문서를 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentResponse.class, description = "조회 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = DocumentResponse.class, description = "조회 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = DocumentResponseCode.class, name = "INVALID_DOCUMENT_GOAL_ASSOCIATION")
+                })
         ResponseEntity<ApiResponse<DocumentResponse>> getDocument(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
@@ -58,7 +64,11 @@ public interface DocumentApi {
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "문서 단건 삭제", description = "특정 문서를 삭제합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "삭제 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "삭제 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = DocumentResponseCode.class, name = "INVALID_DOCUMENT_GOAL_ASSOCIATION")
+                })
         ResponseEntity<ApiResponse<Void>> deleteDocument(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,

@@ -5,6 +5,8 @@ import im.swyp.teumteumeat.domains.user.application.dto.request.NameRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.request.UserSettingsRequest;
 import im.swyp.teumteumeat.domains.user.application.dto.response.*;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalResponse;
+import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -35,7 +37,11 @@ public interface UserApi {
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "출퇴근 정보 조회", description = "요청 유저의 출퇴근 정보를 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = CommuteInfoResponse.class, description = "조회 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = CommuteInfoResponse.class, description = "조회 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_SET_COMMUTE_INFO")
+                })
         ResponseEntity<ApiResponse<CommuteInfoResponse>> getCommuteInfo(
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 

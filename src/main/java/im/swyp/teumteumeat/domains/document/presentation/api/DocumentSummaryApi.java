@@ -1,9 +1,14 @@
 package im.swyp.teumteumeat.domains.document.presentation.api;
 
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
+import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,21 +24,42 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public interface DocumentSummaryApi {
 
         @Operation(summary = "PDF 요약글 및 퀴즈 생성 (학습 시작)", description = "PDF의 새로운 요약본과 퀴즈를 동기로 생성합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
+                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
+                        @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
+                        @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS"),
+                        @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
+                })
         ResponseEntity<ApiResponse<DocumentDetailResponse>> createSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
                         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "스트리밍 방식 - PDF 요약글 및 퀴즈 생성 (학습 시작)", description = "PDF의 새로운 요약본과 퀴즈를  동기로 생성합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
+                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
+                        @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
+                        @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS"),
+                        @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
+                })
         ResponseEntity<SseEmitter> createSummaryStream(
                 @PathVariable Long goalId,
                 @PathVariable Long documentId,
                 @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user);
 
         @Operation(summary = "PDF 요약글 단순 조회 (이어 읽기)", description = "가장 최근에 생성되어 진행 중인 PDF 요약글을 횟수 차감 없이 그대로 다시 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "조회 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = DocumentResponseCode.class, name = "DOCUMENT_NOT_READY"),
+                        @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
+                })
         ResponseEntity<ApiResponse<DocumentDetailResponse>> getSummary(
                         @PathVariable Long goalId,
                         @PathVariable Long documentId,
