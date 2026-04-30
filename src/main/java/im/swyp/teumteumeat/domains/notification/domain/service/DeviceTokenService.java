@@ -28,6 +28,7 @@ public class DeviceTokenService {
             DeviceToken existingToken = existingTokenOpt.get();
             if (!existingToken.getUser().getId().equals(deviceToken.getUser().getId())) {
                 deviceTokenRepository.deleteByTokenAndDeviceType(token, deviceType);
+                deviceTokenRepository.flush();
                 deviceTokenRepository.save(deviceToken);
             }
             // 일치하다면 아무것도 하지 않음
