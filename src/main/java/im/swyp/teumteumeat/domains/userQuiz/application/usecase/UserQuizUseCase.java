@@ -86,6 +86,7 @@ public class UserQuizUseCase {
                             UserQuiz newUserQuiz = UserQuiz.builder()
                                     .user(user)
                                     .quiz(quiz)
+                                    .goal(user.getCurrentGoal())
                                     .isCorrect(isCorrect)
                                     .build();
                             userQuizService.saveUserQuiz(newUserQuiz);
