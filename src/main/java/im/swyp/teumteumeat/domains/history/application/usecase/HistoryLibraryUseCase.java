@@ -12,6 +12,8 @@ import im.swyp.teumteumeat.domains.userQuiz.persistence.entity.UserQuiz;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.domains.goal.persistence.repository.GoalRepository;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class HistoryLibraryUseCase {
 
     private final UserQuizService userQuizService;
     private final HistoryMapper historyMapper;
+    private final GoalRepository goalRepository;
 
     @Transactional(readOnly = true)
     public CalendarResponse getCalendar(Long userId, Integer year, Integer month) {
@@ -87,10 +90,10 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(targetId)
                             .type(GoalType.DOCUMENT)
-                            .goalId(doc.getGoal().getId())
+                            .goalId(doc.getGoal() != null ? doc.getGoal().getId() : null)
                             .title(title) // PDF 파일명 또는 요약 제목
                             .summarySnippet(getSnippet(summary))
-                            .isCompleted(doc.getGoal().isCompleted())
+                            .isCompleted(doc.getGoal() != null && doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -98,14 +101,25 @@ public class HistoryLibraryUseCase {
                 CategoryDocument doc = quiz.getCategoryDocument();
                 key = "CAT_" + doc.getId();
                 if (!processedKeys.contains(key)) {
+                    Goal userGoal = uq.getGoal();
+                    if (userGoal == null) {
+                        Goal docGoal = doc.getGoal();
+                        if (docGoal != null && docGoal.getUser().getId().equals(userId)) {
+                            userGoal = docGoal;
+                        } else {
+                            userGoal = goalRepository.findFirstByUserIdAndCategoryIdAndCreatedDateLessThanEqualOrderByCreatedDateDesc(userId, doc.getCategory().getId(), uq.getCreatedDate())
+                                    .orElse(null);
+                        }
+                    }
+
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
-                            .goalId(doc.getGoal().getId())
+                            .goalId(userGoal != null ? userGoal.getId() : null)
                             .title(doc.getTitle() != null ? doc.getTitle() : doc.getCategory().getName()) // 카테고리명 또는 요약
                                                                                                           // 제목
                             .summarySnippet(getSnippet(doc.getContent()))
-                            .isCompleted(doc.getGoal().isCompleted())
+                            .isCompleted(userGoal != null && userGoal.isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -162,10 +176,10 @@ public class HistoryLibraryUseCase {
                     item = DailyHistoryResponse.builder()
                             .id(targetId)
                             .type(GoalType.DOCUMENT)
-                            .goalId(doc.getGoal().getId())
+                            .goalId(doc.getGoal() != null ? doc.getGoal().getId() : null)
                             .title(title)
                             .summarySnippet(getSnippet(summary))
-                            .isCompleted(doc.getGoal().isCompleted())
+                            .isCompleted(doc.getGoal() != null && doc.getGoal().isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
@@ -179,13 +193,24 @@ public class HistoryLibraryUseCase {
                 uniqueKey = "CAT_" + doc.getId();
 
                 if (!processedKeys.contains(uniqueKey)) {
+                    Goal userGoal = uq.getGoal();
+                    if (userGoal == null) {
+                        Goal docGoal = doc.getGoal();
+                        if (docGoal != null && docGoal.getUser().getId().equals(userId)) {
+                            userGoal = docGoal;
+                        } else {
+                            userGoal = goalRepository.findFirstByUserIdAndCategoryIdAndCreatedDateLessThanEqualOrderByCreatedDateDesc(userId, doc.getCategory().getId(), uq.getCreatedDate())
+                                    .orElse(null);
+                        }
+                    }
+
                     item = DailyHistoryResponse.builder()
                             .id(doc.getId())
                             .type(GoalType.CATEGORY)
-                            .goalId(doc.getGoal().getId())
+                            .goalId(userGoal != null ? userGoal.getId() : null)
                             .title(doc.getTitle() != null ? doc.getTitle() : categoryName)
                             .summarySnippet(getSnippet(doc.getContent()))
-                            .isCompleted(doc.getGoal().isCompleted())
+                            .isCompleted(userGoal != null && userGoal.isCompleted())
                             .lastStudiedAt(uq.getCreatedDate())
                             .build();
                 }
