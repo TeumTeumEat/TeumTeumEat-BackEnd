@@ -8,13 +8,13 @@ import im.swyp.teumteumeat.domains.document.presentation.api.DocumentApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.common.CreatedResponse;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -30,7 +30,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
             @PathVariable Long goalId,
             @RequestBody @Valid DocumentCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         Long savedId = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
     }
@@ -40,7 +40,7 @@ public class DocumentController implements DocumentApi {
     public SseEmitter subscribe(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user,
+            @LoginUser CustomUserDetails user,
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
             HttpServletResponse response) {
 
@@ -51,7 +51,7 @@ public class DocumentController implements DocumentApi {
     @GetMapping
     public ResponseEntity<ApiResponse<DocumentListResponse>> getDocuments(
             @PathVariable Long goalId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         DocumentListResponse response = documentUseCase.getDocuments(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -61,7 +61,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ApiResponse<DocumentResponse>> getDocument(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         DocumentResponse response = documentUseCase.getDocument(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -70,7 +70,7 @@ public class DocumentController implements DocumentApi {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteDocuments(
             @PathVariable Long goalId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         documentUseCase.deleteDocuments(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -80,7 +80,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ApiResponse<Void>> deleteDocument(
             @PathVariable Long goalId,
             @PathVariable Long documentId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         documentUseCase.deleteDocument(user.getUserId(), goalId, documentId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }

@@ -7,13 +7,11 @@ import im.swyp.teumteumeat.domains.category.application.usecase.CategoryUseCase;
 import im.swyp.teumteumeat.domains.category.presentation.api.CategoryApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
-import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,7 +24,6 @@ public class CategoryController implements CategoryApi {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<CategoryListResponse>> getCategories(
-            @AuthenticationPrincipal CustomUserDetails user
     ) {
         CategoryListResponse categories = categoryUseCase.getCategories();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, categories));
@@ -36,8 +33,7 @@ public class CategoryController implements CategoryApi {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> createCategory(
-            @RequestBody @Valid CategoryCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryCreateRequest request
     ) {
         categoryUseCase.createCategory(request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
@@ -48,8 +44,7 @@ public class CategoryController implements CategoryApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
             @NotNull Long categoryId,
-            @RequestBody @Valid CategoryUpdateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @RequestBody @Valid CategoryUpdateRequest request
     ) {
         categoryUseCase.updateCategory(categoryId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
@@ -59,8 +54,7 @@ public class CategoryController implements CategoryApi {
     @DeleteMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(
-            @NotNull Long categoryId,
-            @AuthenticationPrincipal CustomUserDetails user
+            @NotNull Long categoryId
     ) {
         categoryUseCase.deleteCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
