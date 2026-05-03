@@ -65,10 +65,13 @@ public class ApiErrorResponseHandler {
                             .description(responseCode.getMessage())
                             .holder(createSwaggerExample(responseCode, responseCode.getMessage()))
                             .build())
-                    .orElse(null); // 일치하는 이름이 없을 경우
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "%s에 '%s' 상수가 존재하지 않습니다. @ApiErrorResponseExplanation의 name 값을 확인하세요."
+                                    .formatted(enumClass.getSimpleName(), targetName)));
         }
 
-        return null;
+        throw new IllegalArgumentException(
+                "%s는 유효한 Enum 클래스가 아닙니다.".formatted(enumClass.getSimpleName()));
     }
 
     private Example createSwaggerExample(BaseResponseCode responseCode, String description) {

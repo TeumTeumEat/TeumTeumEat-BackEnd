@@ -2,9 +2,11 @@ package im.swyp.teumteumeat.domains.history.presentation.api;
 
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.history.application.dto.response.*;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,7 +42,11 @@ public interface HistoryLibraryApi {
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 
         @Operation(summary = "상세 내용 보기 (요약)", description = "특정 날짜의 특정 학습 기록에 대한 요약 내용을 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = HistorySummaryResponse.class, description = "조회 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = HistorySummaryResponse.class, description = "조회 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
+                })
         ResponseEntity<ApiResponse<HistorySummaryResponse>> getHistorySummary(
                         @Parameter(description = "학습 유형 (DOCUMENT / CATEGORY)", required = true) @PathVariable GoalType type,
                         @Parameter(description = "문서 또는 카테고리 문서 ID", required = true) @PathVariable Long id,
@@ -48,7 +54,11 @@ public interface HistoryLibraryApi {
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 
         @Operation(summary = "상세 내용 보기 (퀴즈 목록)", description = "특정 날짜의 특정 학습 기록에 대한 퀴즈 목록을 조회합니다.")
-        @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = HistoryQuizListResponse.class, description = "조회 성공"))
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(responseClass = HistoryQuizListResponse.class, description = "조회 성공"),
+                errors = {
+                        @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
+                })
         ResponseEntity<ApiResponse<HistoryQuizListResponse>> getHistoryQuizzes(
                         @Parameter(description = "학습 유형 (DOCUMENT / CATEGORY)", required = true) @PathVariable GoalType type,
                         @Parameter(description = "문서 또는 카테고리 문서 ID", required = true) @PathVariable Long id,

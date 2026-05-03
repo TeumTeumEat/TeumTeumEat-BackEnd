@@ -3,6 +3,8 @@ package im.swyp.teumteumeat.domains.goal.presentation.api;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalCreateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.request.GoalUpdateRequest;
 import im.swyp.teumteumeat.domains.goal.application.dto.response.GoalListResponse;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
@@ -45,7 +47,10 @@ public interface GoalApi {
             success = @ApiSuccessResponseExplanation(
                     responseClass = CreatedResponse.class,
                     description = "생성 성공"
-            )
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "INVALID_PROMPT")
+            }
     )
     ResponseEntity<ApiResponse<CreatedResponse>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
@@ -59,7 +64,10 @@ public interface GoalApi {
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
                     description = "수정 성공"
-            )
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "INVALID_PROMPT")
+            }
     )
     ResponseEntity<ApiResponse<Void>> updateGoal(
             @NotNull Long goalId,
@@ -74,7 +82,8 @@ public interface GoalApi {
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
                     description = "삭제 성공"
-            )
+            ),
+            errors = @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "NOT_FOUND_GOAL")
     )
     ResponseEntity<ApiResponse<Void>> deleteGoal(
             @NotNull Long goalId,
