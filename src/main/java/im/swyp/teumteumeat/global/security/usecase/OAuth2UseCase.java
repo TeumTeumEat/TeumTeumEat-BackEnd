@@ -45,7 +45,7 @@ public class OAuth2UseCase {
         String name;
 
         if (provider.equals(SocialProvider.APPLE)) {
-            name = StringUtils.hasText(request.name()) ? request.name() : "Apple User";
+            name = StringUtils.hasText(request.name()) ? request.name() : "사용자";
         } else {
             name = payload.name();
         }
