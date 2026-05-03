@@ -9,6 +9,7 @@ import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CreatedResponse;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,7 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Goal", description = "목표 API")
@@ -33,7 +33,7 @@ public interface GoalApi {
             )
     )
     ResponseEntity<ApiResponse<GoalListResponse>> getGoals(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user
     );
 
     @Operation(
@@ -54,7 +54,7 @@ public interface GoalApi {
     )
     ResponseEntity<ApiResponse<CreatedResponse>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user
     );
 
     @Operation(
@@ -72,7 +72,7 @@ public interface GoalApi {
     ResponseEntity<ApiResponse<Void>> updateGoal(
             @NotNull Long goalId,
             @RequestBody @Valid GoalUpdateRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user
     );
 
     @Operation(
@@ -87,6 +87,6 @@ public interface GoalApi {
     )
     ResponseEntity<ApiResponse<Void>> deleteGoal(
             @NotNull Long goalId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user
     );
 }

@@ -5,11 +5,11 @@ import im.swyp.teumteumeat.domains.notification.application.usecase.Notification
 import im.swyp.teumteumeat.domains.notification.presentation.api.NotificationTestApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +26,7 @@ public class NotificationTestController implements NotificationTestApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> sendNotification(
             @RequestBody NotificationRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     ) {
         notificationUseCase.sendNotificationTest(request, user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));

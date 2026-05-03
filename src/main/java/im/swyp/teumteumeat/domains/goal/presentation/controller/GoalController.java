@@ -8,12 +8,12 @@ import im.swyp.teumteumeat.domains.goal.presentation.api.GoalApi;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.common.CreatedResponse;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,7 +25,7 @@ public class GoalController implements GoalApi {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<GoalListResponse>> getGoals(
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     ) {
         GoalListResponse response = goalUseCase.getGoals(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
@@ -35,7 +35,7 @@ public class GoalController implements GoalApi {
     @PostMapping
     public ResponseEntity<ApiResponse<CreatedResponse>> createGoal(
             @RequestBody @Valid GoalCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     ) {
         Long savedId = goalUseCase.createGoal(user.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
@@ -46,7 +46,7 @@ public class GoalController implements GoalApi {
     public ResponseEntity<ApiResponse<Void>> updateGoal(
             @NotNull Long goalId,
             @RequestBody @Valid GoalUpdateRequest request,
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     ) {
         goalUseCase.updateGoal(user.getUserId(), goalId, request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
@@ -56,7 +56,7 @@ public class GoalController implements GoalApi {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteGoal(
             @NotNull Long goalId,
-            @AuthenticationPrincipal CustomUserDetails user
+            @LoginUser CustomUserDetails user
     ) {
         goalUseCase.deleteGoal(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));

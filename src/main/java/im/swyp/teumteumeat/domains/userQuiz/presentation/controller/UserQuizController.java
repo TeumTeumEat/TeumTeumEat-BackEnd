@@ -10,11 +10,11 @@ import im.swyp.teumteumeat.domains.userQuiz.presentation.api.UserQuizApi;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,7 +37,7 @@ public class UserQuizController implements UserQuizApi {
     @PostMapping("/submit")
     public ResponseEntity<ApiResponse<QuizSubmissionResponse>> submitQuiz(
             @RequestBody @Valid QuizSubmissionRequest request,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         QuizSubmissionResponse response = userQuizUseCase.submitQuiz(user.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -48,7 +48,7 @@ public class UserQuizController implements UserQuizApi {
     public ResponseEntity<ApiResponse<List<QuizSetResponse>>> getQuizzes(
             @RequestParam Long documentId,
             @RequestParam(required = false, defaultValue = "CATEGORY") GoalType documentType,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         List<QuizSetResponse> response = userQuizUseCase.getQuizzesForSolving(documentId, user.getUserId(),
                 documentType);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
@@ -58,8 +58,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse<QuizSetResponse>> getQuiz(
-            @PathVariable Long quizId,
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @PathVariable Long quizId) {
         QuizSetResponse response = userQuizUseCase.getQuizForSolving(quizId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
@@ -67,7 +66,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @PostMapping("/guide")
     public ResponseEntity<ApiResponse<QuizGuideResponse>> completeQuizGuide(
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         userQuizUseCase.completeQuizGuide(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, new QuizGuideResponse(true)));
     }
@@ -75,7 +74,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @PostMapping("/complete-set")
     public ResponseEntity<ApiResponse<Void>> completeQuizSet(
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         userQuizUseCase.completeQuizSet(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -83,7 +82,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @PostMapping("/ad-reward")
     public ResponseEntity<ApiResponse<Void>> claimAdReward(
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
         userQuizUseCase.claimAdReward(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
@@ -91,7 +90,7 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<UserQuizStatusResponse>> getStatus(
-            @AuthenticationPrincipal CustomUserDetails user) {
+            @LoginUser CustomUserDetails user) {
 
         UserQuizStatusResponse response = userQuizUseCase.getUserQuizStatus(user.getUserId());
 

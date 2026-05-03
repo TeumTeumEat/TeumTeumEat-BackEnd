@@ -4,11 +4,11 @@ package im.swyp.teumteumeat.domains.user.presentation.controller.v1;
 import im.swyp.teumteumeat.domains.user.application.usecase.UserWithdrawalUseCase;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.domains.user.presentation.api.v1.UserWithdrawalApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,8 +24,8 @@ public class UserWithdrawalController implements UserWithdrawalApi {
     @Override
     @DeleteMapping("/withdrawal")
     public ResponseEntity<ApiResponse<Void>> withdraw(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        userWithdrawalUseCase.withdraw(userDetails.getUserId());
+            @LoginUser CustomUserDetails user) {
+        userWithdrawalUseCase.withdraw(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }
