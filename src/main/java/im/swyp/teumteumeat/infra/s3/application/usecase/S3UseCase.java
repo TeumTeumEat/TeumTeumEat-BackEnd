@@ -18,15 +18,18 @@ import java.util.Objects;
 public class S3UseCase {
 
     private final S3Service s3Service;
+    private static final Long MAX_SIZE = 50L * 1024 * 1024; // 50MB
 
     public PresignedUrlResponse generatePresignedUrl(
             PresignedUrlRequest request
     ) {
         String fileName = request.fileName();
+        Long contentLength = request.fileSize();
         validSupportedExtension(fileName);
+        validFileSizeLimit(contentLength);
 
         String key = s3Service.createKey(fileName);
-        URL presignedUrl = s3Service.generatePresignedUrl(key);
+        URL presignedUrl = s3Service.generatePresignedUrl(key, contentLength);
 //        String fileUrl = s3Service.generateFileUrl(key);
 
         return S3Mapper.toPresignedUrlResponse(presignedUrl, key);
@@ -36,6 +39,12 @@ public class S3UseCase {
     private void validSupportedExtension(String fileName) {
         if (!Objects.equals(StringUtils.getFilenameExtension(fileName), "pdf")) {
             throw new BaseException(FileResponseCode.NOT_SUPPORTED_EXTENSION);
+        }
+    }
+
+    private void validFileSizeLimit(Long contentLength) {
+        if (contentLength > MAX_SIZE) {
+            throw new BaseException(FileResponseCode.EXCEED_FILE_SIZE);
         }
     }
 }
