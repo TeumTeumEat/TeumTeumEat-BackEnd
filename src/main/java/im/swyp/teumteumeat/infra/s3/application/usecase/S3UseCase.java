@@ -43,7 +43,7 @@ public class S3UseCase {
     }
 
     private void validFileSizeLimit(Long contentLength) {
-        if (contentLength > MAX_SIZE) {
+        if (contentLength != null && contentLength > MAX_SIZE) {
             throw new BaseException(FileResponseCode.EXCEED_FILE_SIZE);
         }
     }
