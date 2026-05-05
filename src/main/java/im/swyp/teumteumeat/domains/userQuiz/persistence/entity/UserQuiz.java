@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.userQuiz.persistence.entity;
 
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -28,13 +29,18 @@ public class UserQuiz extends BaseEntity {
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "goal_id")
+    private Goal goal;
+
     @Column(nullable = false)
     private boolean isCorrect;
 
     @Builder
-    public UserQuiz(UserEntity user, Quiz quiz, boolean isCorrect) {
+    public UserQuiz(UserEntity user, Quiz quiz, Goal goal, boolean isCorrect) {
         this.user = user;
         this.quiz = quiz;
+        this.goal = goal;
         this.isCorrect = isCorrect;
     }
 
