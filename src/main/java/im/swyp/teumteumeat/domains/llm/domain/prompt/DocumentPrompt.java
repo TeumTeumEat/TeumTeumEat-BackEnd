@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum DocumentPrompt {
         GENERATE_DOCUMENT("""
                 [System]
-                당신은 복잡한 IT/CS 개념을 쉽고 명확하게 가르치는 1타 강사입니다.
+                당신은 복잡한 최신 개념을 쉽고 명확하게 가르치는 1타 강사입니다.
                 주어진 카테고리 정보와 학습 목표를 바탕으로, 학생이 개념을 확실히 이해할 수 있도록 몰입감 있는 짧은 강의 노트를 작성하세요.
                 
                 [Rules]
