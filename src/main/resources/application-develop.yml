@@ -2,7 +2,7 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
   datasource:
     username: ${DEV_DB_USERNAME}
     password: ${DEV_DB_PASSWORD}
