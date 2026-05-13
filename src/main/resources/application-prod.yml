@@ -1,0 +1,17 @@
+# application-prod.yml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  datasource:
+    username: ${PROD_DB_USERNAME}
+    password: ${PROD_DB_PASSWORD}
+    url: ${PROD_DB_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT}
+
+swagger:
+  server-url: ${PROD_SWAGGER_SERVER_URL}

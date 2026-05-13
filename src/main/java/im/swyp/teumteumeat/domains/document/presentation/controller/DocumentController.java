@@ -1,0 +1,87 @@
+package im.swyp.teumteumeat.domains.document.presentation.controller;
+
+import im.swyp.teumteumeat.domains.document.application.dto.request.DocumentCreateRequest;
+import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentListResponse;
+import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentResponse;
+import im.swyp.teumteumeat.domains.document.application.usecase.DocumentUseCase;
+import im.swyp.teumteumeat.domains.document.presentation.api.DocumentApi;
+import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.common.CreatedResponse;
+import im.swyp.teumteumeat.global.security.annotation.LoginUser;
+import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+@RestController
+@RequestMapping("/api/v1/goals/{goalId}/documents")
+@RequiredArgsConstructor
+public class DocumentController implements DocumentApi {
+
+    private final DocumentUseCase documentUseCase;
+
+    @Override
+    @PostMapping
+    public ResponseEntity<ApiResponse<CreatedResponse>> uploadDocument(
+            @PathVariable Long goalId,
+            @RequestBody @Valid DocumentCreateRequest request,
+            @LoginUser CustomUserDetails user) {
+        Long savedId = documentUseCase.uploadDocument(user.getUserId(), goalId, request);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, CreatedResponse.from(savedId)));
+    }
+
+    @Override
+    @GetMapping(value = "/{documentId}/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @LoginUser CustomUserDetails user,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            HttpServletResponse response) {
+
+        return documentUseCase.subscribe(user.getUserId(), goalId, documentId, lastEventId);
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<DocumentListResponse>> getDocuments(
+            @PathVariable Long goalId,
+            @LoginUser CustomUserDetails user) {
+        DocumentListResponse response = documentUseCase.getDocuments(user.getUserId(), goalId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/{documentId}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> getDocument(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @LoginUser CustomUserDetails user) {
+        DocumentResponse response = documentUseCase.getDocument(user.getUserId(), goalId, documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteDocuments(
+            @PathVariable Long goalId,
+            @LoginUser CustomUserDetails user) {
+        documentUseCase.deleteDocuments(user.getUserId(), goalId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @DeleteMapping("/{documentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDocument(
+            @PathVariable Long goalId,
+            @PathVariable Long documentId,
+            @LoginUser CustomUserDetails user) {
+        documentUseCase.deleteDocument(user.getUserId(), goalId, documentId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+}

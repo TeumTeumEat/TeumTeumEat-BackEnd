@@ -1,0 +1,85 @@
+name: Deploy Spring Boot Application to API Server
+
+on:
+  push:
+    branches: [ "develop" ]
+    tags: [ "v*.*.*" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+
+# 한번에 1개의 Actions만 실행되도록 제한
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+    with:
+      git_ref: ${{ github.ref }}
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/develop' && 'develop' || 'main' }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Tag Is on Main Branch
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git branch -r --contains ${{ github.ref_name }} | grep -w 'origin/main'
+
+      - name: Create and Stage Config Files
+        run: |
+          mkdir -p configs/
+          
+          echo "${{ secrets.ENV }}" | base64 --decode > configs/.env
+          echo "${{ secrets.APPLE_P8 }}" | base64 --decode > configs/appleAuthKey.p8
+          echo "${{ secrets.FIREBASE_KEY }}" | base64 --decode > configs/firebaseKey.json
+          echo "" >> configs/.env
+          echo "SPRING_PROFILE=${{ vars.SPRING_PROFILE }}" >> configs/.env
+
+      - name: Copy Config Files
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          source: "configs/, scripts/, docker-compose.yml"
+          target: ${{ env.PROJECT_PATH }}
+
+      - name: Deploy Application
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            export RELEASE_VERSION='${{ github.ref_name }}'
+            
+            cd ${{ env.PROJECT_PATH }}
+            
+            IMAGE_PATH="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+            IMAGE_PATH="${IMAGE_PATH,,}"
+            sed -i "s|image: ${IMAGE_PATH}:.*|image: ${IMAGE_PATH}:${RELEASE_VERSION#v}|g" docker-compose.yml
+
+            sed -i "s|NGINX_HOST|${{ secrets.HOST }}|g" ./configs/nginx/default.conf
+            
+            mv ./configs/.env ./
+
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh

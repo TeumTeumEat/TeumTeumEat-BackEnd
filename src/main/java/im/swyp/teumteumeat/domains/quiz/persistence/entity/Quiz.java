@@ -1,0 +1,75 @@
+package im.swyp.teumteumeat.domains.quiz.persistence.entity;
+
+import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
+import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
+import im.swyp.teumteumeat.global.base.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Getter
+@Table(name = "quiz")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Quiz extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "quiz_id")
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    private QuizType quizType;
+
+    @Column(nullable = false, length = 80)
+    private String content;
+
+    @Column(nullable = false)
+    private String answer;
+
+    @Column(nullable = false, length = 120)
+    private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String options; // 퀴즈 선지
+
+    @Column(length = 30)
+    private String topic;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Difficulty difficulty;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_document_id")
+    private CategoryDocument categoryDocument;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_summary_id")
+    private DocumentSummary documentSummary;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id")
+    private Document document;
+
+    @Builder
+    public Quiz(CategoryDocument categoryDocument, Document document, DocumentSummary documentSummary, String content,
+            String options, String answer,
+            String description,
+            QuizType quizType, String topic, Difficulty difficulty) {
+        this.categoryDocument = categoryDocument;
+        this.document = document;
+        this.documentSummary = documentSummary;
+        this.content = content;
+        this.options = options;
+        this.answer = answer;
+        this.description = description;
+        this.quizType = quizType;
+        this.topic = topic;
+        this.difficulty = difficulty;
+    }
+}
