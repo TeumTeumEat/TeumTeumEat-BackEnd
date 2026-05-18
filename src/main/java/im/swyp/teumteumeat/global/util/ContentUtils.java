@@ -2,7 +2,7 @@ package im.swyp.teumteumeat.global.util;
 
 public class ContentUtils {
 
-    private static final int DEFAULT_TRUNCATE_LENGTH = 600;
+    private static final int DEFAULT_TRUNCATE_LENGTH = 800;
 
     /**
      * 내용을 안전하게 자릅니다.
