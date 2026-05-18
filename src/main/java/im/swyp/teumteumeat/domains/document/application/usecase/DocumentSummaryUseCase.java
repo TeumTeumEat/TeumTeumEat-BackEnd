@@ -111,6 +111,7 @@ public class DocumentSummaryUseCase {
         StringBuilder generatedContent = new StringBuilder();
 
         try {
+            sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
             checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
             String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
