@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.infra.s3.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -28,6 +29,8 @@ public class S3Service {
     @Value("${infra.aws.region.static}")
     private String region;
 
+    private final Environment environment;
+
     public URL generatePresignedUrl(
             String key,
             Long contentLength
@@ -36,7 +39,8 @@ public class S3Service {
     }
 
     public String createKey(String fileName) {
-        return String.join(PATH_DELIMITER, PATH_PREFIX, createUniqueFileName(fileName));
+        String env = getActiveProfile();
+        return String.join(PATH_DELIMITER, env, PATH_PREFIX, createUniqueFileName(fileName));
     }
 
     public String generateFileUrl(String key) {
@@ -68,5 +72,14 @@ public class S3Service {
 
         PresignedPutObjectRequest presigned = s3Presigner.presignPutObject(presignRequest);
         return presigned.url();
+    }
+
+    private String getActiveProfile() {
+        String[] profiles = environment.getActiveProfiles();
+        if (profiles.length == 0) return "dev";
+
+        String profile = profiles[0];
+        // local은 dev로 매핑
+        return profile.equals("prod") ? "prod" : "dev";
     }
 }
