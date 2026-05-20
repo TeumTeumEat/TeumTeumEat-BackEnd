@@ -117,8 +117,9 @@ public class UserQuizController implements UserQuizApi {
     @Override
     @PostMapping("/test/reset-goal")
     public ResponseEntity<ApiResponse<Void>> testResetGoalStatus(
+            @RequestParam(required = false) Long goalId,
             @LoginUser CustomUserDetails user) {
-        userQuizUseCase.testResetGoalStatus(user.getUserId());
+        userQuizUseCase.testResetGoalStatus(user.getUserId(), goalId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

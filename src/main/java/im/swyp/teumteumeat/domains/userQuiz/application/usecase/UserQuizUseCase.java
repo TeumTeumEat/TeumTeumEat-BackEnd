@@ -286,16 +286,25 @@ public class UserQuizUseCase {
     }
 
     @Transactional
-    public void testResetGoalStatus(Long userId) {
+    public void testResetGoalStatus(Long userId, Long goalId) {
         UserEntity user = userService.getUserById(userId);
         
         if (user.getRole() != Role.ADMIN) {
             throw new BaseException(CommonResponseCode.FORBIDDEN);
         }
         
-        Goal currentGoal = user.getCurrentGoal();
-        if (currentGoal != null) {
-            currentGoal.testResetGoalStatus();
+        Goal targetGoal;
+        if (goalId != null) {
+            targetGoal = user.getGoals().stream()
+                    .filter(g -> g.getId().equals(goalId))
+                    .findFirst()
+                    .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+        } else {
+            targetGoal = user.getCurrentGoal();
+        }
+        
+        if (targetGoal != null) {
+            targetGoal.testResetGoalStatus();
         }
     }
 }
