@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -42,6 +43,7 @@ public class CategoryDocumentUseCase {
     private final UserQuizService userQuizService;
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
+    private final LlmStreamProvider llmStreamProvider;
 
     // (User) 요약글 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -67,11 +69,8 @@ public class CategoryDocumentUseCase {
 
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
-        SseEmitter sseEmitter = new SseEmitter(180_000L);
+        SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(180_000L);
         try {
-            // 프론트에게 스트리밍 성공 이벤트 반환
-            sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
-
             Goal goal = getValidGoal(userId, categoryId);
             checkUnsolvedQuota(goal, userId);
 

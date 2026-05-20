@@ -23,6 +23,7 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ public class DocumentSummaryUseCase {
     private final QuizUseCase quizUseCase;
     private final QuizService quizService;
     private final LLMService llmService;
+    private final LlmStreamProvider llmStreamProvider;
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -110,11 +112,10 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        SseEmitter sseEmitter = new SseEmitter(10 * 60 * 1000L); // 10분 설정
+        SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(); // 기본 10분 설정
         StringBuilder generatedContent = new StringBuilder();
 
         try {
-            sseEmitter.send(SseEmitter.event().name("CONNECT").data("Stream 연결"));
             checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
             String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
