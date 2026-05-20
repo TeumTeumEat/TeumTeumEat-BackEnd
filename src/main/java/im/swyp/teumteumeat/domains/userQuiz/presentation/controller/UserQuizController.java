@@ -113,4 +113,12 @@ public class UserQuizController implements UserQuizApi {
         userQuizUseCase.testAddQuizCount(user.getUserId(), count);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
+
+    @Override
+    @PostMapping("/test/reset-goal")
+    public ResponseEntity<ApiResponse<Void>> testResetGoalStatus(
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testResetGoalStatus(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
 }

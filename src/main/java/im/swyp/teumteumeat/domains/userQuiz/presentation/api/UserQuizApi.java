@@ -103,4 +103,11 @@ public interface UserQuizApi {
         ResponseEntity<ApiResponse<Void>> testAddQuizCount(
                         @RequestParam(defaultValue = "1") int count,
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
+
+        @Operation(summary = "현재 목표 완료/만료 상태 초기화 (테스트용)", description = "현재 목표의 완료 상태를 해제하고, 만료되었다면 기간을 일주일 연장합니다. (ADMIN 전용)")
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "처리 성공")
+        )
+        ResponseEntity<ApiResponse<Void>> testResetGoalStatus(
+                        @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 }

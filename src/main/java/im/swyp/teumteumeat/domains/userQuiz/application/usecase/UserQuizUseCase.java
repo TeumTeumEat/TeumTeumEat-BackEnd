@@ -284,4 +284,18 @@ public class UserQuizUseCase {
         
         user.addAvailableQuizCount(count);
     }
+
+    @Transactional
+    public void testResetGoalStatus(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        
+        if (user.getRole() != Role.ADMIN) {
+            throw new BaseException(CommonResponseCode.FORBIDDEN);
+        }
+        
+        Goal currentGoal = user.getCurrentGoal();
+        if (currentGoal != null) {
+            currentGoal.testResetGoalStatus();
+        }
+    }
 }
