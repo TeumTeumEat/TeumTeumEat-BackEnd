@@ -16,8 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface NotificationTestApi {
 
     @Operation(
-            summary = "푸쉬 알림 테스트",
-            description = "관리자(ADMIN)만 전송할 수 있습니다."
+            summary = "(ADMIN) 푸쉬 알림 테스트",
+            description = """
+                          - 유저 알림 설정이 켜져 있어야 합니다.
+                          - 디바이스 토큰이 등록되어 있어야 합니다.
+                          """
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
