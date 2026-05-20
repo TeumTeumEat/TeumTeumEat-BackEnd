@@ -104,4 +104,13 @@ public class UserQuizController implements UserQuizApi {
         userQuizUseCase.testResetAdReward(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
+
+    @Override
+    @PostMapping("/test/add-quiz-count")
+    public ResponseEntity<ApiResponse<Void>> testAddQuizCount(
+            @RequestParam(defaultValue = "1") int count,
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testAddQuizCount(user.getUserId(), count);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
 }

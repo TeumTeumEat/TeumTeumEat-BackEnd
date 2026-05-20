@@ -273,4 +273,15 @@ public class UserQuizUseCase {
         
         user.testResetAdReward();
     }
+
+    @Transactional
+    public void testAddQuizCount(Long userId, int count) {
+        UserEntity user = userService.getUserById(userId);
+        
+        if (user.getRole() != Role.ADMIN) {
+            throw new BaseException(CommonResponseCode.FORBIDDEN);
+        }
+        
+        user.addAvailableQuizCount(count);
+    }
 }

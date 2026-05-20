@@ -65,7 +65,7 @@ public class DocumentSummaryUseCase {
 
         UserEntity user = userService.getUserById(userId);
         boolean outOfQuota = !user.canSolveDailyQuiz();
-        boolean hasSolvedToday = user.getRole() != Role.ADMIN && outOfQuota;
+        boolean hasSolvedToday = outOfQuota;
 
         // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
         Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
@@ -181,24 +181,21 @@ public class DocumentSummaryUseCase {
 
     private void checkQuotaAndUnsolvedQuizzes(Long userId, Long documentId) {
         UserEntity user = userService.getUserById(userId);
-        boolean isAdmin = user.getRole() == Role.ADMIN;
 
-        if (!isAdmin && !user.canSolveDailyQuiz()) {
+        if (!user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        if (!isAdmin) {
-            Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
-            if (latestSummaryOpt.isPresent()) {
-                DocumentSummary latestSummary = latestSummaryOpt.get();
-                boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
-                        .anyMatch(uq -> uq.getQuiz() != null &&
-                                uq.getQuiz().getDocumentSummary() != null &&
-                                uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+        if (latestSummaryOpt.isPresent()) {
+            DocumentSummary latestSummary = latestSummaryOpt.get();
+            boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
+                    .anyMatch(uq -> uq.getQuiz() != null &&
+                            uq.getQuiz().getDocumentSummary() != null &&
+                            uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
 
-                if (!isConsumed) {
-                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                }
+            if (!isConsumed) {
+                throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
         }
     }
