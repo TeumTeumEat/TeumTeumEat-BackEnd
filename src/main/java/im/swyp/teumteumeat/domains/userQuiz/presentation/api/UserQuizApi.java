@@ -88,4 +88,11 @@ public interface UserQuizApi {
                 })
         ResponseEntity<ApiResponse<Void>> claimAdReward(
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
+
+        @Operation(summary = "쿠폰 상태 초기화 (테스트용)", description = "광고 시청 및 퀴즈 풀이 횟수 상태를 초기화합니다.")
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "처리 성공")
+        )
+        ResponseEntity<ApiResponse<Void>> testResetAdReward(
+                        @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 }

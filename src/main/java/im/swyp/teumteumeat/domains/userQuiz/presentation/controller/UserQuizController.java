@@ -96,4 +96,12 @@ public class UserQuizController implements UserQuizApi {
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
+
+    @Override
+    @PostMapping("/test/reset-ad-reward")
+    public ResponseEntity<ApiResponse<Void>> testResetAdReward(
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testResetAdReward(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
 }

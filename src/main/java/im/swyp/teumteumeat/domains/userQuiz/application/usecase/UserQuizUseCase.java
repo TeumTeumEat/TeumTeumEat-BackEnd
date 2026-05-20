@@ -23,6 +23,7 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
 
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
@@ -31,8 +32,6 @@ import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -240,14 +239,12 @@ public class UserQuizUseCase {
     public void completeQuizSet(Long userId) {
         UserEntity user = userService.getUserById(userId);
 
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+        if (!user.canSolveDailyQuiz()) {
             throw new BaseException(
                     QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        if (user.getRole() != Role.ADMIN) {
-            user.consumeQuizCount();
-        }
+        user.consumeQuizCount();
 
         Goal currentGoal = user.getCurrentGoal();
         if (currentGoal != null && !currentGoal.isCompleted()) {
@@ -264,5 +261,16 @@ public class UserQuizUseCase {
     public void claimAdReward(Long userId) {
         UserEntity user = userService.getUserById(userId);
         user.claimAdReward();
+    }
+
+    @Transactional
+    public void testResetAdReward(Long userId) {
+        UserEntity user = userService.getUserById(userId);
+        
+        if (user.getRole() != Role.ADMIN) {
+            throw new BaseException(CommonResponseCode.FORBIDDEN);
+        }
+        
+        user.testResetAdReward();
     }
 }
