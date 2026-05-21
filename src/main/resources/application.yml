@@ -164,6 +164,3 @@ notification:
       date: 18
     - message: "전설의 4주 연속 스탬프가 눈앞에! 🏆 25일간의 틈틈잇 대기록 잊지 마세요!"
       date: 25
-#logging:
-#  level:
-#    org.springframework: DEBUG

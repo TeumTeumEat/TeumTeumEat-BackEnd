@@ -30,6 +30,4 @@ frontend:
 logging:
   level:
     org.hibernate.SQL: debug
-#    org.hibernate.orm.jdbc.bind: trace
-#    org.springframework.security: DEBUG
-#    org.springframework.security.oauth2: DEBUG
+    org.hibernate.orm.jdbc.bind: trace
