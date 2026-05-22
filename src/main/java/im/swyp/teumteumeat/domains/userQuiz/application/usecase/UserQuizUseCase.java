@@ -267,10 +267,6 @@ public class UserQuizUseCase {
     public void testResetAdReward(Long userId) {
         UserEntity user = userService.getUserById(userId);
         
-        if (user.getRole() != Role.ADMIN) {
-            throw new BaseException(CommonResponseCode.FORBIDDEN);
-        }
-        
         user.testResetAdReward();
     }
 
@@ -278,20 +274,12 @@ public class UserQuizUseCase {
     public void testAddQuizCount(Long userId, int count) {
         UserEntity user = userService.getUserById(userId);
         
-        if (user.getRole() != Role.ADMIN) {
-            throw new BaseException(CommonResponseCode.FORBIDDEN);
-        }
-        
         user.addAvailableQuizCount(count);
     }
 
     @Transactional
     public void testResetGoalStatus(Long userId, Long goalId) {
         UserEntity user = userService.getUserById(userId);
-        
-        if (user.getRole() != Role.ADMIN) {
-            throw new BaseException(CommonResponseCode.FORBIDDEN);
-        }
         
         Goal targetGoal;
         if (goalId != null) {
