@@ -88,4 +88,27 @@ public interface UserQuizApi {
                 })
         ResponseEntity<ApiResponse<Void>> claimAdReward(
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
+
+        @Operation(summary = "쿠폰 상태 초기화 (테스트용)", description = "광고 시청 및 퀴즈 풀이 횟수 상태를 초기화합니다. (ADMIN 전용)")
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "처리 성공")
+        )
+        ResponseEntity<ApiResponse<Void>> testResetAdReward(
+                        @Parameter(hidden = true) @LoginUser CustomUserDetails user);
+
+        @Operation(summary = "퀴즈 풀이 가능 횟수 추가 (테스트용)", description = "광고 시청 없이 퀴즈 풀이 가능 횟수를 강제로 추가합니다. (ADMIN 전용)")
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "처리 성공")
+        )
+        ResponseEntity<ApiResponse<Void>> testAddQuizCount(
+                        @RequestParam(defaultValue = "1") int count,
+                        @Parameter(hidden = true) @LoginUser CustomUserDetails user);
+
+        @Operation(summary = "현재 목표 완료/만료 상태 초기화 (테스트용)", description = "목표의 완료 상태를 해제하고, 만료되었다면 기간을 일주일 연장합니다. (ADMIN 전용)")
+        @ApiResponseExplanations(
+                success = @ApiSuccessResponseExplanation(description = "처리 성공")
+        )
+        ResponseEntity<ApiResponse<Void>> testResetGoalStatus(
+                        @RequestParam(required = false) @Parameter(description = "리셋할 목표 ID. 안 주면 현재 목표 리셋") Long goalId,
+                        @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 }

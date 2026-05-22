@@ -133,8 +133,7 @@ public class CategoryDocumentUseCase {
         UserEntity user = userService.getUserById(userId);
 
         boolean outOfQuota = !user.canSolveDailyQuiz();
-        boolean isAdmin = user.getRole() == Role.ADMIN;
-        boolean hasSolvedToday = !isAdmin && outOfQuota;
+        boolean hasSolvedToday = outOfQuota;
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
         // 단순 조회: 가장 최근에 발급받은(생성된) 문서를 우선 반환
@@ -243,11 +242,6 @@ public class CategoryDocumentUseCase {
 
     private void checkUnsolvedQuota(Goal goal, Long userId) {
         UserEntity user = userService.getUserById(userId);
-
-        // 관리자는 쿼터 무제한
-        if (user.getRole() == Role.ADMIN) {
-            return;
-        }
         // 오늘의 퀴즈 해결 가능 여부 확인
         if (!user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);

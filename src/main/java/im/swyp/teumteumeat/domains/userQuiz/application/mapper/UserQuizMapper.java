@@ -31,12 +31,6 @@ public class UserQuizMapper {
             isCompleted = currentGoal.isCompleted();
         }
 
-        if (userEntity.getRole() == Role.ADMIN) {
-            hasSolvedToday = false;
-            hasGeneratedContent = false;
-            availableQuizCount = 999;
-        }
-
         return UserQuizStatusResponse.builder()
                 .hasSolvedToday(hasSolvedToday)
                 .isFirstTime(!hasSolvedEver)
