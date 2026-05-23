@@ -56,7 +56,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         oAuth2ResponseHandler.sendRedirectOrJson(
                 request, response,
-                Map.of("accessToken", jwtToken.accessToken(), "refreshToken", jwtToken.refreshToken()),
+                Map.of("accessToken", jwtToken.accessToken()),
+                jwtToken.refreshToken(),
                 HttpStatus.OK.value(),
                 tokenResponse
         );

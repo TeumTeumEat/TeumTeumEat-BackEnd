@@ -66,6 +66,8 @@ spring:
 
 oauth2:
   allowed-redirect-uris:
+    - http://localhost:8081
+    - http://localhost:3000
     - https://admin.teumteumeat.co.kr
   client:
     provider:

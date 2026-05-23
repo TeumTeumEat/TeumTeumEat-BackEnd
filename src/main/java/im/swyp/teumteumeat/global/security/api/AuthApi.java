@@ -11,8 +11,12 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -47,7 +51,10 @@ public interface AuthApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> logOut(
+            @Parameter(hidden = true) @CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
             @RequestParam(required = false) String refreshToken,
-            @LoginUser CustomUserDetails user
+            @LoginUser CustomUserDetails user,
+            HttpServletRequest request,
+            HttpServletResponse response
     );
 }

@@ -6,8 +6,11 @@ import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.dto.ReissueRequest;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "User", description = "유저 API")
@@ -18,5 +21,7 @@ public interface UserApiV2 {
         )
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = TokenResponse.class, description = "재발급 성공"))
         ResponseEntity<ApiResponse<TokenResponse>> tokenReissue(
-                        @RequestBody ReissueRequest request);
+                        @Parameter(hidden = true) @CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
+                        @RequestBody(required = false) ReissueRequest request,
+                        HttpServletResponse response);
 }

@@ -40,6 +40,7 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
         oAuth2ResponseHandler.sendRedirectOrJson(
                 request, response,
                 Map.of("error", "oauth2_login_failed"),
+                null,
                 HttpServletResponse.SC_UNAUTHORIZED,
                 ApiResponse.ofFail(AuthResponseCode.UNAUTHORIZED)
         );
