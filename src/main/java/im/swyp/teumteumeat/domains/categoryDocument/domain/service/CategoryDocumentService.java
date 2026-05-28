@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.categoryDocument.domain.service;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.constant.CategoryDocumentResponseCode;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.categorySubtopic.persistence.entity.CategorySubtopic;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.repository.CategoryDocumentRepository;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -31,6 +32,10 @@ public class CategoryDocumentService {
         return categoryDocumentRepository.findTopByGoal_IdOrderByCreatedDateDesc(goalId);
     }
 
+    public Optional<CategoryDocument> getDocumentByGoalAndSubtopic(Long goalId, Long categorySubtopicId) {
+        return categoryDocumentRepository.findTopByGoal_IdAndCategorySubtopic_IdOrderByCreatedDateDesc(goalId, categorySubtopicId);
+    }
+
     public List<CategoryDocument> getCommonDocuments(Long categoryId) {
         return categoryDocumentRepository.findAllByCategoryIdAndGoalIsNull(categoryId);
     }
@@ -52,7 +57,7 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public String generateTitleandSaveDocument(Category category, Goal goal, String topicInstruction, String content) {
+    public String generateTitleandSaveDocument(Category category, Goal goal, String topicInstruction, String content, CategorySubtopic categorySubtopic) {
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
@@ -63,6 +68,7 @@ public class CategoryDocumentService {
                 .goal(goal)
                 .content(content)
                 .title(generatedTitle)
+                .categorySubtopic(categorySubtopic)
                 .build();
 
         saveDocument(document);

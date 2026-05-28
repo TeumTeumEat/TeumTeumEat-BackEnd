@@ -24,4 +24,6 @@ public interface CategoryDocumentRepository extends JpaRepository<CategoryDocume
     Optional<CategoryDocument> findWithCategoryAndGoalById(Long id);
 
     Optional<CategoryDocument> findTopByGoal_IdOrderByCreatedDateDesc(Long goalId);
+
+    Optional<CategoryDocument> findTopByGoal_IdAndCategorySubtopic_IdOrderByCreatedDateDesc(Long goalId, Long categorySubtopicId);
 }
