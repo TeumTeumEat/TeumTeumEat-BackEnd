@@ -15,4 +15,6 @@ public interface CategorySubtopicRepository extends JpaRepository<CategorySubtop
             Long categoryId, int durationWeeks);
 
     boolean existsByCategoryIdAndDurationWeeks(Long categoryId, int durationWeeks);
+
+    void deleteByCategoryIdAndDurationWeeks(Long categoryId, int durationWeeks);
 }

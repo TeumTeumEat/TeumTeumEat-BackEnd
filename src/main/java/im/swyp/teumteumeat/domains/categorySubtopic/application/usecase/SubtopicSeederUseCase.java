@@ -45,6 +45,9 @@ public class SubtopicSeederUseCase {
                     log.info("스킵 (이미 존재): categoryId={}, {}주", categoryId, weeks);
                     continue;
                 }
+                if (overwrite) {
+                    subtopicService.deleteByCategoryAndDuration(categoryId, weeks);
+                }
                 try {
                     totalCount += generateAndSave(category, weeks);
                 } catch (Exception e) {

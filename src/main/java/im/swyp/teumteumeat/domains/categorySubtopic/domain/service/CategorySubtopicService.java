@@ -34,4 +34,9 @@ public class CategorySubtopicService {
     public void saveAll(List<CategorySubtopic> subtopics) {
         subtopicRepository.saveAll(subtopics);
     }
+
+    @Transactional
+    public void deleteByCategoryAndDuration(Long categoryId, int durationWeeks) {
+        subtopicRepository.deleteByCategoryIdAndDurationWeeks(categoryId, durationWeeks);
+    }
 }
