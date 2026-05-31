@@ -40,7 +40,7 @@ public class SwaggerConfig {
                 .addSecurityItem(securityRequirement)
                 .info(new Info()
                         .title("TeumTeumEat API")
-                        .description("틈틈잇 백엔드 API 문서")
+                        .description("틈틈잇 백엔드 API 문서\n\n[📋 에러 코드 명세 보기](" + serverUrl + "/error-codes)")
                         .version("v1.0"));
     }
 

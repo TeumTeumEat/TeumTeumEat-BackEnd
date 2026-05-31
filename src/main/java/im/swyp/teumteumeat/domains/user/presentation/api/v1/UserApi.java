@@ -29,8 +29,12 @@ public interface UserApi {
         ResponseEntity<ApiResponse<NameResponse>> getName(
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 
-        @Operation(summary = "유저 이름 수정", description = "요청 유저의 이름을 수정합니다." +
-                        "<br>제약사항 : 1~10자, 공백 없는 한영숫자만 가능(^[a-zA-Z0-9가-힣]*$)")
+        @Operation(summary = "유저 이름 수정",
+                  description = """
+                                요청 유저의 이름을 수정합니다.
+                                - 제약사항 : 1~10자, 공백 없는 한영숫자만 가능(^[a-zA-Z0-9가-힣]*$)
+                                """
+        )
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "수정 성공"))
         ResponseEntity<ApiResponse<Void>> updateName(
                         @RequestBody @Valid NameRequest request,
@@ -45,7 +49,7 @@ public interface UserApi {
         ResponseEntity<ApiResponse<CommuteInfoResponse>> getCommuteInfo(
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 
-        @Operation(summary = "출퇴근 정보 수정(생성)", description = "요청 유저의 출퇴근 정보를 수정(초기 생성)합니다.")
+        @Operation(summary = "출퇴근 정보 수정(생성)", description = "요청 유저의 출퇴근 정보를 수정(초기 생성)합니다. (5분:3문제, 7분:5문제, 10분:7문제, 15분+:10문제)")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "수정 성공"))
         ResponseEntity<ApiResponse<Void>> updateCommuteInfo(
                         @RequestBody @Valid CommuteInfoRequest request,
@@ -72,6 +76,7 @@ public interface UserApi {
         ResponseEntity<ApiResponse<AccountInfoResponse>> getAccountInfo(
                         @LoginUser CustomUserDetails user);
 
+        @Deprecated
         @Operation(summary = "토큰 재발급", description = "refreshToken을 이용해 accessToken을 재발급합니다.")
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = String.class, description = "재발급 성공"))
         ResponseEntity<ApiResponse<String>> tokenReissue(
