@@ -28,7 +28,9 @@ public abstract class Constants {
             "/oauth2/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
+            "/webjars/**",
             "/api/v1/webhooks/**",
-            "/actuator/**"
+            "/actuator/**",
+            "/error-codes"
     };
 }

@@ -29,8 +29,7 @@ public interface CategoryApi {
     );
 
     @Operation(
-            summary = "카테고리 추가",
-            description = "관리자(ADMIN)만 추가할 수 있습니다."
+            summary = "(ADMIN) 카테고리 추가"
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
@@ -42,8 +41,7 @@ public interface CategoryApi {
     );
 
     @Operation(
-            summary = "카테고리 수정",
-            description = "관리자(ADMIN)만 수정할 수 있습니다."
+            summary = "(ADMIN) 카테고리 수정"
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
@@ -56,8 +54,7 @@ public interface CategoryApi {
     );
 
     @Operation(
-            summary = "카테고리 삭제",
-            description = "관리자(ADMIN)만 삭제할 수 있습니다."
+            summary = "(ADMIN) 카테고리 삭제"
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
