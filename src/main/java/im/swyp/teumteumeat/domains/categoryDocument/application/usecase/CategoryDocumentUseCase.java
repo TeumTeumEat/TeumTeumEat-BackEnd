@@ -1,12 +1,14 @@
 package im.swyp.teumteumeat.domains.categoryDocument.application.usecase;
 
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
 import im.swyp.teumteumeat.domains.categoryDocument.application.dto.response.CategoryDocumentResponse;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.categorySubtopic.domain.service.CategorySubtopicService;
+import im.swyp.teumteumeat.domains.categorySubtopic.persistence.entity.CategorySubtopic;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
+import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 
@@ -44,6 +47,7 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final DistributedLockFacade distributedLockFacade;
     private final LlmStreamProvider llmStreamProvider;
+    private final CategorySubtopicService categorySubtopicService;
 
     // (User) 요약글 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -52,13 +56,15 @@ public class CategoryDocumentUseCase {
         Category category = goal.getCategory();
         checkUnsolvedQuota(goal, userId);
 
+        Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
+        String topicInstruction = toTopicInstruction(subtopic, goal);
         String lockKey = "lock:category_document:generation:" + goal.getId();
         // 반환값을 직접 받기
         CategoryDocument targetDocument = distributedLockFacade.tryExecuteWithLock(
                 lockKey, 30, 60, TimeUnit.SECONDS,
                 () -> {
-                    String llmPrompt = createLLMPrompt(goal, category);
-                    return createDocumentInternal(goal, category, llmPrompt);
+                    String llmPrompt = createLLMPrompt(category, topicInstruction);
+                    return createDocumentInternal(goal, category, llmPrompt, topicInstruction, subtopic.orElse(null));
                 }
         ).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
 
@@ -78,8 +84,9 @@ public class CategoryDocumentUseCase {
 
             // 프롬프트 생성 로직
             Category category = goal.getCategory();
-            String llmPrompt = createLLMPrompt(goal, category);
-            String topicInstruction = processUserPrompt(goal);
+            Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
+            String topicInstruction = toTopicInstruction(subtopic, goal);
+            String llmPrompt = createLLMPrompt(category, topicInstruction);
 
             // 한 글자씩 sse event로 전송
             llmService.generateContentStream(llmPrompt)
@@ -99,7 +106,7 @@ public class CategoryDocumentUseCase {
                             () -> {
                                 // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
                                 CompletableFuture.supplyAsync(() -> {
-                                            return categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString());
+                                            return categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent.toString(), subtopic.orElse(null));
                                         })
                                         .thenAccept(title -> {
                                             try {
@@ -151,9 +158,10 @@ public class CategoryDocumentUseCase {
         Goal goal = getValidGoal(userId, categoryId);
         Category category = goal.getCategory();
 
-        // 프롬프트 생성 로직
-        String llmPrompt = createLLMPrompt(goal, category);
-        createDocumentInternal(goal, category, llmPrompt);
+        Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
+        String topicInstruction = toTopicInstruction(subtopic, goal);
+        String llmPrompt = createLLMPrompt(category, topicInstruction);
+        createDocumentInternal(goal, category, llmPrompt, topicInstruction, subtopic.orElse(null));
     }
 
     // 단순 조회용 (완료 및 만료 검사 없음)
@@ -182,13 +190,22 @@ public class CategoryDocumentUseCase {
 
     // 공용 요약글 재사용
     private CategoryDocument getCurrentActiveDocument(Goal goal, Long userId) {
+        // 소주제 적용 목표: 현재 소주제에 해당하는 문서만 재활용 대상으로 한정
+        Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
+        if (subtopic.isPresent()) {
+            return categoryDocumentService
+                    .getDocumentByGoalAndSubtopic(goal.getId(), subtopic.get().getId())
+                    .orElse(null);
+        }
+
+        // 소주제 없는 목표: 기존 로직
         // 1. 유저가 직접 생성한 최신 문서가 있는지 확인
         Optional<CategoryDocument> latestDocOpt = categoryDocumentService.getLatestDocumentByGoalId(goal.getId());
         if (latestDocOpt.isPresent()) {
-            return latestDocOpt.get(); // 가장 최근 생성 문서를 우선으로
+            return latestDocOpt.get();
         }
 
-        // 2. 만약 직접 생성한 문서가 없다면, 초기 학습 상태이므로 공용 문서 중 아직 안 푼 가장 첫 번째 문서를 찾음
+        // 2. 초기 학습 상태 - 공용 문서 중 아직 안 푼 첫 번째 문서
         boolean isDefaultPrompt = goal.getPrompt() == null || goal.getPrompt().isBlank();
         if (isDefaultPrompt) {
             List<CategoryDocument> commonDocuments = categoryDocumentService
@@ -205,14 +222,13 @@ public class CategoryDocumentUseCase {
     }
 
     // 요약글 생성 내부 로직
-    private CategoryDocument createDocumentInternal(Goal goal, Category category, String llmPrompt) {
+    private CategoryDocument createDocumentInternal(Goal goal, Category category, String llmPrompt, String topicInstruction, CategorySubtopic categorySubtopic) {
         // CategoryDocument 생성
         String content = llmService.generateContent(llmPrompt);
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         content = ContentUtils.truncateContentSafe(content);
 
         // 제목 생성
-        String topicInstruction = processUserPrompt(goal);
         String generatedTitle = llmService.generateTitle(content, topicInstruction);
 
         CategoryDocument document = CategoryDocument.builder()
@@ -220,6 +236,7 @@ public class CategoryDocumentUseCase {
                 .goal(goal)
                 .content(content)
                 .title(generatedTitle)
+                .categorySubtopic(categorySubtopic)
                 .build();
 
         categoryDocumentService.saveDocument(document);
@@ -227,17 +244,13 @@ public class CategoryDocumentUseCase {
     }
 
     // LLM Prompt 생성
-    private String createLLMPrompt(Goal goal, Category category) {
-        String topicInstruction = processUserPrompt(goal);
-
+    private String createLLMPrompt(Category category, String topicInstruction) {
         String path = category.getPath();
         String description = category.getDescription() != null ? category.getDescription()
                 : path + " " + category.getName();
 
-        String llmPrompt = String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
+        return String.format(DocumentPrompt.GENERATE_DOCUMENT.getTemplate(), category.getName(),
                 path, description, topicInstruction);
-
-        return llmPrompt;
     }
 
     private void checkUnsolvedQuota(Goal goal, Long userId) {
@@ -256,9 +269,26 @@ public class CategoryDocumentUseCase {
         }
     }
 
-    private String processUserPrompt(Goal goal) {
-        String prompt = goal.getPrompt();
-        return (prompt != null && !prompt.isEmpty()) ? prompt : "전반적인 내용";
+    /**
+     * 목표 진행 상황에 맞는 소주제를 반환한다.
+     * @param goal 목표
+     * @return 소주제 (목표 종류가 Document이거나, 소주제가 시딩되어 있지 않으면 Optional.empty() 를 반환)
+     */
+    private Optional<CategorySubtopic> resolveCurrentSubtopic(Goal goal) {
+        if (goal.getType() != GoalType.CATEGORY) {
+            return Optional.empty();
+        }
+        int currentIndex = goal.getCompletedQuizSetCount();
+        int durationWeeks = goal.getTargetQuizSetCount() / 7;
+        return categorySubtopicService.findSubtopic(goal.getCategory().getId(), durationWeeks, currentIndex);
+    }
+
+    private String toTopicInstruction(Optional<CategorySubtopic> subtopic, Goal goal) {
+        String userPrompt = goal.getPrompt();
+        boolean hasUserPrompt = StringUtils.hasText(userPrompt);
+        return subtopic
+                .map(s -> hasUserPrompt ? s.getTitle() + " (" + userPrompt + ")" : s.getTitle())
+                .orElse(hasUserPrompt ? userPrompt : "전반적인 내용");
     }
 
     // 요약글 삭제

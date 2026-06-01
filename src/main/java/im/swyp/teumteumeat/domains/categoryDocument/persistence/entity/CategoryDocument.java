@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.categoryDocument.persistence.entity;
 
 import im.swyp.teumteumeat.domains.category.persistence.entity.Category;
+import im.swyp.teumteumeat.domains.categorySubtopic.persistence.entity.CategorySubtopic;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.global.base.entity.BaseEntity;
@@ -36,14 +37,19 @@ public class CategoryDocument extends BaseEntity {
     @JoinColumn(name = "goal_id")
     private Goal goal;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_subtopic_id")
+    private CategorySubtopic categorySubtopic;
+
     @OneToMany(mappedBy = "categoryDocument", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Quiz> quizzes = new ArrayList<>();
 
     @Builder
-    public CategoryDocument(String content, String title, Category category, Goal goal) {
+    public CategoryDocument(String content, String title, Category category, Goal goal, CategorySubtopic categorySubtopic) {
         this.content = content;
         this.title = title;
         this.category = category;
         this.goal = goal;
+        this.categorySubtopic = categorySubtopic;
     }
 }

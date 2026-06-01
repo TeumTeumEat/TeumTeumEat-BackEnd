@@ -35,7 +35,6 @@ public record GoalCreateRequest(
         String fileKey
 ) {
     @AssertTrue(message = "카테고리 목표 설정 시 카테고리 ID는 필수입니다.")
-    @Schema(hidden = true)
     public boolean isCategoryId() {
         if (type == GoalType.CATEGORY) {
             return categoryId != null;
