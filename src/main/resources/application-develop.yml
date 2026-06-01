@@ -15,10 +15,3 @@ spring:
 
 swagger:
   server-url: ${DEV_SWAGGER_SERVER_URL}
-
-frontend:
-  base-url: ${DEV_BASE_URL}
-  main-page: ${MAIN_PAGE}
-  login-fail-page: ${LOGIN_FAIL_PAGE}
-  local-url: ${LOCAL_URL}
-  local-secure-url: ${LOCAL_SECURE_URL}

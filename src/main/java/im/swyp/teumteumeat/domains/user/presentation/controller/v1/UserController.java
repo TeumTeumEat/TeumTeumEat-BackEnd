@@ -13,7 +13,6 @@ import im.swyp.teumteumeat.domains.user.application.usecase.UserUseCase;
 import im.swyp.teumteumeat.domains.user.presentation.api.v1.UserApi;
 import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
-import im.swyp.teumteumeat.global.security.token.TokenResponse;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.security.dto.ReissueRequest;
@@ -102,12 +101,6 @@ public class UserController implements UserApi {
             @LoginUser CustomUserDetails user) {
         AccountInfoResponse response = userUseCase.getAccountInfo(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
-    }
-
-    @Deprecated
-    @GetMapping("/auth/success")
-    public ResponseEntity<ApiResponse<TokenResponse>> loginSuccess(TokenResponse tokenResponse) {
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, tokenResponse));
     }
 
     @Deprecated
