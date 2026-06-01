@@ -137,6 +137,12 @@ public class UserEntity extends BaseEntity {
         this.availableQuizCount++;
     }
 
+    public void testResetAdReward() {
+        this.availableQuizCount = 1;
+        this.dailyAdRewardCount = 0;
+        this.lastQuizCountResetDate = LocalDate.now();
+    }
+
     public void completeQuizGuide() {
         this.quizGuideSeen = true;
     }

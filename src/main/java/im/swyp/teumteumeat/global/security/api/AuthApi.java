@@ -24,7 +24,13 @@ public interface AuthApi {
 
     @Operation(
             summary = "소셜로그인 회원가입(로그인)",
-            description = "OAuth2 OIDC 회원가입(로그인) 요청"
+            description = """
+                          - 로그인 클릭 시: termsAgreed: false로 요청
+                            - 기존 유저: 로그인 처리 및 토큰 발급
+                            - 신규 유저:
+                              - AUTH-006(401) 예외 수신 시 약관 동의 팝업 노출
+                              - 동의 후 termsAgreed: true로 재요청하여 회원가입 및 로그인 완료
+                          """
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
@@ -53,7 +59,7 @@ public interface AuthApi {
     ResponseEntity<ApiResponse<Void>> logOut(
             @Parameter(hidden = true) @CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
             @RequestParam(required = false) String refreshToken,
-            @LoginUser CustomUserDetails user,
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user,
             HttpServletRequest request,
             HttpServletResponse response
     );

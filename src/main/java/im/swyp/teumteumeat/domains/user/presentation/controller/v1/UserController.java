@@ -103,6 +103,7 @@ public class UserController implements UserApi {
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
+    @Deprecated
     @Override
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<String>> tokenReissue(@RequestBody @Valid ReissueRequest request) {

@@ -280,7 +280,7 @@ public class QuizUseCase {
         }
 
         UserEntity user = userService.getUserById(userId);
-        if (user.getRole() != Role.ADMIN && !user.canSolveDailyQuiz()) {
+        if (!user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 

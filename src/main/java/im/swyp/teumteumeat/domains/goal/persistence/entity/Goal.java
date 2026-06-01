@@ -110,4 +110,14 @@ public class Goal extends BaseEntity {
             }
         }
     }
+
+    public void testResetGoalStatus() {
+        this.isCompleted = false;
+        this.completedQuizSetCount = 0; // 퀴즈를 1번 풀자마자 다시 완료되는 것을 방지
+        
+        // 만약 기간이 이미 만료되었다면 일주일 뒤로 연장
+        if (this.endDate != null && (this.endDate.isBefore(LocalDate.now()) || this.endDate.isEqual(LocalDate.now()))) {
+            this.endDate = LocalDate.now().plusDays(7);
+        }
+    }
 }
