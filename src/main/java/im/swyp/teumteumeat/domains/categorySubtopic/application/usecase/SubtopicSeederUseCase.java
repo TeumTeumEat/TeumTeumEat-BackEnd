@@ -26,6 +26,7 @@ public class SubtopicSeederUseCase {
     private final LLMService llmService;
     private final ObjectMapper objectMapper;
 
+    private static final int MAX_LLM_ATTEMPTS = 4;
     private static final int[] DURATION_WEEKS = {1, 2, 3, 4};
 
     public int seed(Long startId, Long endId, boolean overwrite) {
@@ -71,8 +72,28 @@ public class SubtopicSeederUseCase {
                 weeks, days, days, days
         );
 
-        String raw = llmService.generateContent(prompt);
-        List<String> titles = parseSubtopics(raw, days);
+        List<String> titles = null;
+        for (int attempt = 1; attempt <= MAX_LLM_ATTEMPTS; attempt++) {
+            String raw = llmService.generateContent(prompt);
+            List<String> parsed = parseSubtopics(raw);
+            if (parsed.size() == days) {
+                titles = parsed;
+                break;
+            }
+            log.warn("서브주제 개수 불일치 (시도 {}/{}): categoryId={}, {}주, 기대={}, 실제={}",
+                    attempt, MAX_LLM_ATTEMPTS, category.getId(), weeks, days, parsed.size());
+            if (attempt == MAX_LLM_ATTEMPTS) {
+                if (parsed.size() > days) {
+                    log.warn("최대 재시도 초과, 잘라냄: categoryId={}, {}주, 기대={}, 실제={}",
+                            category.getId(), weeks, days, parsed.size());
+                    titles = parsed.subList(0, days);
+                } else {
+                    log.error("최대 재시도 초과, 개수 부족: categoryId={}, {}주, 기대={}, 실제={}",
+                            category.getId(), weeks, days, parsed.size());
+                    titles = parsed;
+                }
+            }
+        }
 
         List<CategorySubtopic> subtopics = new ArrayList<>();
         for (int i = 0; i < titles.size(); i++) {
@@ -89,17 +110,12 @@ public class SubtopicSeederUseCase {
         return subtopics.size();
     }
 
-    private List<String> parseSubtopics(String raw, int expectedCount) {
+    private List<String> parseSubtopics(String raw) {
         try {
-            // LLM 응답에서 JSON 블록만 추출 (마크다운 코드블록 등 제거)
             String json = extractJson(raw);
             JsonNode node = objectMapper.readTree(json);
             List<String> result = new ArrayList<>();
             node.get("subtopics").forEach(n -> result.add(n.asText()));
-
-            if (result.size() != expectedCount) {
-                log.warn("서브주제 개수 불일치: 기대={}, 실제={}", expectedCount, result.size());
-            }
             return result;
         } catch (Exception e) {
             throw new RuntimeException("서브주제 파싱 실패: " + raw, e);
