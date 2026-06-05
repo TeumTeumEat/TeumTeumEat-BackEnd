@@ -72,13 +72,12 @@ public class CategoryDocumentUseCase {
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
+        Category category = goal.getCategory();
         checkUnsolvedQuota(goal, userId);
 
         // 프롬프트 생성 로직
-        Category category = goal.getCategory();
         Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
         String topicInstruction = toTopicInstruction(subtopic, goal);
-
         String llmPrompt = createLLMPrompt(category, topicInstruction);
 
         // 템플릿 콜백 함수
@@ -88,6 +87,20 @@ public class CategoryDocumentUseCase {
                 (savedDocument) -> savedDocument.getTitle(),
                 null
         );
+    }
+
+    // (Admin) 요약글 생성
+    @Transactional
+    public void createDocument(Long categoryId, Long userId) {
+        Goal goal = getValidGoal(userId, categoryId);
+        Category category = goal.getCategory();
+
+        Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
+        String topicInstruction = toTopicInstruction(subtopic, goal);
+        String llmPrompt = createLLMPrompt(category, topicInstruction);
+
+        String generatedContent = llmService.generateContent(llmPrompt);
+        categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null));
     }
 
     // (User) 요약글 조회
@@ -108,20 +121,6 @@ public class CategoryDocumentUseCase {
         }
 
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
-    }
-
-    // (Admin)
-    @Transactional
-    public void createDocument(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
-        Category category = goal.getCategory();
-
-        Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
-        String topicInstruction = toTopicInstruction(subtopic, goal);
-        String llmPrompt = createLLMPrompt(category, topicInstruction);
-        
-        String generatedContent = llmService.generateContent(llmPrompt);
-        categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null));
     }
 
     // 단순 조회용 (완료 및 만료 검사 없음)
@@ -180,7 +179,6 @@ public class CategoryDocumentUseCase {
 
         return null;
     }
-
 
 
     // LLM Prompt 생성

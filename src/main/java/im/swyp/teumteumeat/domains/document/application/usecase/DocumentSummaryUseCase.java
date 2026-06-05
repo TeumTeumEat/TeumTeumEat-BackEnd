@@ -81,13 +81,11 @@ public class DocumentSummaryUseCase {
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
         validateGoal(goal);
+        goal.validateOwner(userId);
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
-
         checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
         String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
