@@ -46,9 +46,8 @@ public class CategoryDocumentUseCase {
     // (User) 요약글 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocumentResponse generateDocument(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
+        Goal goal = validateAndGetGoalWithQuota(userId, categoryId);
         Category category = goal.getCategory();
-        checkUnsolvedQuota(goal, userId);
 
         Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
         String topicInstruction = toTopicInstruction(subtopic, goal);
@@ -71,9 +70,8 @@ public class CategoryDocumentUseCase {
     // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
-        Goal goal = getValidGoal(userId, categoryId);
+        Goal goal = validateAndGetGoalWithQuota(userId, categoryId);
         Category category = goal.getCategory();
-        checkUnsolvedQuota(goal, userId);
 
         // 프롬프트 생성 로직
         Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
@@ -205,6 +203,13 @@ public class CategoryDocumentUseCase {
                 throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
         }
+    }
+
+    // 퀴즈 풀이 여부 검증 및 Goal 반환
+    private Goal validateAndGetGoalWithQuota(Long userId, Long categoryId) {
+        Goal goal = getValidGoal(userId, categoryId);
+        checkUnsolvedQuota(goal, userId);
+        return goal;
     }
 
     /**

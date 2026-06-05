@@ -53,13 +53,7 @@ public class DocumentSummaryUseCase {
     // 문서 요약 (학습 시 사용 되는 메서드)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
-        Goal goal = goalService.getGoalById(goalId);
-        validateGoal(goal);
-        goal.validateOwner(userId);
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-        checkQuotaAndUnsolvedQuizzes(userId, documentId);
+        Document document = validateAndGetDocumentContext(userId, goalId, documentId);
 
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
 
@@ -80,13 +74,7 @@ public class DocumentSummaryUseCase {
     // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
-        Goal goal = goalService.getGoalById(goalId);
-        validateGoal(goal);
-        goal.validateOwner(userId);
-
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-        checkQuotaAndUnsolvedQuizzes(userId, documentId);
+        Document document = validateAndGetDocumentContext(userId, goalId, documentId);
 
         String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
@@ -170,5 +158,18 @@ public class DocumentSummaryUseCase {
                 throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
         }
+    }
+
+    // 퀴즈 풀이 여부 검증 및 Document 반환
+    private Document validateAndGetDocumentContext(Long userId, Long goalId, Long documentId) {
+        Goal goal = goalService.getGoalById(goalId);
+        validateGoal(goal);
+        goal.validateOwner(userId);
+
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        checkQuotaAndUnsolvedQuizzes(userId, documentId);
+        return document;
     }
 }
