@@ -51,9 +51,7 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
     private final QuizService quizService;
-    private final LLMService llmService;
     private final LlmGenerationTemplate llmGenerationTemplate;
-    private final DistributedLockFacade distributedLockFacade;
 
     // 문서 요약 (학습 시 사용 되는 메서드)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -69,17 +67,16 @@ public class DocumentSummaryUseCase {
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
         String lockKey = "lock:document_summary:generation:" + documentId;
 
-        DocumentSummary summary = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS,
-                () -> {
-                    String summaryContent = llmService.generateContent(prompt);
-                    return documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
-                }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
-
-        quizUseCase.createQuizzesForPdfDocument(document, summary);
+        DocumentSummary documentSummary = llmGenerationTemplate.executeSyncSummary(
+                lockKey,
+                prompt,
+                (generatedContent) -> documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent),
+                (savedSummary) -> quizUseCase.createQuizzesForPdfDocument(document, savedSummary)
+                );
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
+        return DocumentMapper.toDocumentDetailResponse(document, documentSummary, false, isFirstTime);
     }
 
     // Stream 분리 (템플릿 콜백 패턴)
@@ -98,7 +95,7 @@ public class DocumentSummaryUseCase {
         String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
 
-        return llmGenerationTemplate.executeStream(
+        return llmGenerationTemplate.executeStreamSummary(
                 llmPrompt,
                 (generatedContent) -> documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent),
                 (savedSummary) -> savedSummary.getTitle(),

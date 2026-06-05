@@ -1,6 +1,9 @@
 package im.swyp.teumteumeat.domains.llm.application.component;
 
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
+import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -18,14 +22,30 @@ import java.util.function.Function;
 public class LlmGenerationTemplate {
     private final LLMService llmService;
     private final LlmStreamProvider llmStreamProvider;
+    private final DistributedLockFacade distributedLockFacade;
 
     // TODO: 동기식 요약글 생성 로직
+    public <T> T executeSyncSummary(String lockKey, String prompt,
+                                    Function<String, T> saveAction,
+                                    Consumer<T> postAction) {
+        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS,
+                () -> {
+                    String summaryContent = llmService.generateContent(prompt);
+                    T savedEntity = saveAction.apply(summaryContent);
+
+                    if (postAction != null) {
+                        postAction.accept(savedEntity);
+                    }
+                    return savedEntity;
+                }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR)
+        );
+    }
 
 
     // 비동기식 stream 요약글 생성 로직
-    public <T> SseEmitter executeStream(String prompt, Function<String, T> saveAction,
-                                        Function<T, String> titleExtractor,
-                                        Consumer<T> postAction
+    public <T> SseEmitter executeStreamSummary(String prompt, Function<String, T> saveAction,
+                                               Function<T, String> titleExtractor,
+                                               Consumer<T> postAction
                                         ) {
         SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(180_000L);
         StringBuilder generatedContent = new StringBuilder();
