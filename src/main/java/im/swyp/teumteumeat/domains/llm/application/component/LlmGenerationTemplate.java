@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.llm.application.component;
 
+import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class LlmGenerationTemplate {
     private final LlmStreamProvider llmStreamProvider;
 
     // TODO: 동기식 요약글 생성 로직
+
 
     // 비동기식 stream 요약글 생성 로직
     public <T> SseEmitter executeStream(String prompt, Function<String, T> saveAction,
@@ -50,12 +52,20 @@ public class LlmGenerationTemplate {
                             CompletableFuture.supplyAsync(() ->
                                 // 콜백
                                 saveAction.apply(generatedContent.toString()))
-                                        .thenAccept(title -> {
+                                        .thenAccept(savedContent -> {
                                         try {
-                                            // 제목 전송 (프론트엔드는 이 이벤트를 받아 UI의 제목 영역을 업데이트)
-                                            sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                            if (titleExtractor != null) {
+                                                String title = titleExtractor.apply(savedContent);
+                                                sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                            }
+
                                             // 모든 데이터 전송 완료 후 스트림 종료
                                             sseEmitter.complete();
+
+                                            // (DocumentSummary 퀴즈 생성용) 후처리 콜백 비동기 실행
+                                            if (postAction != null) {
+                                                CompletableFuture.runAsync(() -> postAction.accept(savedContent));
+                                            }
                                         } catch (IOException e) {
                                             sseEmitter.completeWithError(e);
                                         }
@@ -71,7 +81,6 @@ public class LlmGenerationTemplate {
     } catch (Exception e) {
         sseEmitter.completeWithError(e);
     }
-
         return sseEmitter;
     }
 }

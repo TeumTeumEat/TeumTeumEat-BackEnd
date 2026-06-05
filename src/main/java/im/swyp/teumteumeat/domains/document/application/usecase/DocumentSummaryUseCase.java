@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSumma
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
+import im.swyp.teumteumeat.domains.llm.application.component.LlmGenerationTemplate;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
@@ -23,16 +24,13 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -51,7 +49,7 @@ public class DocumentSummaryUseCase {
     private final QuizUseCase quizUseCase;
     private final QuizService quizService;
     private final LLMService llmService;
-    private final LlmStreamProvider llmStreamProvider;
+    private final LlmGenerationTemplate llmGenerationTemplate;
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -103,6 +101,8 @@ public class DocumentSummaryUseCase {
         return DocumentMapper.toDocumentDetailResponse(document, summary, false, isFirstTime);
     }
 
+    // Stream 분리 (템플릿 콜백 패턴)
+    // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
@@ -112,66 +112,24 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(); // 기본 10분 설정
-        StringBuilder generatedContent = new StringBuilder();
+        checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
-        try {
-            checkQuotaAndUnsolvedQuizzes(userId, documentId);
+        String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
+                document.getRawContent());
 
-            String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
-                    document.getRawContent());
-
-            // 한 글자씩 sse event로 전송
-            llmService.generateContentStream(llmPrompt)
-                    .subscribe(
-                            parsedText -> {
-                                try {
-                                    sseEmitter.send(SseEmitter.event().name("message").data(parsedText));
-                                    generatedContent.append(parsedText);
-                                } catch (IOException e) {
-                                    sseEmitter.completeWithError(e);
-                                }
-                            },
-                            error -> {
-                                log.error("LLM Stream Error: ", error);
-                                sseEmitter.completeWithError(error);
-                            },
-                            () -> {
-                                // 비동기로 제목 생성 및 DB 저장 (스트리밍용 스레드 블로킹 방지)
-                                CompletableFuture.supplyAsync(() -> {
-                                    return documentSummaryService.generateTitleAndSaveSummary(documentId,
-                                            generatedContent.toString());
-                                })
-                                        .thenAccept(savedSummary -> {
-                                            try {
-                                                sseEmitter.send(
-                                                        SseEmitter.event().name("title").data(savedSummary.getTitle()));
-                                                sseEmitter.complete();
-                                            } catch (IOException e) {
-                                                sseEmitter.completeWithError(e);
-                                            }
-                                            // 퀴즈 생성은 SSE 종료 여부와 상관 없이 비동기
-                                            CompletableFuture.runAsync(() -> {
-                                                try {
-                                                    log.info("백그라운드에서 퀴즈 생성 시작 (문서 ID: {})", documentId);
-                                                    quizUseCase.createQuizzesForPdfDocument(document, savedSummary);
-                                                    log.info("백그라운드 퀴즈 생성 완료 (문서 ID: {})", documentId);
-                                                } catch (Exception e) {
-                                                    log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
-                                                }
-                                            });
-                                        })
-                                        .exceptionally(e -> {
-                                            log.error("문서 저장 중 에러 발생!", e);
-                                            sseEmitter.completeWithError(e);
-                                            return null; // 에러 핸들링
-                                        });
-                            });
-        } catch (Exception e) {
-            sseEmitter.completeWithError(e);
-        }
-
-        return sseEmitter;
+        return llmGenerationTemplate.executeStream(
+                llmPrompt,
+                (generatedContent) -> documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent),
+                (savedSummary) -> savedSummary.getTitle(),
+                (savedSummary) -> {
+                    try {
+                        log.info("백그라운드에서 퀴즈 생성 시작 (문서 ID: {})", documentId);
+                        quizUseCase.createQuizzesForPdfDocument(document, savedSummary);
+                        log.info("백그라운드 퀴즈 생성 완료 (문서 ID: {})", documentId);
+                    } catch (Exception e) {
+                        log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
+                    }
+                });
     }
 
     private void validateGoal(Goal goal) {
