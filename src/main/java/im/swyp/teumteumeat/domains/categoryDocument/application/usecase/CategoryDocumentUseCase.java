@@ -27,13 +27,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -74,7 +71,7 @@ public class CategoryDocumentUseCase {
         return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
     }
 
-    // TODO: Stream 분리 (템플릿 콜백 패턴)
+    // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
@@ -89,8 +86,10 @@ public class CategoryDocumentUseCase {
 
         // 템플릿 콜백 함수
         return llmGenerationTemplate.executeStream(
-                llmPrompt, (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
-                null, null
+                llmPrompt,
+                (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
+                (title) -> title,
+                null
         );
     }
 
