@@ -19,8 +19,6 @@ import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.global.component.DistributedLockFacade;
-import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,7 +29,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @UseCase
@@ -43,7 +40,6 @@ public class CategoryDocumentUseCase {
     private final UserService userService;
     private final UserQuizService userQuizService;
     private final LLMService llmService;
-    private final DistributedLockFacade distributedLockFacade;
     private final LlmGenerationTemplate llmGenerationTemplate;
     private final CategorySubtopicService categorySubtopicService;
 
@@ -56,19 +52,20 @@ public class CategoryDocumentUseCase {
 
         Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
         String topicInstruction = toTopicInstruction(subtopic, goal);
+        String llmPrompt = createLLMPrompt(category, topicInstruction);
+
         String lockKey = "lock:category_document:generation:" + goal.getId();
-        // 반환값을 직접 받기
-        CategoryDocument targetDocument = distributedLockFacade.tryExecuteWithLock(
-                lockKey, 30, 60, TimeUnit.SECONDS,
-                () -> {
-                    String llmPrompt = createLLMPrompt(category, topicInstruction);
-                    return createDocumentInternal(goal, category, llmPrompt, topicInstruction, subtopic.orElse(null));
-                }
-        ).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
+
+        CategoryDocument categoryDocument = llmGenerationTemplate.executeSyncSummary(
+                lockKey,
+                llmPrompt,
+                (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
+                null
+        );
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
-        return CategoryDocumentResponse.from(targetDocument, false, isFirstTime);
+        return CategoryDocumentResponse.from(categoryDocument, false, isFirstTime);
     }
 
     // Stream 분리 (템플릿 콜백 패턴)
@@ -85,10 +82,10 @@ public class CategoryDocumentUseCase {
         String llmPrompt = createLLMPrompt(category, topicInstruction);
 
         // 템플릿 콜백 함수
-        return llmGenerationTemplate.executeStream(
+        return llmGenerationTemplate.executeStreamSummary(
                 llmPrompt,
                 (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
-                (title) -> title,
+                (savedDocument) -> savedDocument.getTitle(),
                 null
         );
     }
@@ -113,6 +110,7 @@ public class CategoryDocumentUseCase {
         return CategoryDocumentResponse.from(targetDocument, hasSolvedToday, isFirstTime);
     }
 
+    // (Admin)
     @Transactional
     public void createDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
@@ -121,7 +119,9 @@ public class CategoryDocumentUseCase {
         Optional<CategorySubtopic> subtopic = resolveCurrentSubtopic(goal);
         String topicInstruction = toTopicInstruction(subtopic, goal);
         String llmPrompt = createLLMPrompt(category, topicInstruction);
-        createDocumentInternal(goal, category, llmPrompt, topicInstruction, subtopic.orElse(null));
+        
+        String generatedContent = llmService.generateContent(llmPrompt);
+        categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null));
     }
 
     // 단순 조회용 (완료 및 만료 검사 없음)
@@ -181,27 +181,7 @@ public class CategoryDocumentUseCase {
         return null;
     }
 
-    // 요약글 생성 내부 로직
-    private CategoryDocument createDocumentInternal(Goal goal, Category category, String llmPrompt, String topicInstruction, CategorySubtopic categorySubtopic) {
-        // CategoryDocument 생성
-        String content = llmService.generateContent(llmPrompt);
-        // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        content = ContentUtils.truncateContentSafe(content);
 
-        // 제목 생성
-        String generatedTitle = llmService.generateTitle(content, topicInstruction);
-
-        CategoryDocument document = CategoryDocument.builder()
-                .category(category)
-                .goal(goal)
-                .content(content)
-                .title(generatedTitle)
-                .categorySubtopic(categorySubtopic)
-                .build();
-
-        categoryDocumentService.saveDocument(document);
-        return document;
-    }
 
     // LLM Prompt 생성
     private String createLLMPrompt(Category category, String topicInstruction) {
