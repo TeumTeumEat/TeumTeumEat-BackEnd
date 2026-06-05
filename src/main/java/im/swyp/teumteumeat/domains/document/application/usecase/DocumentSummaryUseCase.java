@@ -21,16 +21,19 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -50,23 +53,27 @@ public class DocumentSummaryUseCase {
     private final QuizService quizService;
     private final LLMService llmService;
     private final LlmGenerationTemplate llmGenerationTemplate;
+    private final DistributedLockFacade distributedLockFacade;
 
     // 문서 요약 (학습 시 사용 되는 메서드)
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
         validateGoal(goal);
+        goal.validateOwner(userId);
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
-
         checkQuotaAndUnsolvedQuizzes(userId, documentId);
 
         String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
-        String summaryContent = llmService.generateContent(prompt);
-        DocumentSummary summary = documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
+        String lockKey = "lock:document_summary:generation:" + documentId;
+
+        DocumentSummary summary = distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS,
+                () -> {
+                    String summaryContent = llmService.generateContent(prompt);
+                    return documentSummaryService.generateTitleAndSaveSummary(documentId, summaryContent);
+                }).orElseThrow(() -> new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR));
 
         quizUseCase.createQuizzesForPdfDocument(document, summary);
 
