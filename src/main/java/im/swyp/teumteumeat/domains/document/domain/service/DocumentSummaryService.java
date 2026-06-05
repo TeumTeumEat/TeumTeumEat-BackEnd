@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class DocumentSummaryService {
         return documentSummaryRepository.findLatestByDocumentId(documentId);
     }
 
+    @Transactional
     public DocumentSummary generateTitleAndSaveSummary(Long documentId, String summaryContent) {
          // LazyInitializationException 방지 및 업데이트를 위한 영속성 상태 보장을 위해 Goal과 함께 문서 재조회
         Document fetchedDocument = documentRepository.findWithGoalById(documentId)
