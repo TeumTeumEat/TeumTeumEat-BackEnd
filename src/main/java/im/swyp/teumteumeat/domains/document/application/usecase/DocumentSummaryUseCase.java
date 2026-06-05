@@ -51,33 +51,7 @@ public class DocumentSummaryUseCase {
     private final LLMService llmService;
     private final LlmGenerationTemplate llmGenerationTemplate;
 
-    @Transactional
-    public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
-        Goal goal = goalService.getGoalById(goalId);
-        goal.validateOwner(userId);
-
-        // 조회 시에는 완료되거나 만료된 목표여도 기존 데이터 조회를 허용합니다.
-
-        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
-        Document document = documentService.getDocumentById(documentId);
-        document.validateOwner(userId);
-
-        if (document.getRawContent() == null || document.getRawContent().trim().isEmpty()) {
-            throw new BaseException(DocumentResponseCode.DOCUMENT_NOT_READY);
-        }
-
-        UserEntity user = userService.getUserById(userId);
-        boolean outOfQuota = !user.canSolveDailyQuiz();
-        boolean hasSolvedToday = outOfQuota;
-
-        // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
-        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
-        DocumentSummary summary = latestSummaryOpt.orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
-
-        return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
-    }
-
-    // 문서 요약 및 상세 조회 (학습 시 사용 되는 메서드)
+    // 문서 요약 (학습 시 사용 되는 메서드)
     @Transactional
     public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
@@ -130,6 +104,32 @@ public class DocumentSummaryUseCase {
                         log.error("비동기 퀴즈 생성 중 에러 (문서 ID: {})", documentId, e);
                     }
                 });
+    }
+
+    @Transactional
+    public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
+        Goal goal = goalService.getGoalById(goalId);
+        goal.validateOwner(userId);
+
+        // 조회 시에는 완료되거나 만료된 목표여도 기존 데이터 조회를 허용합니다.
+
+        boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
+        Document document = documentService.getDocumentById(documentId);
+        document.validateOwner(userId);
+
+        if (document.getRawContent() == null || document.getRawContent().trim().isEmpty()) {
+            throw new BaseException(DocumentResponseCode.DOCUMENT_NOT_READY);
+        }
+
+        UserEntity user = userService.getUserById(userId);
+        boolean outOfQuota = !user.canSolveDailyQuiz();
+        boolean hasSolvedToday = outOfQuota;
+
+        // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
+        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+        DocumentSummary summary = latestSummaryOpt.orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
+
+        return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
     }
 
     private void validateGoal(Goal goal) {

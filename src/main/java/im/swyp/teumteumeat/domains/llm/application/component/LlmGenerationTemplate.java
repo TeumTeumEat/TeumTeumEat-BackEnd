@@ -1,6 +1,5 @@
 package im.swyp.teumteumeat.domains.llm.application.component;
 
-import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
