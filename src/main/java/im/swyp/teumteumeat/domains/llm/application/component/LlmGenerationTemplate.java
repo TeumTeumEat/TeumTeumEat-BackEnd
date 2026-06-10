@@ -24,7 +24,6 @@ public class LlmGenerationTemplate {
     private final LlmStreamProvider llmStreamProvider;
     private final DistributedLockFacade distributedLockFacade;
 
-    // TODO: 동기식 요약글 생성 로직
     public <T> T executeSyncSummary(String lockKey, String prompt,
                                     Function<String, T> saveAction,
                                     Consumer<T> postAction) {
