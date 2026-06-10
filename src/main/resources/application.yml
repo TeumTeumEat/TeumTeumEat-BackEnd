@@ -65,6 +65,10 @@ spring:
           temperature: 0.7 # 창의성 조절 (0.0 ~ 1.0)
 
 oauth2:
+  allowed-redirect-uris:
+    - http://localhost:8081
+    - http://localhost:3000
+    - https://admin.teumteumeat.co.kr
   client:
     provider:
       apple:

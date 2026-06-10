@@ -20,16 +20,7 @@ spring:
 swagger:
   server-url: ${LOCAL_SWAGGER_SERVER_URL}
 
-frontend:
-  base-url: ${LOCAL_BASE_URL}
-  main-page: ${MAIN_PAGE}
-  login-fail-page: ${LOGIN_FAIL_PAGE}
-  local-url: ${LOCAL_URL}
-  local-secure-url: ${LOCAL_SECURE_URL}
-
 logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
-#    org.springframework.security: DEBUG
-#    org.springframework.security.oauth2: DEBUG

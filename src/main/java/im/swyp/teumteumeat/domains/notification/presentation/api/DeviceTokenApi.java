@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface DeviceTokenApi {
 
     @Operation(
-            summary = "디바이스 토큰 등록"
+            summary = "디바이스 토큰 등록",
+            description = "회원가입 완료 시, 앱 실행 시 호출해주세요."
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(

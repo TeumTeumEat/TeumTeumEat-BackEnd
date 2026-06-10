@@ -15,19 +15,22 @@ import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
+import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
+import im.swyp.teumteumeat.global.sse.component.LlmStreamProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +49,9 @@ public class DocumentSummaryUseCase {
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
+    private final QuizService quizService;
     private final LLMService llmService;
+    private final LlmStreamProvider llmStreamProvider;
 
     @Transactional
     public DocumentDetailResponse getSummaryForView(Long userId, Long goalId, Long documentId) {
@@ -65,7 +70,7 @@ public class DocumentSummaryUseCase {
 
         UserEntity user = userService.getUserById(userId);
         boolean outOfQuota = !user.canSolveDailyQuiz();
-        boolean hasSolvedToday = user.getRole() != Role.ADMIN && outOfQuota;
+        boolean hasSolvedToday = outOfQuota;
 
         // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
         Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
@@ -107,7 +112,7 @@ public class DocumentSummaryUseCase {
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
 
-        SseEmitter sseEmitter = new SseEmitter(10 * 60 * 1000L); // 10분 설정
+        SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(); // 기본 10분 설정
         StringBuilder generatedContent = new StringBuilder();
 
         try {
@@ -181,24 +186,30 @@ public class DocumentSummaryUseCase {
 
     private void checkQuotaAndUnsolvedQuizzes(Long userId, Long documentId) {
         UserEntity user = userService.getUserById(userId);
-        boolean isAdmin = user.getRole() == Role.ADMIN;
 
-        if (!isAdmin && !user.canSolveDailyQuiz()) {
+        if (!user.canSolveDailyQuiz()) {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        if (!isAdmin) {
-            Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
-            if (latestSummaryOpt.isPresent()) {
-                DocumentSummary latestSummary = latestSummaryOpt.get();
-                boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
-                        .anyMatch(uq -> uq.getQuiz() != null &&
-                                uq.getQuiz().getDocumentSummary() != null &&
-                                uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+        if (latestSummaryOpt.isPresent()) {
+            DocumentSummary latestSummary = latestSummaryOpt.get();
 
-                if (!isConsumed) {
-                    throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
-                }
+            // 정상: 생성된 퀴즈가 아예 없는 경우 (생성 실패 또는 비동기 지연 등) 예외를 발생시키지 않음
+            List<Quiz> generatedQuizzes = quizService.getQuizzesByDocumentSummaryId(latestSummary.getId());
+            if (generatedQuizzes.isEmpty()) {
+                return;
+            }
+
+
+            boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
+                    .anyMatch(uq -> uq.getQuiz() != null &&
+                            uq.getQuiz().getDocumentSummary() != null &&
+                            uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+
+            // 에러: 생성된 퀴즈가 있지만 요약글 생성 요청 시
+            if (!isConsumed) {
+                throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
         }
     }

@@ -15,6 +15,7 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -95,5 +96,34 @@ public class UserQuizController implements UserQuizApi {
         UserQuizStatusResponse response = userQuizUseCase.getUserQuizStatus(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @PostMapping("/test/reset-ad-reward")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> testResetAdReward(
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testResetAdReward(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @PostMapping("/test/add-quiz-count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> testAddQuizCount(
+            @RequestParam(defaultValue = "1") int count,
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testAddQuizCount(user.getUserId(), count);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
+    }
+
+    @Override
+    @PostMapping("/test/reset-goal")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> testResetGoalStatus(
+            @RequestParam(required = false) Long goalId,
+            @LoginUser CustomUserDetails user) {
+        userQuizUseCase.testResetGoalStatus(user.getUserId(), goalId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }

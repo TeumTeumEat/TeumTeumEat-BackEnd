@@ -1,6 +1,8 @@
 package im.swyp.teumteumeat.global.security.handler;
 
-import im.swyp.teumteumeat.global.config.properties.FrontendProperties;
+import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.component.OAuth2ResponseHandler;
+import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +14,14 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    private final FrontendProperties frontendProperties;
+    private final OAuth2ResponseHandler oAuth2ResponseHandler;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
@@ -34,6 +37,12 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
         }
 
         log.error("Stack Trace: ", exception);
-        response.sendRedirect(frontendProperties.baseUrl() + frontendProperties.loginFailPage());
+        oAuth2ResponseHandler.sendRedirectOrJson(
+                request, response,
+                Map.of("error", "oauth2_login_failed"),
+                null,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                ApiResponse.ofFail(AuthResponseCode.UNAUTHORIZED)
+        );
     }
 }

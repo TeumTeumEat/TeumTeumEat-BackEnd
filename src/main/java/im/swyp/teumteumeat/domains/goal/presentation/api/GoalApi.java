@@ -38,10 +38,12 @@ public interface GoalApi {
 
     @Operation(
             summary = "목표 생성",
-            description = "요청 유저의 목표를 생성합니다." +
-                    "<br>type이 DOCUMENT인 경우 POST/PATCH에서 categoryId는 입력하지 않으며 category가 반환되지 않습니다." +
-                    "<br>prompt는 30자 이하/미입력 가능하며 null인 경우 반환되지 않습니다." +
-                    "<br>type이 DOCUMENT인 경우이고 /goals/{goalId}/documents를 통해 문서를 등록하지 않고 목표 생성 시에 문서를 등록하려고 하는 경우 fileName과 fileKey 2가지를 입력합니다.(s3 파일 업로드 선행)"
+            description = """
+                          요청 유저의 목표를 생성합니다.
+                          - type이 DOCUMENT인 경우 POST/PATCH에서 categoryId는 입력하지 않으며 category가 반환되지 않습니다.
+                          - prompt는 30자 이하/미입력 가능하며 null인 경우 반환되지 않습니다.
+                          - type이 DOCUMENT인 경우이고 /goals/{goalId}/documents를 통해 문서를 등록하지 않고 목표 생성 시에 문서를 등록하려고 하는 경우 fileName과 fileKey 2가지를 입력합니다.(s3 파일 업로드 선행)
+                          """
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
