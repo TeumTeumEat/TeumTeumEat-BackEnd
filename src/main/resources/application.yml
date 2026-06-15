@@ -126,6 +126,9 @@ server:
       enabled: false
     include-stacktrace: never
     include-message: never
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 management:
   metrics:
