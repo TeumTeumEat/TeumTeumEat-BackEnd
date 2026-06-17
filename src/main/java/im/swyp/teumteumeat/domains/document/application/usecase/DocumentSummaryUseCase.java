@@ -163,8 +163,8 @@ public class DocumentSummaryUseCase {
     // 퀴즈 풀이 여부 검증 및 Document 반환
     private Document validateAndGetDocumentContext(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
-        validateGoal(goal);
         goal.validateOwner(userId);
+        validateGoal(goal);
 
         Document document = documentService.getDocumentById(documentId);
         document.validateOwner(userId);
