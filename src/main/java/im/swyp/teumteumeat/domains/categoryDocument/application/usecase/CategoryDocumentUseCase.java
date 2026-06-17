@@ -58,7 +58,7 @@ public class CategoryDocumentUseCase {
         CategoryDocument categoryDocument = llmGenerationTemplate.executeSyncSummary(
                 lockKey,
                 llmPrompt,
-                (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
+                (generatedContent) -> categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
                 null
         );
 
@@ -81,7 +81,7 @@ public class CategoryDocumentUseCase {
         // 템플릿 콜백 함수
         return llmGenerationTemplate.executeStreamSummary(
                 llmPrompt,
-                (generatedContent) -> categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
+                (generatedContent) -> categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
                 (savedDocument) -> savedDocument.getTitle(),
                 null
         );
@@ -98,7 +98,7 @@ public class CategoryDocumentUseCase {
         String llmPrompt = createLLMPrompt(category, topicInstruction);
 
         String generatedContent = llmService.generateContent(llmPrompt);
-        categoryDocumentService.generateTitleandSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null));
+        categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null));
     }
 
     // (User) 요약글 조회
