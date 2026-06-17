@@ -42,9 +42,12 @@ public class LlmGenerationTemplate {
 
 
     // 비동기식 stream 요약글 생성 로직
-    public <T> SseEmitter executeStreamSummary(String prompt, Function<String, T> saveAction,
+    public <T> SseEmitter executeStreamSummary(String cooldownKey, String prompt, Function<String, T> saveAction,
                                                Function<T, String> titleExtractor,
                                                Consumer<T> postAction) {
+        
+        distributedLockFacade.checkAndSetCooldown(cooldownKey, 30);
+
         SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(180_000L);
         StringBuilder generatedContent = new StringBuilder();
 
@@ -57,11 +60,13 @@ public class LlmGenerationTemplate {
                                 sseEmitter.send(SseEmitter.event().name("message").data(parsedText));
                                 generatedContent.append(parsedText);
                             } catch (IOException e) {
+                                distributedLockFacade.deleteCooldownKey(cooldownKey);
                                 sseEmitter.completeWithError(e);
                             }
                         },
                         error -> {
                             log.error("LLM Stream Error: ", error);
+                            distributedLockFacade.deleteCooldownKey(cooldownKey);
                             sseEmitter.completeWithError(error);
                         },
                         () -> {
@@ -85,9 +90,12 @@ public class LlmGenerationTemplate {
                                                 }
                                             } catch (IOException e) {
                                                 sseEmitter.completeWithError(e);
+                                            } finally {
+                                                distributedLockFacade.deleteCooldownKey(cooldownKey);
                                             }
                                     }).exceptionally(e -> {
                                             log.error("문서 저장 중 에러 발생!", e);
+                                            distributedLockFacade.deleteCooldownKey(cooldownKey);
                                             sseEmitter.completeWithError(e);
                                             return null; // 에러 핸들링
                                     });
@@ -95,6 +103,7 @@ public class LlmGenerationTemplate {
 
                 );
     } catch (Exception e) {
+        distributedLockFacade.deleteCooldownKey(cooldownKey);
         sseEmitter.completeWithError(e);
     }
         return sseEmitter;

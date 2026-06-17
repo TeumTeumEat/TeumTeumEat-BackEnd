@@ -79,7 +79,10 @@ public class DocumentSummaryUseCase {
         String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
                 document.getRawContent());
 
+        String cooldownKey = "cooldown:document_summary:generation:" + documentId;
+
         return llmGenerationTemplate.executeStreamSummary(
+                cooldownKey,
                 llmPrompt,
                 (generatedContent) -> documentSummaryService.generateTitleAndSaveSummary(documentId, generatedContent),
                 (savedSummary) -> savedSummary.getTitle(),

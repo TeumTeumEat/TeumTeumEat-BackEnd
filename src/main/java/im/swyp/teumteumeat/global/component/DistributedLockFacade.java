@@ -80,4 +80,32 @@ public class DistributedLockFacade {
             throw new BaseException(CommonResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * 특정 키에 대해 TTL을 설정하며 저장을 시도(SETNX).
+     * @param key 상태 키
+     * @param ttlSeconds 유지 시간(초)
+     * @throws BaseException 이미 키가 존재할 경우(중복 요청) 예외 발생
+     */
+    public void checkAndSetCooldown(String key, long ttlSeconds) {
+        boolean isFirstRequest = redissonClient.getBucket(key)
+                .trySet("PROCESSING", ttlSeconds, TimeUnit.SECONDS);
+
+        if (!isFirstRequest) {
+            log.warn("Duplicate request blocked by cooldown key: {}", key);
+            throw new BaseException(CommonResponseCode.TOO_MANY_REQUESTS);
+        }
+    }
+
+    /**
+     * 쿨타임(상태) 키를 삭제.
+     * @param key 상태 키
+     */
+    public void deleteCooldownKey(String key) {
+        try {
+            redissonClient.getBucket(key).delete();
+        } catch (Exception e) {
+            log.error("Failed to delete cooldown key: {}", key, e);
+        }
+    }
 }

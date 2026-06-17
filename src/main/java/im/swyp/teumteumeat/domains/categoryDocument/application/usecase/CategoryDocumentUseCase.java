@@ -78,8 +78,11 @@ public class CategoryDocumentUseCase {
         String topicInstruction = toTopicInstruction(subtopic, goal);
         String llmPrompt = createLLMPrompt(category, topicInstruction);
 
+        String cooldownKey = "cooldown:category_document:generation:" + goal.getId();
+
         // 템플릿 콜백 함수
         return llmGenerationTemplate.executeStreamSummary(
+                cooldownKey,
                 llmPrompt,
                 (generatedContent) -> categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
                 (savedDocument) -> savedDocument.getTitle(),
