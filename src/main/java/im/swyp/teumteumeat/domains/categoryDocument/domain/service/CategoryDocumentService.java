@@ -57,23 +57,23 @@ public class CategoryDocumentService {
     }
 
     @Transactional
-    public String generateTitleandSaveDocument(Category category, Goal goal, String topicInstruction, String content, CategorySubtopic categorySubtopic) {
+    public CategoryDocument generateTitleAndSaveDocument(Category category, Goal goal, String topicInstruction, String content, CategorySubtopic categorySubtopic) {
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
-        content = ContentUtils.truncateContentSafe(content);
+        String safeContent = ContentUtils.truncateContentSafe(content);
 
-        String generatedTitle = llmService.generateTitle(content, topicInstruction);
+        String generatedTitle = llmService.generateTitle(safeContent, topicInstruction);
 
         CategoryDocument document = CategoryDocument.builder()
                 .category(category)
                 .goal(goal)
-                .content(content)
+                .content(safeContent)
                 .title(generatedTitle)
                 .categorySubtopic(categorySubtopic)
                 .build();
 
         saveDocument(document);
 
-        return generatedTitle;
+        return document;
     }
 
     @Transactional
