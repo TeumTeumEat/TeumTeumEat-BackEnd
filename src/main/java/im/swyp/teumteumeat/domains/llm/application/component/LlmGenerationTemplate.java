@@ -44,8 +44,7 @@ public class LlmGenerationTemplate {
     // 비동기식 stream 요약글 생성 로직
     public <T> SseEmitter executeStreamSummary(String prompt, Function<String, T> saveAction,
                                                Function<T, String> titleExtractor,
-                                               Consumer<T> postAction
-                                        ) {
+                                               Consumer<T> postAction) {
         SseEmitter sseEmitter = llmStreamProvider.createStreamEmitter(180_000L);
         StringBuilder generatedContent = new StringBuilder();
 
@@ -70,28 +69,27 @@ public class LlmGenerationTemplate {
                             CompletableFuture.supplyAsync(() ->
                                 // 콜백
                                 saveAction.apply(generatedContent.toString()))
-                                        .thenAccept(savedContent -> {
-                                        try {
-                                            if (titleExtractor != null) {
-                                                String title = titleExtractor.apply(savedContent);
-                                                sseEmitter.send(SseEmitter.event().name("title").data(title));
-                                            }
+                                    .thenAccept(savedContent -> {
+                                            try {
+                                                if (titleExtractor != null) {
+                                                    String title = titleExtractor.apply(savedContent);
+                                                    sseEmitter.send(SseEmitter.event().name("title").data(title));
+                                                }
 
-                                            // 모든 데이터 전송 완료 후 스트림 종료
-                                            sseEmitter.complete();
+                                                // 모든 데이터 전송 완료 후 스트림 종료
+                                                sseEmitter.complete();
 
-                                            // (DocumentSummary 퀴즈 생성용) 후처리 콜백 비동기 실행
-                                            if (postAction != null) {
-                                                CompletableFuture.runAsync(() -> postAction.accept(savedContent));
+                                                // (DocumentSummary 퀴즈 생성용) 후처리 콜백 비동기 실행
+                                                if (postAction != null) {
+                                                    CompletableFuture.runAsync(() -> postAction.accept(savedContent));
+                                                }
+                                            } catch (IOException e) {
+                                                sseEmitter.completeWithError(e);
                                             }
-                                        } catch (IOException e) {
+                                    }).exceptionally(e -> {
+                                            log.error("문서 저장 중 에러 발생!", e);
                                             sseEmitter.completeWithError(e);
-                                        }
-                                    })
-                                    .exceptionally(e -> {
-                                        log.error("문서 저장 중 에러 발생!", e);
-                                        sseEmitter.completeWithError(e);
-                                        return null; // 에러 핸들링
+                                            return null; // 에러 핸들링
                                     });
                         }
 
