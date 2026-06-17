@@ -27,7 +27,7 @@ public class LlmGenerationTemplate {
     public <T> T executeSyncSummary(String lockKey, String prompt,
                                     Function<String, T> saveAction,
                                     Consumer<T> postAction) {
-        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS,
+        return distributedLockFacade.tryExecuteWithLock(lockKey, 1, 60, TimeUnit.SECONDS,
                 () -> {
                     String summaryContent = llmService.generateContent(prompt);
                     T savedEntity = saveAction.apply(summaryContent);
