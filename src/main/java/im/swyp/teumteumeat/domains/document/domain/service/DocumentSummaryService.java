@@ -36,15 +36,6 @@ public class DocumentSummaryService {
         Document fetchedDocument = documentRepository.findWithGoalById(documentId)
                 .orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
-        // 최근 30초 내에 동일한 문서에 대해 요약본이 생성되었는지 검사 (더블클릭/중복 생성 방지)
-        LocalDateTime thirtySecondsAgo = LocalDateTime.now().minusSeconds(30);
-        Optional<DocumentSummary> recentSummary = documentSummaryRepository
-                .findFirstByDocumentIdAndCreatedDateAfterOrderByIdDesc(documentId, thirtySecondsAgo);
-
-        if (recentSummary.isPresent()) {
-            throw new BaseException(CommonResponseCode.BAD_REQUEST);
-        }
-
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         String truncatedContent = ContentUtils.truncateContentSafe(summaryContent);
 
