@@ -75,7 +75,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .findBySocialProviderAndSocialId(oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId())
                 .orElseGet(() -> userRepository.save(
                         UserEntity.socialSignup(
-                                oAuth2Attributes.getName(),
+                                oAuth2Attributes.getName().trim(),
                                 oAuth2Attributes.getEmail(),
                                 oAuth2Attributes.getProvider(),
                                 oAuth2Attributes.getProviderId(),
