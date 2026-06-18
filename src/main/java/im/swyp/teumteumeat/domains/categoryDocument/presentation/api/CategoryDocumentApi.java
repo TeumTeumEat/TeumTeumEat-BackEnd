@@ -35,7 +35,6 @@ public interface CategoryDocumentApi {
                 errors = {
                         @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND"),
                         @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
-                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS")
                 })
@@ -60,7 +59,6 @@ public interface CategoryDocumentApi {
                 errors = {
                         @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND"),
                         @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
-                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS")
                 })

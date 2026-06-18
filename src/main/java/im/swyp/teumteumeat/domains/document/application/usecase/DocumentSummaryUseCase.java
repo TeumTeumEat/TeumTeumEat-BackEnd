@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,12 +123,9 @@ public class DocumentSummaryUseCase {
     }
 
     private void validateGoal(Goal goal) {
-        // Goal 달성 및 만료 확인
+        // Goal 달성 확인
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-        }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
     }
 
