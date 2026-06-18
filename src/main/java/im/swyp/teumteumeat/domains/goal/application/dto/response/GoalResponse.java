@@ -19,7 +19,7 @@ public record GoalResponse(
 
                 @Schema(description = "목표 종료일") LocalDate endDate,
 
-                @Schema(description = "목표 만료 여부", example = "true/false") boolean isExpired,
+                @Schema(description = "목표 만료 여부(Deprecated)", example = "false") boolean isExpired,
 
                 @Schema(description = "목표 달성 여부", example = "true/false") boolean isCompleted,
 
