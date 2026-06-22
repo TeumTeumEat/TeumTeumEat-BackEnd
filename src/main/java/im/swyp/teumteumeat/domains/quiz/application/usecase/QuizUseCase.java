@@ -188,13 +188,17 @@ public class QuizUseCase {
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
     public void createQuizzesForPdfDocument(Document document, DocumentSummary documentSummary) {
-        // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
-        int questionCount = calculateQuestionCount(document.getUser().getId());
+        // 비동기 콜백으로 전달된 document는 이전 트랜잭션(세션)에서 분리된 상태이므로
+        // 현재 트랜잭션에 다시 부착된 영속 엔티티를 조회해 지연 로딩 시 세션 단절 문제를 방지
+        Document attachedDocument = documentService.getDocumentById(document.getId());
 
-        String documentContent = document.getRawContent();
+        // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
+        int questionCount = calculateQuestionCount(attachedDocument.getUser().getId());
+
+        String documentContent = attachedDocument.getRawContent();
 
         // Goal 정보 가져오기
-        Goal goal = document.getGoal();
+        Goal goal = attachedDocument.getGoal();
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : (documentSummary.getTitle() != null ? documentSummary.getTitle() : "전반적인 내용");
@@ -207,7 +211,7 @@ public class QuizUseCase {
 
         executeQuizGeneration(basePrompt, topicInstruction,
                 (quizDto, storedTopic) -> quizService.createQuizFromPdfDocument(
-                        document,
+                        attachedDocument,
                         documentSummary,
                         quizDto.question(),
                         convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
