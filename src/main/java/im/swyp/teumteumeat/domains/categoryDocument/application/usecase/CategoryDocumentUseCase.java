@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,9 +140,6 @@ public class CategoryDocumentUseCase {
         }
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-        }
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
         return goal;
     }

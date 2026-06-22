@@ -34,7 +34,6 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @UseCase
@@ -273,10 +272,6 @@ public class QuizUseCase {
 
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-        }
-
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         UserEntity user = userService.getUserById(userId);

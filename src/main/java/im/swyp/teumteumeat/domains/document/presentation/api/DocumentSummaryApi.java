@@ -36,7 +36,6 @@ public interface DocumentSummaryApi {
                 success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"),
                 errors = {
                         @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
-                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS"),
                         @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
@@ -60,7 +59,6 @@ public interface DocumentSummaryApi {
                 success = @ApiSuccessResponseExplanation(responseClass = DocumentDetailResponse.class, description = "생성 요청 성공"),
                 errors = {
                         @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_COMPLETED"),
-                        @ApiErrorResponseExplanation(exceptionCode = GoalResponseCode.class, name = "GOAL_EXPIRED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED"),
                         @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "UNSOLVED_QUIZ_EXISTS"),
                         @ApiErrorResponseExplanation(exceptionCode = CommonResponseCode.class, name = "NOT_FOUND")
