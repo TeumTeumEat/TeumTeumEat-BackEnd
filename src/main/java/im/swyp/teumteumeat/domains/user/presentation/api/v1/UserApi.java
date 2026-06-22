@@ -32,7 +32,7 @@ public interface UserApi {
         @Operation(summary = "유저 이름 수정",
                   description = """
                                 요청 유저의 이름을 수정합니다.
-                                - 제약사항 : 1~10자, 공백 없는 한영숫자만 가능(^[a-zA-Z0-9가-힣]*$)
+                                - 제약사항 : 1~10자, 한영숫자만 가능(^[a-zA-Z0-9가-힣\\s]*$)
                                 """
         )
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(description = "수정 성공"))
