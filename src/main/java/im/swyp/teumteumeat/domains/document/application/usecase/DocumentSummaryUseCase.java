@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.document.application.usecase;
 import im.swyp.teumteumeat.domains.document.application.dto.response.DocumentDetailResponse;
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
 import im.swyp.teumteumeat.domains.document.application.mapper.DocumentMapper;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentSectionService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
@@ -43,6 +44,7 @@ public class DocumentSummaryUseCase {
     private final UserService userService;
     private final UserQuizService userQuizService;
     private final DocumentService documentService;
+    private final DocumentSectionService documentSectionService;
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
@@ -52,9 +54,11 @@ public class DocumentSummaryUseCase {
     // 문서 요약 (학습 시 사용 되는 메서드)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public DocumentDetailResponse createSummary(Long userId, Long goalId, Long documentId) {
-        Document document = validateAndGetDocumentContext(userId, goalId, documentId);
+        DocumentGoalContext context = validateAndGetDocumentContext(userId, goalId, documentId);
+        Document document = context.document();
 
-        String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), document.getRawContent());
+        String sectionContent = documentSectionService.resolveCurrentSectionContent(documentId, context.goal());
+        String prompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), sectionContent);
 
         String lockKey = "lock:document_summary:generation:" + documentId;
 
@@ -73,10 +77,11 @@ public class DocumentSummaryUseCase {
     // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
     public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
-        Document document = validateAndGetDocumentContext(userId, goalId, documentId);
+        DocumentGoalContext context = validateAndGetDocumentContext(userId, goalId, documentId);
+        Document document = context.document();
 
-        String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(),
-                document.getRawContent());
+        String sectionContent = documentSectionService.resolveCurrentSectionContent(documentId, context.goal());
+        String llmPrompt = String.format(DocumentPrompt.GENERATE_PDF_SUMMARY.getTemplate(), sectionContent);
 
         String cooldownKey = "cooldown:document_summary:generation:" + documentId;
 
@@ -159,8 +164,8 @@ public class DocumentSummaryUseCase {
         }
     }
 
-    // 퀴즈 풀이 여부 검증 및 Document 반환
-    private Document validateAndGetDocumentContext(Long userId, Long goalId, Long documentId) {
+    // 퀴즈 풀이 여부 검증 및 Document/Goal 반환
+    private DocumentGoalContext validateAndGetDocumentContext(Long userId, Long goalId, Long documentId) {
         Goal goal = goalService.getGoalById(goalId);
         goal.validateOwner(userId);
         validateGoal(goal);
@@ -169,6 +174,9 @@ public class DocumentSummaryUseCase {
         document.validateOwner(userId);
 
         checkQuotaAndUnsolvedQuizzes(userId, documentId);
-        return document;
+        return new DocumentGoalContext(document, goal);
+    }
+
+    private record DocumentGoalContext(Document document, Goal goal) {
     }
 }
