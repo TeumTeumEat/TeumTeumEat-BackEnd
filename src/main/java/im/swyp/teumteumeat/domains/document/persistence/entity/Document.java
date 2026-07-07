@@ -60,6 +60,7 @@ public class Document extends BaseEntity {
     private String title;
 
     @Lob
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String rawContent;
 
     private LocalDateTime estimateTime;

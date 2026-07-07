@@ -34,7 +34,7 @@ public class DocumentSection extends BaseEntity {
     private Integer sectionIndex;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @Builder
