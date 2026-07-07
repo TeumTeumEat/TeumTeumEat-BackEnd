@@ -57,7 +57,8 @@ spring:
   # LLM
   ai:
     openai:
-      base-url: https://api.openai.com/v1
+      # Spring AI가 completions-path(/v1/chat/completions)를 붙이므로 /v1을 포함하면 안 됨
+      base-url: https://api.openai.com
       api-key: ${OPENAI_API_KEY}
       chat:
         options:
