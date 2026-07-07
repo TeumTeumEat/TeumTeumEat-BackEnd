@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.global.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
@@ -18,13 +19,6 @@ public class RestClientConfig {
     @Value("${rest-client.read-timeout}")
     private long READ_TIMEOUT;
 
-    // OpenAI Config
-    @Value("${spring.ai.openai.api-key}")
-    private String openAiApiKey;
-
-    @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}")
-    private String openAiBaseUrl;
-
     @Bean
     public RestClient restClient() {
         return RestClient.builder()
@@ -33,14 +27,13 @@ public class RestClientConfig {
                 .build();
     }
 
+    // Spring AI의 OpenAiAutoConfiguration이 이 빌더를 주입받아 OpenAI 호출에 사용하므로
+    // 커스텀 타임아웃이 LLM 호출에도 적용된다. 빌더는 가변 객체라 prototype으로 선언한다.
     @Bean
-    public RestClient openAiRestClient() {
+    @Scope("prototype")
+    public RestClient.Builder restClientBuilder() {
         return RestClient.builder()
-                .baseUrl(openAiBaseUrl)
-                .requestFactory(customRequestFactory())
-                .defaultHeader("Authorization", "Bearer " + openAiApiKey)
-                .defaultHeader("Content-Type", "application/json")
-                .build();
+                .requestFactory(customRequestFactory());
     }
 
     private ClientHttpRequestFactory customRequestFactory() {
