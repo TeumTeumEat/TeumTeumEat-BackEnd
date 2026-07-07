@@ -39,12 +39,18 @@ public class LLMService {
                         .build())
                 .build();
 
-        return executeWithExceptionHandling(() -> chatClient.prompt()
-                .system("당신은 퀴즈 생성 전문가입니다.")
-                .user(promptMessage)
-                .options(OpenAiChatOptions.builder().responseFormat(responseFormat).build())
-                .call()
-                .entity(converter));
+        // entity(converter)는 프롬프트 전체를 StringTemplate으로 렌더링해서
+        // 프롬프트 내 JSON 예시의 중괄호가 템플릿 파싱 에러를 일으키므로
+        // content()로 받아 converter로 직접 파싱한다
+        return executeWithExceptionHandling(() -> {
+            String content = chatClient.prompt()
+                    .system("당신은 퀴즈 생성 전문가입니다.")
+                    .user(promptMessage)
+                    .options(OpenAiChatOptions.builder().responseFormat(responseFormat).build())
+                    .call()
+                    .content();
+            return converter.convert(content);
+        });
     }
 
     public String generateContent(String promptMessage) {
