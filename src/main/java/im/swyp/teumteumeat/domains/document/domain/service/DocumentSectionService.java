@@ -1,7 +1,6 @@
 package im.swyp.teumteumeat.domains.document.domain.service;
 
 import im.swyp.teumteumeat.domains.document.domain.constant.DocumentResponseCode;
-import im.swyp.teumteumeat.domains.document.domain.util.DocumentSectionSplitter;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSection;
 import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepository;
@@ -14,11 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * PDF 원문을 목표 진행 일자(N일)에 맞춰 지연(lazy) 분할/조회한다.
- * 최초 조회 시 {@link DocumentSectionSplitter}로 결정적 분할해 저장하고, 이후에는 저장된 섹션을 재사용한다.
+ * 최초 조회 시 {@link DocumentSectionSeeder}로 결정적 분할해 저장하고, 이후에는 저장된 섹션을 재사용한다.
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +29,7 @@ public class DocumentSectionService {
 
     private final DocumentRepository documentRepository;
     private final DocumentSectionRepository documentSectionRepository;
+    private final DocumentSectionSeeder documentSectionSeeder;
 
     @Transactional
     public String resolveCurrentSectionContent(Long documentId, Goal goal) {
@@ -44,32 +43,19 @@ public class DocumentSectionService {
                 .findByDocumentIdAndTotalSectionsOrderBySectionIndex(documentId, totalSections);
 
         if (sections.isEmpty()) {
-            sections = seedSections(document, totalSections);
+            // seed는 별도 트랜잭션(REQUIRES_NEW)에서 수행해, unique 제약 위반으로 flush가
+            // 실패해도 현재 트랜잭션의 영속성 컨텍스트가 오염되지 않도록 격리한다.
+            try {
+                sections = documentSectionSeeder.seedSections(document, totalSections);
+            } catch (DataIntegrityViolationException e) {
+                // 동시 요청으로 이미 다른 트랜잭션이 생성한 경우, 현재(오염되지 않은) 트랜잭션에서 재조회
+                sections = documentSectionRepository
+                        .findByDocumentIdAndTotalSectionsOrderBySectionIndex(documentId, totalSections);
+            }
         }
 
         // 문서가 짧아 실제 섹션 수가 목표 일수보다 적으면, 마지막 섹션을 재사용
         int clampedIndex = Math.min(Math.max(currentIndex, 0), sections.size() - 1);
         return sections.get(clampedIndex).getContent();
-    }
-
-    private List<DocumentSection> seedSections(Document document, int totalSections) {
-        List<String> contents = DocumentSectionSplitter.split(document.getRawContent(), totalSections);
-
-        List<DocumentSection> sections = IntStream.range(0, contents.size())
-                .mapToObj(index -> DocumentSection.builder()
-                        .document(document)
-                        .totalSections(totalSections)
-                        .sectionIndex(index)
-                        .content(contents.get(index))
-                        .build())
-                .toList();
-
-        // 동시 요청시 재생성이 아닌 기존 생성된 로직 반환
-        try {
-            return documentSectionRepository.saveAllAndFlush(sections);
-        } catch (DataIntegrityViolationException e) {
-            return documentSectionRepository
-                    .findByDocumentIdAndTotalSectionsOrderBySectionIndex(document.getId(), totalSections);
-        }
     }
 }
