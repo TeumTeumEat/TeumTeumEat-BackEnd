@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvisor;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.stereotype.Service;
@@ -36,12 +35,10 @@ public class LLMService {
                     .build();
 
     public LLMResponse generateAnswer(String promptMessage) {
-        // 스키마를 프롬프트 텍스트가 아닌 OpenAI Structured Outputs(json_schema, strict)로 전달한다.
-        // native 경로는 options가 StructuredOutputChatOptions 구현체일 때만 활성화된다.
+        // 스키마를 프롬프트 텍스트가 아닌 OpenAI Structured Outputs(json_schema, strict)로 전달한다
         return executeWithExceptionHandling(() -> chatClient.prompt()
                 .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
                 .advisors(quizSchemaValidationAdvisor)
-                .options(OpenAiChatOptions.builder().build())
                 .system("당신은 퀴즈 생성 전문가입니다.")
                 .user(promptMessage)
                 .call()
