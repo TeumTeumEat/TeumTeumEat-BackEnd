@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.quiz.application.usecase;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentSectionService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
@@ -47,6 +48,7 @@ public class QuizUseCase {
     private final QuizMapper quizMapper;
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
+    private final DocumentSectionService documentSectionService;
     private final UserService userService;
     private final GoalService goalService;
     private final DocumentSummaryRepository documentSummaryRepository;
@@ -195,10 +197,10 @@ public class QuizUseCase {
         // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
         int questionCount = calculateQuestionCount(attachedDocument.getUser().getId());
 
-        String documentContent = attachedDocument.getRawContent();
-
         // Goal 정보 가져오기
         Goal goal = attachedDocument.getGoal();
+        String documentContent = documentSectionService.resolveCurrentSectionContent(attachedDocument.getId(), goal);
+
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : (documentSummary.getTitle() != null ? documentSummary.getTitle() : "전반적인 내용");
