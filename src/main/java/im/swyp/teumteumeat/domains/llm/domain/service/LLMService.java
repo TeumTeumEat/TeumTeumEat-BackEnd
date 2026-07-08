@@ -5,10 +5,10 @@ import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvisor;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.ResponseFormat;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.stereotype.Service;
@@ -29,29 +29,23 @@ public class LLMService {
         this.chatClient = chatClientBuilder.build();
     }
 
+    // 스키마 검증 실패 시 에러 내용을 프롬프트에 붙여 재시도한다 (기본 3회)
+    private final StructuredOutputValidationAdvisor quizSchemaValidationAdvisor =
+            StructuredOutputValidationAdvisor.builder()
+                    .outputType(LLMResponse.class)
+                    .build();
+
     public LLMResponse generateAnswer(String promptMessage) {
-        BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-
-        // OpenAI Structured Outputs(json_schema, strict)로 응답 스키마를 강제한다
-        ResponseFormat responseFormat = ResponseFormat.builder()
-                .type(ResponseFormat.Type.JSON_SCHEMA)
-                .jsonSchema(ResponseFormat.JsonSchema.builder()
-                        .schema(converter.getJsonSchemaMap())
-                        .build())
-                .build();
-
-        // entity(converter)는 프롬프트 전체를 StringTemplate으로 렌더링해서
-        // 프롬프트 내 JSON 예시의 중괄호가 템플릿 파싱 에러를 일으키므로
-        // content()로 받아 converter로 직접 파싱한다
-        return executeWithExceptionHandling(() -> {
-            String content = chatClient.prompt()
-                    .system("당신은 퀴즈 생성 전문가입니다.")
-                    .user(promptMessage)
-                    .options(OpenAiChatOptions.builder().responseFormat(responseFormat).build())
-                    .call()
-                    .content();
-            return converter.convert(content);
-        });
+        // 스키마를 프롬프트 텍스트가 아닌 OpenAI Structured Outputs(json_schema, strict)로 전달한다.
+        // native 경로는 options가 StructuredOutputChatOptions 구현체일 때만 활성화된다.
+        return executeWithExceptionHandling(() -> chatClient.prompt()
+                .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                .advisors(quizSchemaValidationAdvisor)
+                .options(OpenAiChatOptions.builder().build())
+                .system("당신은 퀴즈 생성 전문가입니다.")
+                .user(promptMessage)
+                .call()
+                .entity(LLMResponse.class));
     }
 
     public String generateContent(String promptMessage) {
