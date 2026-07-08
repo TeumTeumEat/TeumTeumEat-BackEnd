@@ -54,8 +54,8 @@ public class DocumentSectionService {
             }
         }
 
-        // 문서가 짧아 실제 섹션 수가 목표 일수보다 적으면, 마지막 섹션을 재사용
-        int clampedIndex = Math.min(Math.max(currentIndex, 0), sections.size() - 1);
-        return sections.get(clampedIndex).getContent();
+        // 문서가 짧아 실제 섹션 수가 목표 일수보다 적으면, 처음부터 순환하며 재사용
+        int cycleIndex = Math.max(currentIndex, 0) % sections.size();
+        return sections.get(cycleIndex).getContent();
     }
 }
