@@ -20,7 +20,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class LLMService {
 
-    private static final String STATUS_TOO_MANY_REQUESTS = "429";
+    // Spring AI 1.1의 에러 메시지 포맷은 "HTTP {status} - {body}"
+    private static final String STATUS_TOO_MANY_REQUESTS = "HTTP 429";
 
     private final ChatClient chatClient;
 
@@ -83,7 +84,7 @@ public class LLMService {
         try {
             return apiCall.get();
         } catch (NonTransientAiException e) {
-            // 4xx 에러. 메시지 포맷은 "{status} - {body}" (RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER)
+            // 4xx 에러 (재시도 대상 아님)
             log.error("AI 요청 클라이언트 에러: {}", e.getMessage(), e);
             if (e.getMessage() != null && e.getMessage().startsWith(STATUS_TOO_MANY_REQUESTS)) {
                 throw new BaseException(LLMResponseCode.AI_QUOTA_EXCEEDED);
