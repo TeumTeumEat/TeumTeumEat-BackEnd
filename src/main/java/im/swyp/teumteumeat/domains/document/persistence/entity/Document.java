@@ -71,6 +71,9 @@ public class Document extends BaseEntity {
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Quiz> quizzes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentSection> sections = new ArrayList<>();
+
     @Builder
     private Document(
             UserEntity user,
