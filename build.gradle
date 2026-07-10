@@ -27,7 +27,7 @@ repositories {
 }
 
 ext {
-	set('springAiVersion', '1.0.0-M6')
+	set('springAiVersion', '1.1.8')
 	set('springCloudVersion', '2024.0.0')
 }
 
@@ -74,7 +74,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
 	// Spring AI
-	implementation ('org.springframework.ai:spring-ai-openai-spring-boot-starter') {
+	implementation ('org.springframework.ai:spring-ai-starter-model-openai') {
 		exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
 	}
 

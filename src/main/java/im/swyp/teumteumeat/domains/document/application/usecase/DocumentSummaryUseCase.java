@@ -152,10 +152,8 @@ public class DocumentSummaryUseCase {
             }
 
 
-            boolean isConsumed = userQuizService.getAllQuizzes(userId).stream()
-                    .anyMatch(uq -> uq.getQuiz() != null &&
-                            uq.getQuiz().getDocumentSummary() != null &&
-                            uq.getQuiz().getDocumentSummary().getId().equals(latestSummary.getId()));
+            // 세션이 없는 흐름(NOT_SUPPORTED)에서 호출되므로 lazy proxy 접근 대신 exists 쿼리로 확인
+            boolean isConsumed = userQuizService.hasSolvedSummaryQuiz(userId, latestSummary.getId());
 
             // 에러: 생성된 퀴즈가 있지만 요약글 생성 요청 시
             if (!isConsumed) {

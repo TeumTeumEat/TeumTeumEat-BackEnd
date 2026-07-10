@@ -48,6 +48,13 @@ public class UserQuizService {
     }
 
     /**
+     * 특정 요약글(DocumentSummary)의 퀴즈를 푼 적이 있는지 확인
+     */
+    public boolean hasSolvedSummaryQuiz(Long userId, Long documentSummaryId) {
+        return userQuizRepository.existsByUserIdAndQuiz_DocumentSummary_Id(userId, documentSummaryId);
+    }
+
+    /**
      * 소비된 CategoryDocument ID 목록 반환 (냠냠지식)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
