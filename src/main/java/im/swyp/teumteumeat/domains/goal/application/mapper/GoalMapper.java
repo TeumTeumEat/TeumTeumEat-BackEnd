@@ -51,7 +51,7 @@ public class GoalMapper {
                 .type(goal.getType())
                 .startDate(startDate)
                 .endDate(endDate)
-                .isExpired(endDate.isBefore(LocalDate.now()))
+                .isExpired(false)
                 .isCompleted(goal.isCompleted())
                 .studyPeriod(studyPeriod)
                 .difficulty(goal.getDifficulty())

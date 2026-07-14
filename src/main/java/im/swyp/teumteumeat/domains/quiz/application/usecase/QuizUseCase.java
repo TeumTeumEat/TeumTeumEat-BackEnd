@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.quiz.application.usecase;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentSectionService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
@@ -34,7 +35,6 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @UseCase
@@ -48,6 +48,7 @@ public class QuizUseCase {
     private final QuizMapper quizMapper;
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
+    private final DocumentSectionService documentSectionService;
     private final UserService userService;
     private final GoalService goalService;
     private final DocumentSummaryRepository documentSummaryRepository;
@@ -189,13 +190,17 @@ public class QuizUseCase {
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
     @Transactional
     public void createQuizzesForPdfDocument(Document document, DocumentSummary documentSummary) {
-        // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
-        int questionCount = calculateQuestionCount(document.getUser().getId());
+        // 비동기 콜백으로 전달된 document는 이전 트랜잭션(세션)에서 분리된 상태이므로
+        // 현재 트랜잭션에 다시 부착된 영속 엔티티를 조회해 지연 로딩 시 세션 단절 문제를 방지
+        Document attachedDocument = documentService.getDocumentById(document.getId());
 
-        String documentContent = document.getRawContent();
+        // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
+        int questionCount = calculateQuestionCount(attachedDocument.getUser().getId());
 
         // Goal 정보 가져오기
-        Goal goal = document.getGoal();
+        Goal goal = attachedDocument.getGoal();
+        String documentContent = documentSectionService.resolveCurrentSectionContent(attachedDocument.getId(), goal);
+
         Difficulty difficulty = goal.getDifficulty();
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : (documentSummary.getTitle() != null ? documentSummary.getTitle() : "전반적인 내용");
@@ -208,7 +213,7 @@ public class QuizUseCase {
 
         executeQuizGeneration(basePrompt, topicInstruction,
                 (quizDto, storedTopic) -> quizService.createQuizFromPdfDocument(
-                        document,
+                        attachedDocument,
                         documentSummary,
                         quizDto.question(),
                         convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
@@ -273,10 +278,6 @@ public class QuizUseCase {
 
         if (goal.isCompleted()) {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
-        }
-
-        if (goal.getEndDate().isBefore(LocalDate.now())) {
-            throw new BaseException(GoalResponseCode.GOAL_EXPIRED);
         }
 
         UserEntity user = userService.getUserById(userId);

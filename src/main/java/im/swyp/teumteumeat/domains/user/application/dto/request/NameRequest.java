@@ -9,7 +9,7 @@ public record NameRequest(
 
         @NotBlank(message = "비어있을 수 없습니다.")
         @Size(min = 1, max = 10, message = "10자 이하이어야 합니다.")
-        @Pattern(regexp = "^[a-zA-Z0-9가-힣]*$", message = "공백없는 한영숫자로만 가능합니다.")
+        @Pattern(regexp = "^[a-zA-Z0-9가-힣\\s]*$", message = "한글, 영문, 숫자, 공백만 가능합니다.")
         @Schema(description = "이름", example = "이효재")
         String name
 ) {

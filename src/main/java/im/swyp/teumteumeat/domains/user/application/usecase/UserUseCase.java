@@ -38,7 +38,7 @@ public class UserUseCase {
     @Transactional
     public void updateName(Long userId, NameRequest request) {
         UserEntity user = userService.getUserById(userId);
-        String name = request.name();
+        String name = request.name().trim();
         userService.updateName(user, name);
     }
 

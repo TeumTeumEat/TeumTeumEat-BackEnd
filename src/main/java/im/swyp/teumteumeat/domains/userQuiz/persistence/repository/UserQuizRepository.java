@@ -42,6 +42,8 @@ public interface UserQuizRepository extends JpaRepository<UserQuiz, Long> {
         boolean existsByUserIdAndQuiz_Document_Goal_IdAndCreatedDateBetween(Long userId, Long goalId,
                         LocalDateTime start, LocalDateTime end);
 
+        boolean existsByUserIdAndQuiz_DocumentSummary_Id(Long userId, Long documentSummaryId);
+
         void deleteAllByUserId(Long userId);
 
         @Query("SELECT DISTINCT uq.user FROM UserQuiz uq WHERE uq.createdDate BETWEEN :start AND :end")
