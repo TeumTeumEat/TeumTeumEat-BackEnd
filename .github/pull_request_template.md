@@ -16,3 +16,4 @@
 - [x] 테스트 통과 확인
 - [] 서버 실행 확인
 - [] API 동작 확인
+- [] DB 스키마 변경(테이블 생성/컬럼 변경/삭제 등)이 있다면 `docs/flyway_migration_guide.md` 참고하여 Flyway 마이그레이션 작성
