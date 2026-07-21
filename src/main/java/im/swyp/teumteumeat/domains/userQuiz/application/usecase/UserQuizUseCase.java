@@ -110,9 +110,16 @@ public class UserQuizUseCase {
             DocumentSummary latestSummary = documentSummaryService.getLatestSummaryByDocumentId(documentId)
                     .orElse(null);
             if (latestSummary == null) {
-                return Collections.emptyList();
+                throw new BaseException(QuizResponseCode.QUIZ_GENERATING);
             }
             quizzesUnsolved = quizService.getUnsolvedDocumentQuizzes(latestSummary.getId(), userId, quizCount);
+            
+            if (quizzesUnsolved.isEmpty()) {
+                List<Quiz> allQuizzes = quizService.getQuizzesByDocumentSummaryId(latestSummary.getId());
+                if (allQuizzes.isEmpty()) {
+                    throw new BaseException(QuizResponseCode.QUIZ_GENERATING);
+                }
+            }
         } else {
             quizzesUnsolved = getPrioritizedQuizzes(documentId, userId, quizCount);
             // getPrioritizedQuizzes에서 빈 리스트가 돌아왔을 경우
