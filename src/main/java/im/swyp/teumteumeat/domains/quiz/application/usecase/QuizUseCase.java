@@ -28,7 +28,7 @@ import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
@@ -146,14 +146,17 @@ public class QuizUseCase {
             + "- type: 퀴즈 타입 ('MCQ' 또는 'OX')\n"
             + "- explanation: 정답에 대한 해설\n";
 
-    private void executeQuizGeneration(String basePrompt, String topic, BiConsumer<LLMResponse.Quiz, String> saver) {
+    private void executeQuizGeneration(String basePrompt, String topic, BiFunction<LLMResponse.Quiz, String, Quiz> quizBuilder) {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
         String fullPrompt = basePrompt + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
 
         LLMResponse response = llmService.generateAnswer(fullPrompt);
         String storedTopic = truncateTopic(topic);
 
-        response.quizzes().forEach(quizDto -> saver.accept(quizDto, storedTopic));
+        List<Quiz> quizzes = response.quizzes().stream()
+                .map(quizDto -> quizBuilder.apply(quizDto, storedTopic))
+                .toList();
+        quizService.saveQuizzes(quizzes);
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String categoryPath,
@@ -168,7 +171,7 @@ public class QuizUseCase {
                 difficulty,
                 topic);
 
-        executeQuizGeneration(basePrompt, topic, (quizDto, storedTopic) -> quizService.createQuizFromCategoryDocument(
+        executeQuizGeneration(basePrompt, topic, (quizDto, storedTopic) -> quizService.buildQuizFromCategoryDocument(
                 document,
                 quizDto.question(),
                 convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
@@ -212,7 +215,7 @@ public class QuizUseCase {
                 topicInstruction); // 주제 (없으면 전반적인 내용)
 
         executeQuizGeneration(basePrompt, topicInstruction,
-                (quizDto, storedTopic) -> quizService.createQuizFromPdfDocument(
+                (quizDto, storedTopic) -> quizService.buildQuizFromPdfDocument(
                         attachedDocument,
                         documentSummary,
                         quizDto.question(),
