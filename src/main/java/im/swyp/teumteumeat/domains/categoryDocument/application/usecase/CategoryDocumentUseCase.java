@@ -68,6 +68,7 @@ public class CategoryDocumentUseCase {
 
     // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public SseEmitter generateDocumentStream(Long categoryId, Long userId) {
         Goal goal = validateAndGetGoalWithQuota(userId, categoryId);
         Category category = goal.getCategory();
@@ -90,7 +91,7 @@ public class CategoryDocumentUseCase {
     }
 
     // (Admin) 요약글 생성
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createDocument(Long categoryId, Long userId) {
         Goal goal = getValidGoal(userId, categoryId);
         Category category = goal.getCategory();

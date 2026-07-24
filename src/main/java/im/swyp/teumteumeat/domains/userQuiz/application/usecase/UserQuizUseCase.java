@@ -124,7 +124,7 @@ public class UserQuizUseCase {
                 // 프롬프트가 있는 경우에만 퀴즈 생성
                 // 프롬프트가 없는(Default) 경우에는 기존 퀴즈만 제공
 
-                CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+                CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
                 Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
                 boolean hasCustomPrompt = goal.getPrompt() != null && !goal.getPrompt().isBlank();
 

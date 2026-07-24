@@ -5,9 +5,9 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.domains.categoryDocument.persistence.entity.CategoryDocument;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSectionService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
+import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
-import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
@@ -19,12 +19,12 @@ import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
@@ -51,7 +51,7 @@ public class QuizUseCase {
     private final DocumentSectionService documentSectionService;
     private final UserService userService;
     private final GoalService goalService;
-    private final DocumentSummaryRepository documentSummaryRepository;
+    private final DocumentSummaryService documentSummaryService;
 
     // 카테고리 기반 퀴즈
     public QuizListResponse getQuizzesByCategoryDocumentId(Long categoryDocumentId) {
@@ -77,16 +77,16 @@ public class QuizUseCase {
     }
 
     // 퀴즈 세트 생성 (CategoryDocument) - 기본 (이동시간 기준)
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createQuizzesForDocument(Long documentId, Long userId) {
         int questionCount = calculateQuestionCount(userId);
         createQuizzesForDocument(documentId, userId, questionCount);
     }
 
     // 퀴즈 세트 생성 (CategoryDocument) - 문제 수 지정 (퀴즈 채우기 용)
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createQuizzesForDocument(Long documentId, Long userId, int questionCount) {
-        CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+        CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
@@ -95,7 +95,6 @@ public class QuizUseCase {
 
         // Goal의 difficulty(Enum)와 prompt(String) 사용
         Difficulty difficulty = goal.getDifficulty();
-        // Topic 조회
         // Topic 조회
         String topicInstruction = goalService.getTopic(userId, document.getCategory().getId());
 
@@ -108,9 +107,9 @@ public class QuizUseCase {
     }
 
     // 퀴즈 Seeder용: 특정 문서에 대해 모든 난이도의 기본(전반적인 내용) 퀴즈가 없으면 생성
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createDefaultQuizzesForCategoryDocument(Long documentId) {
-        CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+        CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
         String categoryName = document.getCategory().getName();
         String documentContent = document.getContent();
 
@@ -191,11 +190,11 @@ public class QuizUseCase {
     }
 
     // 퀴즈 세트 생성 (PDF Document), 파일 업로드 직후
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createQuizzesForPdfDocument(Document document, DocumentSummary documentSummary) {
-        // 비동기 콜백으로 전달된 document는 이전 트랜잭션(세션)에서 분리된 상태이므로
-        // 현재 트랜잭션에 다시 부착된 영속 엔티티를 조회해 지연 로딩 시 세션 단절 문제를 방지
-        Document attachedDocument = documentService.getDocumentById(document.getId());
+        // 비동기 콜백으로 전달된 document는 이전 트랜잭션(세션)에서 분리된 상태이고, 이 메서드
+        // 자체도 NOT_SUPPORTED라 세션이 없으므로 Goal/User를 lazy 로딩하지 않도록 fetch join 조회 사용
+        Document attachedDocument = documentService.getDocumentWithGoalAndUserById(document.getId());
 
         // 사용자의 이동 시간을 기준에 따라 퀴즈 수 맞춰서 퀴즈 생성
         int questionCount = calculateQuestionCount(attachedDocument.getUser().getId());
@@ -228,15 +227,15 @@ public class QuizUseCase {
     }
 
     // 퀴즈 세트 생성 (PDF Document) - Document ID, 퀴즈 재생성
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createQuizzesForPdfDocumentById(Long documentId, Long userId) {
-        Document document = documentService.getDocumentById(documentId);
+        Document document = documentService.getDocumentWithGoalAndUserById(documentId);
         document.validateOwner(userId);
 
         validateGoal(document.getGoal(), userId, null);
 
         // 최신 DocumentSummary 조회
-        DocumentSummary summary = documentSummaryRepository.findLatestByDocumentId(documentId)
+        DocumentSummary summary = documentSummaryService.getLatestSummaryByDocumentId(documentId)
                 .orElseThrow(() -> new BaseException(QuizResponseCode.NOT_FOUND_QUIZ)); // or appropriate error
 
         createQuizzesForPdfDocument(document, summary);

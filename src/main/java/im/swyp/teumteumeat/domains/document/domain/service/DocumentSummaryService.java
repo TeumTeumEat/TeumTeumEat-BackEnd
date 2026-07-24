@@ -9,9 +9,10 @@ import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.util.ContentUtils;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,18 +20,29 @@ import java.time.LocalTime;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class DocumentSummaryService {
 
     private final LLMService llmService;
     private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentRepository documentRepository;
+    private final TransactionTemplate transactionTemplate;
 
+    public DocumentSummaryService(
+            LLMService llmService,
+            DocumentSummaryRepository documentSummaryRepository,
+            DocumentRepository documentRepository,
+            PlatformTransactionManager transactionManager) {
+        this.llmService = llmService;
+        this.documentSummaryRepository = documentSummaryRepository;
+        this.documentRepository = documentRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<DocumentSummary> getLatestSummaryByDocumentId(Long documentId) {
         return documentSummaryRepository.findLatestByDocumentId(documentId);
     }
 
-    @Transactional
     public DocumentSummary generateTitleAndSaveSummary(Long documentId, String summaryContent) {
          // LazyInitializationException 방지 및 업데이트를 위한 영속성 상태 보장을 위해 Goal과 함께 문서 재조회
         Document fetchedDocument = documentRepository.findWithGoalById(documentId)
@@ -46,18 +58,22 @@ public class DocumentSummaryService {
                 .orElse("전반적인 내용");
 
         String generatedTitle = llmService.generateTitle(truncatedContent, topicInstruction);
-        fetchedDocument.updateTitle(generatedTitle);
-        documentRepository.save(fetchedDocument); // 분리된(detached) 혹은 재조회된 엔티티에 대한 명시적 저장
 
-        // DocumentSummary 저장
-        DocumentSummary documentSummary = DocumentSummary.builder()
-                .document(fetchedDocument)
-                .summary(truncatedContent)
-                .title(generatedTitle)
-                .build();
-        return documentSummaryRepository.save(documentSummary);
+        return transactionTemplate.execute(status -> {
+            fetchedDocument.updateTitle(generatedTitle);
+            documentRepository.save(fetchedDocument); // 분리된(detached) 혹은 재조회된 엔티티에 대한 명시적 저장
+
+            // DocumentSummary 저장
+            DocumentSummary documentSummary = DocumentSummary.builder()
+                    .document(fetchedDocument)
+                    .summary(truncatedContent)
+                    .title(generatedTitle)
+                    .build();
+            return documentSummaryRepository.save(documentSummary);
+        });
     }
 
+    @Transactional(readOnly = true)
     public boolean hasSummaryCreatedToday(Long userId) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
