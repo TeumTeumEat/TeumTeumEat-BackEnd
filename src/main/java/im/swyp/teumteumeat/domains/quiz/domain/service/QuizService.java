@@ -10,6 +10,7 @@ import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,20 +36,15 @@ public class QuizService {
                 return quizRepository.findByDocumentSummaryId(documentSummaryId);
         }
 
-        public List<Quiz> getUnsolvedCategoryQuizzes(Long categoryDocumentId, Long userId, int limit) {
-                return quizRepository.findUnsolvedCategoryQuizzes(categoryDocumentId, userId,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
-        }
-
         public List<Quiz> getUnsolvedQuizzesByAttributes(Long categoryDocumentId, Long userId, Difficulty difficulty,
                         String topic, int limit) {
                 return quizRepository.findUnsolvedQuizzesByAttributes(categoryDocumentId, userId, difficulty, topic,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
+                                PageRequest.of(0, limit));
         }
 
         public List<Quiz> getUnsolvedDocumentQuizzes(Long documentSummaryId, Long userId, int limit) {
                 return quizRepository.findUnsolvedByDocumentSummaryId(documentSummaryId, userId,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
+                                PageRequest.of(0, limit));
         }
 
         public Quiz getQuizById(Long quizId) {
