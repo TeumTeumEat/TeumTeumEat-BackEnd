@@ -36,7 +36,7 @@ public class DocumentService {
                 .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
     }
 
-    public Optional<Document> getDocumnetByFileKeyOptional(String fileKey) {
+    public Optional<Document> getDocumentByFileKeyOptional(String fileKey) {
         return documentRepository.findByFileKey(fileKey);
     }
 
