@@ -10,7 +10,6 @@ import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
 import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
-import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.request.QuizSubmissionRequest;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSetResponse;
 import im.swyp.teumteumeat.domains.userQuiz.application.dto.response.QuizSubmissionResponse;
@@ -28,10 +27,8 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import im.swyp.teumteumeat.global.sse.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,8 +58,6 @@ public class UserQuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
-    private final ApplicationEventPublisher eventPublisher;
-    private final NotificationService notificationService;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -136,7 +131,7 @@ public class UserQuizUseCase {
                 // 프롬프트가 있는 경우에만 퀴즈 생성
                 // 프롬프트가 없는(Default) 경우에는 기존 퀴즈만 제공
 
-                CategoryDocument document = categoryDocumentService.getDocumentById(documentId);
+                CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
                 Goal goal = goalService.findLatestGoal(userId, document.getCategory().getId());
                 boolean hasCustomPrompt = goal.getPrompt() != null && !goal.getPrompt().isBlank();
 

@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.global.util.ContentUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -56,7 +57,7 @@ public class CategoryDocumentService {
                 .orElseThrow(() -> new BaseException(CategoryDocumentResponseCode.NOT_FOUND_CATEGORY_DOCUMENT));
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CategoryDocument generateTitleAndSaveDocument(Category category, Goal goal, String topicInstruction, String content, CategorySubtopic categorySubtopic) {
         // LLM이 길게 생성할 경우를 대비하여 길이 제한 (공백 포함 600자) - 문장 단위로 자르기
         String safeContent = ContentUtils.truncateContentSafe(content);

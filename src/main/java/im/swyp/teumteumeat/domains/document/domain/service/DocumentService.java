@@ -9,12 +9,14 @@ import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentRepos
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
@@ -24,12 +26,17 @@ public class DocumentService {
         return getOrThrow(documentId);
     }
 
+    public Document getDocumentWithGoalAndUserById(Long documentId) {
+        return documentRepository.findWithGoalAndUserById(documentId)
+                .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
+    }
+
     public Document getDocumentByFileKey(String fileKey) {
         return documentRepository.findByFileKey(fileKey)
                 .orElseThrow(() -> new BaseException(DocumentResponseCode.NOT_FOUND_DOCUMENT));
     }
 
-    public Optional<Document> getDocumnetByFileKeyOptional(String fileKey) {
+    public Optional<Document> getDocumentByFileKeyOptional(String fileKey) {
         return documentRepository.findByFileKey(fileKey);
     }
 
@@ -37,6 +44,7 @@ public class DocumentService {
         return documentRepository.findAllByGoalId(goalId);
     }
 
+    @Transactional
     public Document getOrSaveDocument(String fileKey, String fileName) {
         return documentRepository.findByFileKey(fileKey)
                 .orElseGet(() -> {
@@ -45,18 +53,22 @@ public class DocumentService {
                 });
     }
 
+    @Transactional
     public void createDocument(Document document) {
         documentRepository.save(document);
     }
 
+    @Transactional
     public void createDocumentPart(DocumentPart documentPart) {
         documentPartRepository.save(documentPart);
     }
 
+    @Transactional
     public void deleteDocumentsByGoalId(Long goalId) {
         documentRepository.deleteAllByGoalId(goalId);
     }
 
+    @Transactional
     public void deleteDocument(Long documentId) {
         documentRepository.deleteById(documentId);
     }
