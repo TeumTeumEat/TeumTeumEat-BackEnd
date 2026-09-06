@@ -67,7 +67,7 @@ public class UserWithdrawalUseCase {
 
     private void unlinkKakao(String socialId) {
         if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
-            log.error("Kakao Admin Key is not configured. Skipping unlink.");
+            log.warn("Kakao Admin Key is not configured. Skipping unlink.");
             return;
         }
 
