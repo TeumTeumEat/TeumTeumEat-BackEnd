@@ -29,7 +29,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
      */
     @Override
     public void commence(final HttpServletRequest request, final HttpServletResponse response, final AuthenticationException authException) throws IOException {
-        log.debug("Unauthorized request. Path: {}", request.getRequestURI());
+        log.warn("Unauthorized request. Path: {}", request.getRequestURI());
 
         log.debug("Authentication entry point exception details: ", authException);
         ResponseUtil.responseError(response, objectMapper, AuthResponseCode.UNAUTHORIZED);
