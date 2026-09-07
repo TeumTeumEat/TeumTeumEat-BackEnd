@@ -108,7 +108,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("HttpRequestMethodNotSupportedException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.METHOD_NOT_ALLOWED;
         return ResponseEntity
                 .status(responseCode.getStatus())
@@ -118,7 +117,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("MethodArgumentNotValidException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.INVALID_METHOD_ARGUMENT;
         return ResponseEntity
                 .status(responseCode.getStatus())
@@ -128,7 +126,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("JSON Parse Error: ", e);
         BaseResponseCode responseCode = CommonResponseCode.BAD_REQUEST;
         return ResponseEntity
                 .status(responseCode.getStatus())
