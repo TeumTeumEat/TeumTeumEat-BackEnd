@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.8'
 	id 'io.spring.dependency-management' version '1.1.5'
 	id 'java'
+	id 'io.sentry.jvm.gradle' version '6.22.0'
 }
 
 group = 'im.swyp'
@@ -11,6 +12,17 @@ java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
+}
+
+sentry {
+	// Generates a JVM (Java, Kotlin, etc.) source bundle and uploads your source code to Sentry.
+	// This enables source context, allowing you to see your source
+	// code as part of your stack traces in Sentry.
+	includeSourceContext = true
+
+	org = "teumteumeat"
+	projectName = "java-spring-boot"
+	authToken = System.getenv("SENTRY_AUTH_TOKEN")
 }
 
 configurations {
@@ -82,6 +94,7 @@ dependencies {
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.sentry:sentry-async-profiler:8.56.0'
 
 	// SSE streaming
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
