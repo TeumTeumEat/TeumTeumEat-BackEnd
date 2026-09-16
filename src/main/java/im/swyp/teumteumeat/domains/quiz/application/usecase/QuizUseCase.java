@@ -282,11 +282,8 @@ public class QuizUseCase {
             throw new BaseException(GoalResponseCode.GOAL_COMPLETED);
         }
 
-        UserEntity user = userService.getUserById(userId);
-        if (!user.canSolveDailyQuiz()) {
-            throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        }
-
+        // 이용 횟수는 요약글 생성 시점에 이미 검증/차감되었으므로 여기서는 재검증하지 않음
+        // (재검증 시, 방금 생성이 승인된 요약글에 딸린 퀴즈조차 생성하지 못하게 막혀버림)
         return goal;
     }
 
