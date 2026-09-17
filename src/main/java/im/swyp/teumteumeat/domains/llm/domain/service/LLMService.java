@@ -4,7 +4,6 @@ import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvisor;
@@ -16,7 +15,6 @@ import reactor.core.publisher.Flux;
 import java.util.function.Supplier;
 
 @Service
-@Slf4j
 public class LLMService {
 
     // Spring AI 1.1의 에러 메시지 포맷은 "HTTP {status} - {body}"
@@ -75,19 +73,16 @@ public class LLMService {
         try {
             return apiCall.get();
         } catch (NonTransientAiException e) {
-            // 4xx 에러 (재시도 대상 아님)
-            log.error("AI 요청 클라이언트 에러: {}", e.getMessage(), e);
+            // 4xx 에러 (재시도 대상 아님). 원인은 BaseException에 실어 보내 상위(GlobalExceptionHandler)에서 한 번만 로깅한다
             if (e.getMessage() != null && e.getMessage().startsWith(STATUS_TOO_MANY_REQUESTS)) {
-                throw new BaseException(LLMResponseCode.AI_QUOTA_EXCEEDED);
+                throw new BaseException(LLMResponseCode.AI_QUOTA_EXCEEDED, e);
             }
-            throw new BaseException(LLMResponseCode.AI_INVALID_REQUEST);
+            throw new BaseException(LLMResponseCode.AI_INVALID_REQUEST, e);
         } catch (TransientAiException e) {
             // 5xx 에러. Spring AI 기본 RetryTemplate의 재시도가 모두 소진된 경우
-            log.error("AI 요청 서버 에러: {}", e.getMessage(), e);
-            throw new BaseException(LLMResponseCode.AI_SERVER_ERROR);
+            throw new BaseException(LLMResponseCode.AI_SERVER_ERROR, e);
         } catch (Exception e) {
-            log.error("AI 요청 중 알 수 없는 에러 발생", e);
-            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED);
+            throw new BaseException(LLMResponseCode.AI_GENERATION_FAILED, e);
         }
     }
 }
