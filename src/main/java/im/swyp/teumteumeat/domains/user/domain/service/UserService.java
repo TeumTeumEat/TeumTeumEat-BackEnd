@@ -85,12 +85,6 @@ public class UserService {
         user.completeSignup();
     }
 
-    @Transactional
-    public void consumeQuizCount(Long userId) {
-        UserEntity user = getOrThrow(userId);
-        user.consumeQuizCount();
-    }
-
     /* HELPER METHOD */
     private UserEntity getOrThrow(Long id) {
         return userRepository.findById(id)

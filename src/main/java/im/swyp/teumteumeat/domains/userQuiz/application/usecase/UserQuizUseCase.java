@@ -241,7 +241,13 @@ public class UserQuizUseCase {
     public void completeQuizSet(Long userId) {
         UserEntity user = userService.getUserById(userId);
 
-        // 이용 횟수는 요약글 생성 시점에 이미 차감되었으므로, 여기서는 완료 통계만 갱신
+        if (!user.canSolveDailyQuiz()) {
+            throw new BaseException(
+                    QuizResponseCode.TODAY_QUOTA_EXCEEDED);
+        }
+
+        user.consumeQuizCount();
+
         Goal currentGoal = user.getCurrentGoal();
         if (currentGoal != null && !currentGoal.isCompleted()) {
             currentGoal.incrementCompletedQuizSetCount();

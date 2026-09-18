@@ -159,9 +159,6 @@ public class DocumentSummaryUseCase {
                 throw new BaseException(QuizResponseCode.UNSOLVED_QUIZ_EXISTS);
             }
         }
-
-        // 모든 검증 통과 시, AI 호출(요약글 생성) 직전에 이용 횟수 차감
-        userService.consumeQuizCount(userId);
     }
 
     // 퀴즈 풀이 여부 검증 및 Document/Goal 반환
