@@ -25,12 +25,11 @@ public interface DocumentSummaryApi {
         @Operation(summary = "PDF 요약글 및 퀴즈 생성 (학습 시작)",
                    description = """
                                  업로드된 PDF 문서에 대한 새로운 요약본과 퀴즈를 동기 방식으로 생성합니다.
-
+                                 
                                  **참고사항**
                                  - 요청 완료까지 대기 시간이 발생할 수 있습니다.
                                  - 성공 시 생성된 요약 및 퀴즈 상세 정보를 반환합니다.
                                  - 요약글을 매일 생성하기 위해, 매일 카테고리 자료(요약글) 생성하기(POST)를 호출 해야 합니다.
-                                 - 검증(오늘의 이용 가능 횟수, 미해결 퀴즈 여부)을 통과하면 이 시점에 오늘의 이용 가능 횟수가 즉시 차감됩니다. (퀴즈 풀이 완료 여부와 무관)
                                  """
         )
         @ApiResponseExplanations(
@@ -49,12 +48,11 @@ public interface DocumentSummaryApi {
         @Operation(summary = "스트리밍 방식 - PDF 요약글 및 퀴즈 생성 (학습 시작)",
                    description = """
                                  업로드된 PDF 문서에 대한 새로운 요약본과 퀴즈를 생성하고 과정을 스트리밍합니다.
-
+                                 
                                  **특징**
                                  - 비동기로 처리되며 SSE(Server-Sent Events)를 통해 상태가 전달됩니다.
                                  - 클라이언트는 `text/event-stream`으로 응답을 받아 로딩 UI에 활용할 수 있습니다.
                                  - 요약글이 완성될 때까지 텍스트 청크 단위로 분할되어 연속적으로 스트리밍됩니다. (프록시 버퍼링 방지를 위해 응답 헤더에 'X-Accel-Buffering: no'가 포함됩니다.)
-                                 - 검증(오늘의 이용 가능 횟수, 미해결 퀴즈 여부)을 통과하면 스트리밍 시작 전 오늘의 이용 가능 횟수가 즉시 차감됩니다. (퀴즈 풀이 완료 여부와 무관)
                                  """
         )
         @ApiResponseExplanations(
