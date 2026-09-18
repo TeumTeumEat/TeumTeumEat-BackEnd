@@ -117,17 +117,14 @@ public interface UserQuizApi {
         @Operation(summary = "퀴즈 세트 완료 처리",
                    description = """
                                  현재 진행 중인 퀴즈 세트를 모두 완료했음을 서버에 알립니다.
-                                 
+
                                  **처리 내용**
-                                 - 오늘 남은 퀴즈 풀이 횟수가 1회 차감됩니다.
-                                 - 목표(Goal) 달성도가 증가합니다.
+                                 - 목표(Goal) 달성도(완료한 퀴즈 세트 수)가 증가합니다.
+                                 - 오늘의 이용 가능 횟수는 이 시점이 아니라 요약글 생성 시점에 이미 차감되었으므로, 이 API에서는 별도로 차감되지 않습니다.
                                  """
         )
         @ApiResponseExplanations(
-                success = @ApiSuccessResponseExplanation(description = "처리 성공"),
-                errors = {
-                        @ApiErrorResponseExplanation(exceptionCode = QuizResponseCode.class, name = "TODAY_QUOTA_EXCEEDED")
-                })
+                success = @ApiSuccessResponseExplanation(description = "처리 성공"))
         ResponseEntity<ApiResponse<Void>> completeQuizSet(
                         @Parameter(hidden = true) @LoginUser CustomUserDetails user);
 
