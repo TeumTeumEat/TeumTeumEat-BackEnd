@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.llm.domain.service;
 
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.llm.application.dto.response.QuizValidationResponse;
 import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.global.exception.BaseException;
@@ -32,6 +33,11 @@ public class LLMService {
                     .outputType(LLMResponse.class)
                     .build();
 
+    private final StructuredOutputValidationAdvisor quizValidationSchemaValidationAdvisor =
+            StructuredOutputValidationAdvisor.builder()
+                    .outputType(QuizValidationResponse.class)
+                    .build();
+
     public LLMResponse generateAnswer(String promptMessage) {
         // 스키마를 프롬프트 텍스트가 아닌 OpenAI Structured Outputs(json_schema, strict)로 전달한다
         return executeWithExceptionHandling(() -> chatClient.prompt()
@@ -41,6 +47,17 @@ public class LLMService {
                 .user(promptMessage)
                 .call()
                 .entity(LLMResponse.class));
+    }
+
+    // 생성된 퀴즈 세트의 논리적 일관성(정답/해설이 문제와 모순되지 않는지)을 별도 콜로 재검증한다
+    public QuizValidationResponse validateQuizzes(String promptMessage) {
+        return executeWithExceptionHandling(() -> chatClient.prompt()
+                .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                .advisors(quizValidationSchemaValidationAdvisor)
+                .system("당신은 퀴즈 검수 전문가입니다.")
+                .user(promptMessage)
+                .call()
+                .entity(QuizValidationResponse.class));
     }
 
     public String generateContent(String promptMessage) {
