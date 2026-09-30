@@ -13,6 +13,7 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalType;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.DocumentPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
@@ -28,6 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @UseCase
@@ -41,6 +43,7 @@ public class CategoryDocumentUseCase {
     private final LLMService llmService;
     private final LlmGenerationTemplate llmGenerationTemplate;
     private final CategorySubtopicService categorySubtopicService;
+    private final QuizUseCase quizUseCase;
 
     // (User) 요약글 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -60,6 +63,10 @@ public class CategoryDocumentUseCase {
                 (generatedContent) -> categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
                 null
         );
+
+        // 사용자가 요약글을 읽는 동안 퀴즈(검증 포함)를 미리 준비해둔다. executeSyncSummary는 postAction을
+        // 요청 스레드에서 그대로 블로킹 실행하므로, 여기서 직접 CompletableFuture로 분리해 응답 지연에 영향 없게 한다.
+        CompletableFuture.runAsync(() -> prefetchQuizzes(categoryDocument.getId(), userId));
 
         boolean isFirstTime = !userQuizService.hasSolvedAnyQuizEver(userId);
 
@@ -86,7 +93,7 @@ public class CategoryDocumentUseCase {
                 llmPrompt,
                 (generatedContent) -> categoryDocumentService.generateTitleAndSaveDocument(category, goal, topicInstruction, generatedContent, subtopic.orElse(null)),
                 (savedDocument) -> savedDocument.getTitle(),
-                null
+                (savedDocument) -> prefetchQuizzes(savedDocument.getId(), userId)
         );
     }
 
@@ -232,6 +239,18 @@ public class CategoryDocumentUseCase {
         return subtopic
                 .map(s -> hasUserPrompt ? s.getTitle() + " (" + userPrompt + ")" : s.getTitle())
                 .orElse(hasUserPrompt ? userPrompt : "전반적인 내용");
+    }
+
+    // 요약글 생성 직후 백그라운드에서 퀴즈(사전 검증 포함)를 미리 만들어둔다.
+    // 이미 충분한 퀴즈가 있으면 QuizUseCase.ensureQuizzesAvailable로 넘어감.
+    // 실패하더라도 사용자가 실제로 풀이를 시작할 때 같은 로직(잠금 포함)이 안전망으로 재시도한다.
+    private void prefetchQuizzes(Long categoryDocumentId, Long userId) {
+        try {
+            int quizCount = quizUseCase.calculateQuestionCount(userId);
+            quizUseCase.ensureQuizzesAvailable(categoryDocumentId, userId, quizCount);
+        } catch (Exception e) {
+            log.warn("퀴즈 프리페치 실패 (풀이 시작 시점에 재시도됨): categoryDocumentId={}, userId={}", categoryDocumentId, userId, e);
+        }
     }
 
     // 요약글 삭제
