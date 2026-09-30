@@ -20,6 +20,7 @@ import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -51,8 +52,8 @@ class QuizUseCaseBackfillTest {
         DocumentSummaryService documentSummaryService = mock(DocumentSummaryService.class);
 
         QuizUseCase quizUseCase = new QuizUseCase(
-                quizService, distributedLockFacade, categoryDocumentService, llmService, quizMapper,
-                new ObjectMapper(), documentService, documentSectionService, userService, goalService,
+                quizService, new SimpleMeterRegistry(), distributedLockFacade, categoryDocumentService, llmService,
+                quizMapper, new ObjectMapper(), documentService, documentSectionService, userService, goalService,
                 documentSummaryService);
 
         Category category = Category.builder().name("테스트").path("test/path").description("설명").build();

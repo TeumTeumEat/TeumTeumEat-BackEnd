@@ -24,6 +24,10 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
@@ -53,6 +57,7 @@ import java.util.stream.IntStream;
 public class QuizUseCase {
 
     private final QuizService quizService;
+    private final MeterRegistry meterRegistry;
     private final DistributedLockFacade distributedLockFacade;
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
@@ -201,9 +206,11 @@ public class QuizUseCase {
         String storedTopic = truncateTopic(topic);
         List<LLMResponse.Quiz> collectedQuizzes = new ArrayList<>();
 
-        long startTimeMs = System.currentTimeMillis();
+        Timer.Sample sample = Timer.start(meterRegistry);
         int remainingCount = questionCount;
-        for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS && remainingCount > 0; attempt++) {
+        int attempt = 0;
+        while (attempt < MAX_GENERATION_ATTEMPTS && remainingCount > 0) {
+            attempt++;
             BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
             String fullPrompt = promptBuilder.apply(remainingCount) + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
 
@@ -216,9 +223,14 @@ public class QuizUseCase {
                         questionCount, collectedQuizzes.size(), remainingCount, attempt + 1);
             }
         }
-        long elapsedMs = System.currentTimeMillis() - startTimeMs;
-        log.info("[퀴즈 생성 타이밍] 소요시간={}ms, 목표 문제 수={}, 확보된 문제 수={}",
-                elapsedMs, questionCount, collectedQuizzes.size());
+        sample.stop(Timer.builder("quiz.generation.duration")
+                .description("퀴즈 세트 생성(사전 검증 및 부족분 재시도 포함) 소요시간")
+                .publishPercentileHistogram()
+                .register(meterRegistry));
+        DistributionSummary.builder("quiz.generation.rounds")
+                .description("퀴즈 세트 하나를 확보하는 데 걸린 생성 라운드 수")
+                .register(meterRegistry)
+                .record(attempt);
 
         List<Quiz> quizzes = collectedQuizzes.stream()
                 .limit(questionCount)
@@ -243,6 +255,15 @@ public class QuizUseCase {
                 .filter(result -> !result.isValid())
                 .map(QuizValidationResponse.Result::index)
                 .collect(Collectors.toSet());
+
+        Counter.builder("quiz.validation.checked")
+                .description("검증 콜에 포함된 퀴즈 수")
+                .register(meterRegistry)
+                .increment(quizzes.size());
+        Counter.builder("quiz.validation.invalid")
+                .description("검증에서 무효 판정되어 제외된 퀴즈 수")
+                .register(meterRegistry)
+                .increment(invalidIndexes.size());
 
         if (!invalidIndexes.isEmpty()) {
             log.warn("[퀴즈 검증 실패] 무효 판정되어 제외된 인덱스={}", invalidIndexes);
