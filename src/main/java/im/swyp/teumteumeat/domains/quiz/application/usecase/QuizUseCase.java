@@ -32,12 +32,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import java.util.function.BiFunction;
+import java.util.function.IntFunction;
 
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -191,20 +193,35 @@ public class QuizUseCase {
             + "- type: 퀴즈 타입 ('MCQ' 또는 'OX')\n"
             + "- explanation: 정답에 대한 해설\n";
 
-    private void executeQuizGeneration(String basePrompt, String topic, BiFunction<LLMResponse.Quiz, String, Quiz> quizBuilder) {
-        BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-        String fullPrompt = basePrompt + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
+    // 검증으로 걸러진 만큼 부족분을 다시 생성해 채우되, 무한 재시도를 막기 위해 시도 횟수를 제한한다
+    private static final int MAX_GENERATION_ATTEMPTS = 3;
+
+    private void executeQuizGeneration(int questionCount, IntFunction<String> promptBuilder, String topic,
+            BiFunction<LLMResponse.Quiz, String, Quiz> quizBuilder) {
+        String storedTopic = truncateTopic(topic);
+        List<LLMResponse.Quiz> collectedQuizzes = new ArrayList<>();
 
         long startTimeMs = System.currentTimeMillis();
-        LLMResponse response = llmService.generateAnswer(fullPrompt);
+        int remainingCount = questionCount;
+        for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS && remainingCount > 0; attempt++) {
+            BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
+            String fullPrompt = promptBuilder.apply(remainingCount) + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
+
+            LLMResponse response = llmService.generateAnswer(fullPrompt);
+            collectedQuizzes.addAll(filterByValidation(response.quizzes()));
+            remainingCount = questionCount - collectedQuizzes.size();
+
+            if (remainingCount > 0 && attempt < MAX_GENERATION_ATTEMPTS) {
+                log.warn("[퀴즈 생성 부족분 재시도] 목표={}, 확보={}, 부족={}, 다음 시도={}",
+                        questionCount, collectedQuizzes.size(), remainingCount, attempt + 1);
+            }
+        }
         long elapsedMs = System.currentTimeMillis() - startTimeMs;
-        log.info("[퀴즈 생성 타이밍] 소요시간={}ms, 생성된 문제 수={}", elapsedMs, response.quizzes().size());
+        log.info("[퀴즈 생성 타이밍] 소요시간={}ms, 목표 문제 수={}, 확보된 문제 수={}",
+                elapsedMs, questionCount, collectedQuizzes.size());
 
-        String storedTopic = truncateTopic(topic);
-
-        List<LLMResponse.Quiz> validatedQuizzes = filterByValidation(response.quizzes());
-
-        List<Quiz> quizzes = validatedQuizzes.stream()
+        List<Quiz> quizzes = collectedQuizzes.stream()
+                .limit(questionCount)
                 .map(quizDto -> quizBuilder.apply(quizDto, storedTopic))
                 .toList();
         quizService.saveQuizzes(quizzes);
@@ -256,16 +273,16 @@ public class QuizUseCase {
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String categoryPath,
             String categoryDescription, String documentContent,
             Difficulty difficulty, String topic, int questionCount) {
-        String basePrompt = String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
+        IntFunction<String> promptBuilder = count -> String.format(QuizPrompt.GENERATE_QUIZ.getTemplate(),
                 categoryName,
                 categoryPath,
                 categoryDescription,
-                questionCount,
+                count,
                 documentContent,
                 difficulty,
                 topic);
 
-        executeQuizGeneration(basePrompt, topic, (quizDto, storedTopic) -> quizService.buildQuizFromCategoryDocument(
+        executeQuizGeneration(questionCount, promptBuilder, topic, (quizDto, storedTopic) -> quizService.buildQuizFromCategoryDocument(
                 document,
                 quizDto.question(),
                 convertOptionsToJson(quizDto.type() == QuizType.OX ? List.of("O", "X") : quizDto.options()),
@@ -302,13 +319,13 @@ public class QuizUseCase {
         String topicInstruction = (goal.getPrompt() != null && !goal.getPrompt().isEmpty()) ? goal.getPrompt()
                 : (documentSummary.getTitle() != null ? documentSummary.getTitle() : "전반적인 내용");
 
-        String basePrompt = String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(),
-                questionCount,
+        IntFunction<String> promptBuilder = count -> String.format(QuizPrompt.GENERATE_DOCUMENT_QUIZ.getTemplate(),
+                count,
                 documentContent,
                 difficulty,
                 topicInstruction); // 주제 (없으면 전반적인 내용)
 
-        executeQuizGeneration(basePrompt, topicInstruction,
+        executeQuizGeneration(questionCount, promptBuilder, topicInstruction,
                 (quizDto, storedTopic) -> quizService.buildQuizFromPdfDocument(
                         attachedDocument,
                         documentSummary,
