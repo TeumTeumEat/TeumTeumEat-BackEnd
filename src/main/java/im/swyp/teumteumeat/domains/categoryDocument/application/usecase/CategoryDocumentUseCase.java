@@ -242,7 +242,7 @@ public class CategoryDocumentUseCase {
     }
 
     // 요약글 생성 직후 백그라운드에서 퀴즈(사전 검증 포함)를 미리 만들어둔다.
-    // 이미 충분한 퀴즈가 있으면 QuizUseCase.ensureQuizzesAvailable로 넘어감.
+    // QuizUseCase.ensureQuizzesAvailable에서 필요 개수만큼 퀴즈 생성 혹은 반환
     // 실패하더라도 사용자가 실제로 풀이를 시작할 때 같은 로직(잠금 포함)이 안전망으로 재시도한다.
     private void prefetchQuizzes(Long categoryDocumentId, Long userId) {
         try {
