@@ -11,6 +11,7 @@ import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
 
 import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
+import im.swyp.teumteumeat.domains.llm.application.dto.response.QuizValidationResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
@@ -38,7 +39,10 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @UseCase
 @RequiredArgsConstructor
@@ -198,10 +202,55 @@ public class QuizUseCase {
 
         String storedTopic = truncateTopic(topic);
 
-        List<Quiz> quizzes = response.quizzes().stream()
+        List<LLMResponse.Quiz> validatedQuizzes = filterByValidation(response.quizzes());
+
+        List<Quiz> quizzes = validatedQuizzes.stream()
                 .map(quizDto -> quizBuilder.apply(quizDto, storedTopic))
                 .toList();
         quizService.saveQuizzes(quizzes);
+    }
+
+    private static final String VALIDATION_JSON_SCHEMA_INSTRUCTIONS = "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 "
+            + "(스키마 정의나 metadata 포함 금지, 근거 설명 없이 판정 결과만 간결하게):\n";
+
+    // 생성된 퀴즈 세트를 별도 LLM 콜로 재검증해, 문제/정답/해설이 논리적으로 모순되는 항목을 걸러낸다 (사전 검증)
+    private List<LLMResponse.Quiz> filterByValidation(List<LLMResponse.Quiz> quizzes) {
+        if (quizzes.isEmpty()) {
+            return quizzes;
+        }
+
+        String validationPrompt = buildValidationPrompt(quizzes);
+        QuizValidationResponse validationResponse = llmService.validateQuizzes(validationPrompt);
+
+        Set<Integer> invalidIndexes = validationResponse.results().stream()
+                .filter(result -> !result.isValid())
+                .map(QuizValidationResponse.Result::index)
+                .collect(Collectors.toSet());
+
+        if (!invalidIndexes.isEmpty()) {
+            log.warn("[퀴즈 검증 실패] 무효 판정되어 제외된 인덱스={}", invalidIndexes);
+        }
+
+        return IntStream.range(0, quizzes.size())
+                .filter(i -> !invalidIndexes.contains(i))
+                .mapToObj(quizzes::get)
+                .toList();
+    }
+
+    private String buildValidationPrompt(List<LLMResponse.Quiz> quizzes) {
+        StringBuilder quizListBuilder = new StringBuilder();
+        for (int i = 0; i < quizzes.size(); i++) {
+            LLMResponse.Quiz quiz = quizzes.get(i);
+            quizListBuilder.append(i).append(". 문제: ").append(quiz.question())
+                    .append(" / 정답: ").append(quiz.answer())
+                    .append(" / 해설: ").append(quiz.explanation())
+                    .append("\n");
+        }
+
+        String basePrompt = String.format(QuizPrompt.VALIDATE_QUIZ.getTemplate(), quizListBuilder);
+
+        BeanOutputConverter<QuizValidationResponse> converter = new BeanOutputConverter<>(QuizValidationResponse.class);
+        return basePrompt + VALIDATION_JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String categoryPath,
