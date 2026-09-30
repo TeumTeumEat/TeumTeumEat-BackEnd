@@ -20,9 +20,11 @@ import im.swyp.teumteumeat.domains.quiz.persistence.entity.Quiz;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
+import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,13 +38,16 @@ import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class QuizUseCase {
 
     private final QuizService quizService;
+    private final DistributedLockFacade distributedLockFacade;
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
     private final QuizMapper quizMapper;
@@ -106,6 +111,43 @@ public class QuizUseCase {
                 questionCount);
     }
 
+    // 사용자가 (아직 안 푼) 퀴즈를 충분히 갖도록 보장한다 - 부족하면 부족분만 락을 걸고 생성한다.
+    // 실제 풀이 조회 시점(UserQuizUseCase)과, 요약글 생성 직후 미리 당겨오는 프리페치 양쪽에서 공용으로 쓰인다.
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<Quiz> ensureQuizzesAvailable(Long documentId, Long userId, int quizCount) {
+        CategoryDocument document = categoryDocumentService.getDocumentWithCategoryById(documentId);
+        Goal goal = goalService.findLatestGoalWithCategory(userId, document.getCategory().getId());
+
+        Difficulty targetDifficulty = goal.getDifficulty();
+        String rawTopic = truncateTopic(goal.getPrompt());
+        boolean isDefaultPrompt = rawTopic == null || rawTopic.isBlank();
+        String targetTopic = isDefaultPrompt ? "전반적인 내용" : rawTopic;
+
+        // 아직 풀지 않은 퀴즈가 충분히 존재하는지 확인, 존재 시 퀴즈 추가 없이 퀴즈 리스트 반환
+        List<Quiz> priorityQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                targetDifficulty, targetTopic, quizCount);
+
+        if (priorityQuizzes.size() >= quizCount) {
+            return priorityQuizzes;
+        }
+
+        String lockKey = "lock:quiz:generation:" + documentId + ":" + userId;
+        return distributedLockFacade.tryExecuteWithLock(lockKey, 30, 60, TimeUnit.SECONDS, () -> {
+            // 이중 체크(Double-Check): 락 획득 후 다시 한 번 개수 확인 (그 사이 다른 요청이 이미 채웠을 수 있음)
+            List<Quiz> currentQuizzes = quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                    targetDifficulty, targetTopic, quizCount);
+
+            if (currentQuizzes.size() < quizCount) {
+                int remainingCount = quizCount - currentQuizzes.size();
+                createQuizzesForDocument(documentId, userId, remainingCount);
+
+                return quizService.getUnsolvedQuizzesByAttributes(documentId, userId,
+                        targetDifficulty, targetTopic, quizCount);
+            }
+            return currentQuizzes;
+        }).orElse(priorityQuizzes);
+    }
+
     // 퀴즈 Seeder용: 특정 문서에 대해 모든 난이도의 기본(전반적인 내용) 퀴즈가 없으면 생성
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void createDefaultQuizzesForCategoryDocument(Long documentId) {
@@ -149,7 +191,11 @@ public class QuizUseCase {
         BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
         String fullPrompt = basePrompt + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
 
+        long startTimeMs = System.currentTimeMillis();
         LLMResponse response = llmService.generateAnswer(fullPrompt);
+        long elapsedMs = System.currentTimeMillis() - startTimeMs;
+        log.info("[퀴즈 생성 타이밍] 소요시간={}ms, 생성된 문제 수={}", elapsedMs, response.quizzes().size());
+
         String storedTopic = truncateTopic(topic);
 
         List<Quiz> quizzes = response.quizzes().stream()
