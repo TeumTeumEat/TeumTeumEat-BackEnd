@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.security.annotation.LoginUser;
+import im.swyp.teumteumeat.global.security.component.RefreshTokenCookieProvider;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.constant.SocialProvider;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
@@ -57,7 +58,7 @@ public interface AuthApi {
             )
     )
     ResponseEntity<ApiResponse<Void>> logOut(
-            @Parameter(hidden = true) @CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
+            @Parameter(hidden = true) @CookieValue(name = RefreshTokenCookieProvider.COOKIE_NAME, required = false) String cookieRefreshToken,
             @RequestParam(required = false) String refreshToken,
             @Parameter(hidden = true) @LoginUser CustomUserDetails user,
             HttpServletRequest request,

@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.user.presentation.api.v2;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiSuccessResponseExplanation;
 import im.swyp.teumteumeat.global.common.ApiResponse;
+import im.swyp.teumteumeat.global.security.component.RefreshTokenCookieProvider;
 import im.swyp.teumteumeat.global.security.dto.ReissueRequest;
 import im.swyp.teumteumeat.global.security.token.TokenResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +25,7 @@ public interface UserApiV2 {
         )
         @ApiResponseExplanations(success = @ApiSuccessResponseExplanation(responseClass = TokenResponse.class, description = "재발급 성공"))
         ResponseEntity<ApiResponse<TokenResponse>> tokenReissue(
-                        @Parameter(hidden = true) @CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
+                        @Parameter(hidden = true) @CookieValue(name = RefreshTokenCookieProvider.COOKIE_NAME, required = false) String cookieRefreshToken,
                         @RequestBody(required = false) ReissueRequest request,
                         HttpServletResponse response);
 }

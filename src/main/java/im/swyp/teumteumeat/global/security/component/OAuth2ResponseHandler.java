@@ -2,7 +2,6 @@ package im.swyp.teumteumeat.global.security.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import im.swyp.teumteumeat.global.common.ApiResponse;
-import im.swyp.teumteumeat.global.config.properties.JwtProperties;
 import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import im.swyp.teumteumeat.global.security.properties.OAuth2RedirectProperties;
 import im.swyp.teumteumeat.global.security.repository.HttpCookieOAuth2AuthorizationRequestRepository;
@@ -26,12 +25,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OAuth2ResponseHandler {
 
-    public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
-
     private final CookieUtils cookieUtils;
     private final ObjectMapper objectMapper;
     private final OAuth2RedirectProperties oAuth2RedirectProperties;
-    private final JwtProperties jwtProperties;
+    private final RefreshTokenCookieProvider refreshTokenCookieProvider;
 
     public void sendRedirectOrJson(HttpServletRequest request, HttpServletResponse response,
                                    Map<String, String> queryParams, String refreshToken,
@@ -49,8 +46,7 @@ public class OAuth2ResponseHandler {
                 return;
             }
             if (refreshToken != null) {
-                int maxAge = (int) (jwtProperties.refreshToken().expirationTime() / 1000);
-                cookieUtils.addCookie(response, REFRESH_TOKEN_COOKIE_NAME, refreshToken, maxAge);
+                refreshTokenCookieProvider.addCookie(response, refreshToken);
             }
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(redirectUri);
             queryParams.forEach(builder::queryParam);
