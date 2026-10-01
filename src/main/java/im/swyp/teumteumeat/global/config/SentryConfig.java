@@ -1,6 +1,9 @@
 package im.swyp.teumteumeat.global.config;
 
+import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
+import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
+import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import io.sentry.SentryOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,10 +30,16 @@ public class SentryConfig {
         return (event, hint) -> {
             Throwable throwable = event.getThrowable();
 
-            // HTTP STATUS 예외
-            if (throwable instanceof BaseException baseException
-                    && IGNORED_STATUS_CODES.contains(baseException.getResponseCode().getStatus().value())) {
-                return null;
+            if (throwable instanceof BaseException baseException) {
+                BaseResponseCode responseCode = baseException.getResponseCode();
+
+                // GlobalExceptionHandler가 log.info로만 남기는, 상태코드와 무관한 의도된 정상 분기
+                boolean isSilent = responseCode == AuthResponseCode.NEED_REGISTER
+                        || responseCode == QuizResponseCode.TODAY_QUOTA_EXCEEDED;
+
+                if (isSilent || IGNORED_STATUS_CODES.contains(responseCode.getStatus().value())) {
+                    return null;
+                }
             }
 
             // NoResourceFoundException(404) 등 Spring이 던지는 ErrorResponse 구현 예외
