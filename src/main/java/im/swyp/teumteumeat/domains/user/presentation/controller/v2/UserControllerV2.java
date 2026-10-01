@@ -39,9 +39,17 @@ public class UserControllerV2 implements UserApiV2 {
             throw new BaseException(AuthResponseCode.INVALID_JWT_TOKEN);
         }
         TokenResponse result = jwtProvider.reissueTokens(refreshToken);
-        if (cookieRefreshToken != null && result.refreshToken() != null) {
+        if (cookieRefreshToken == null) {
+            return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, result));
+        }
+
+        // 쿠키로 요청한 경우(웹) 회전된 리프레시 토큰은 쿠키로만 내려주고 body에는 노출하지 않음
+        if (result.refreshToken() != null) {
             refreshTokenCookieProvider.addCookie(response, result.refreshToken());
         }
-        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, result));
+        TokenResponse accessTokenOnly = TokenResponse.builder()
+                .accessToken(result.accessToken())
+                .build();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, accessTokenOnly));
     }
 }
