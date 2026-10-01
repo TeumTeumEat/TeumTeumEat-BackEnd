@@ -13,7 +13,6 @@ import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,7 @@ public interface AuthApi {
 
     @Operation(
             summary = "로그아웃",
-            description = "(Nullable) refreshToken 전송 시 서버에서 폐기합니다."
+            description = "(Nullable) refreshToken 전송 시 서버에서 폐기합니다. 웹은 `refresh_token` 쿠키를 우선 사용하며, 응답으로 쿠키를 만료시킵니다."
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
@@ -61,7 +60,6 @@ public interface AuthApi {
             @Parameter(hidden = true) @CookieValue(name = RefreshTokenCookieProvider.COOKIE_NAME, required = false) String cookieRefreshToken,
             @RequestParam(required = false) String refreshToken,
             @Parameter(hidden = true) @LoginUser CustomUserDetails user,
-            HttpServletRequest request,
-            HttpServletResponse response
+            @Parameter(hidden = true) HttpServletResponse response
     );
 }

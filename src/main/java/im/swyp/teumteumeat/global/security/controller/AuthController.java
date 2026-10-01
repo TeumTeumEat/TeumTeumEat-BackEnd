@@ -11,7 +11,6 @@ import im.swyp.teumteumeat.global.security.dto.LoginResponse;
 import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.usecase.OAuth2UseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,14 +43,11 @@ public class AuthController implements AuthApi {
             @CookieValue(name = RefreshTokenCookieProvider.COOKIE_NAME, required = false) String cookieRefreshToken,
             @RequestParam(required = false) String refreshToken,
             @LoginUser CustomUserDetails user,
-            HttpServletRequest request,
             HttpServletResponse response
     ) {
         String token = (cookieRefreshToken != null) ? cookieRefreshToken : refreshToken;
         oAuth2UseCase.logOut(user.getUserId(), token);
-        if (cookieRefreshToken != null) {
-            refreshTokenCookieProvider.expireCookie(response);
-        }
+        refreshTokenCookieProvider.expireCookie(response);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK));
     }
 }
