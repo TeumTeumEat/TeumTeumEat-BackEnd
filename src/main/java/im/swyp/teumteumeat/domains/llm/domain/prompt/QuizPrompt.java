@@ -75,6 +75,17 @@ public enum QuizPrompt {
                 %s
                 - 난이도: %s (EASY: 쉬움, MEDIUM: 보통, HARD: 어려움)
                 - 중점 주제: %s
+                """),
+
+        VALIDATE_QUIZ("""
+                [System]
+                당신은 퀴즈 검수 전문가입니다. 다음은 방금 생성된 퀴즈 목록입니다.
+                각 항목의 문제(question), 정답(answer), 해설(explanation)이 서로 논리적으로
+                모순되지 않는지 검증하세요. 정답이 문제에 대해 실제로 올바른지, 해설이 그 정답과
+                모순되지 않는지 확인하고, 각 항목의 index를 그대로 사용해 결과를 반환하세요.
+
+                [퀴즈 목록]
+                %s
                 """);
 
         private final String template;
