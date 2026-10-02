@@ -96,6 +96,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./configs/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./configs/monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
     networks:
       - backend
 
