@@ -243,18 +243,23 @@ public class QuizUseCase {
             + "(스키마 정의나 metadata 포함 금지, 근거 설명 없이 판정 결과만 간결하게):\n";
 
     // 생성된 퀴즈 세트를 별도 LLM 콜로 재검증해, 문제/정답/해설이 논리적으로 모순되는 항목을 걸러낸다 (사전 검증)
+    // 검증은 품질 보조 장치이므로, 검증 콜 자체가 실패(429, 5xx 등)하면 이미 생성된 퀴즈를 버리지 않고 검증 없이 통과시킨다
     private List<LLMResponse.Quiz> filterByValidation(List<LLMResponse.Quiz> quizzes) {
         if (quizzes.isEmpty()) {
             return quizzes;
         }
 
-        String validationPrompt = buildValidationPrompt(quizzes);
-        QuizValidationResponse validationResponse = llmService.validateQuizzes(validationPrompt);
-
-        Set<Integer> invalidIndexes = validationResponse.results().stream()
-                .filter(result -> !result.isValid())
-                .map(QuizValidationResponse.Result::index)
-                .collect(Collectors.toSet());
+        Set<Integer> invalidIndexes;
+        try {
+            invalidIndexes = findInvalidIndexes(quizzes);
+        } catch (Exception e) {
+            log.warn("[퀴즈 검증 건너뜀] 검증 콜 실패로 {}개 퀴즈를 검증 없이 통과시킵니다", quizzes.size(), e);
+            Counter.builder("quiz.validation.skipped")
+                    .description("검증 콜 실패로 검증 없이 통과된 퀴즈 수")
+                    .register(meterRegistry)
+                    .increment(quizzes.size());
+            return quizzes;
+        }
 
         Counter.builder("quiz.validation.checked")
                 .description("검증 콜에 포함된 퀴즈 수")
@@ -273,6 +278,15 @@ public class QuizUseCase {
                 .filter(i -> !invalidIndexes.contains(i))
                 .mapToObj(quizzes::get)
                 .toList();
+    }
+
+    private Set<Integer> findInvalidIndexes(List<LLMResponse.Quiz> quizzes) {
+        QuizValidationResponse validationResponse = llmService.validateQuizzes(buildValidationPrompt(quizzes));
+
+        return validationResponse.results().stream()
+                .filter(result -> !result.isValid())
+                .map(QuizValidationResponse.Result::index)
+                .collect(Collectors.toSet());
     }
 
     private String buildValidationPrompt(List<LLMResponse.Quiz> quizzes) {
