@@ -14,6 +14,7 @@ import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.QuizValidationResponse;
 import im.swyp.teumteumeat.domains.llm.domain.prompt.QuizPrompt;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.quiz.application.component.QuizGenerationMetrics;
 import im.swyp.teumteumeat.domains.quiz.application.dto.response.QuizListResponse;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
@@ -24,10 +25,6 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
@@ -43,6 +40,7 @@ import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +55,7 @@ import java.util.stream.IntStream;
 public class QuizUseCase {
 
     private final QuizService quizService;
-    private final MeterRegistry meterRegistry;
+    private final QuizGenerationMetrics quizGenerationMetrics;
     private final DistributedLockFacade distributedLockFacade;
     private final CategoryDocumentService categoryDocumentService;
     private final LLMService llmService;
@@ -198,6 +196,10 @@ public class QuizUseCase {
             + "- type: 퀴즈 타입 ('MCQ' 또는 'OX')\n"
             + "- explanation: 정답에 대한 해설\n";
 
+    // BeanOutputConverter는 생성 시 리플렉션으로 JSON 스키마를 만들고, 스키마는 고정이므로 포맷 문구를 한 번만 만들어 재사용한다
+    private static final String GENERATION_OUTPUT_FORMAT = JSON_SCHEMA_INSTRUCTIONS
+            + new BeanOutputConverter<>(LLMResponse.class).getFormat();
+
     // 검증으로 걸러진 만큼 부족분을 다시 생성해 채우되, 무한 재시도를 막기 위해 시도 횟수를 제한한다
     private static final int MAX_GENERATION_ATTEMPTS = 3;
 
@@ -206,13 +208,12 @@ public class QuizUseCase {
         String storedTopic = truncateTopic(topic);
         List<LLMResponse.Quiz> collectedQuizzes = new ArrayList<>();
 
-        Timer.Sample sample = Timer.start(meterRegistry);
+        long startNanos = System.nanoTime();
         int remainingCount = questionCount;
         int attempt = 0;
         while (attempt < MAX_GENERATION_ATTEMPTS && remainingCount > 0) {
             attempt++;
-            BeanOutputConverter<LLMResponse> converter = new BeanOutputConverter<>(LLMResponse.class);
-            String fullPrompt = promptBuilder.apply(remainingCount) + JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
+            String fullPrompt = promptBuilder.apply(remainingCount) + GENERATION_OUTPUT_FORMAT;
 
             LLMResponse response = llmService.generateAnswer(fullPrompt);
             collectedQuizzes.addAll(filterByValidation(response.quizzes()));
@@ -223,14 +224,7 @@ public class QuizUseCase {
                         questionCount, collectedQuizzes.size(), remainingCount, attempt + 1);
             }
         }
-        sample.stop(Timer.builder("quiz.generation.duration")
-                .description("퀴즈 세트 생성(사전 검증 및 부족분 재시도 포함) 소요시간")
-                .publishPercentileHistogram()
-                .register(meterRegistry));
-        DistributionSummary.builder("quiz.generation.rounds")
-                .description("퀴즈 세트 하나를 확보하는 데 걸린 생성 라운드 수")
-                .register(meterRegistry)
-                .record(attempt);
+        quizGenerationMetrics.recordGeneration(Duration.ofNanos(System.nanoTime() - startNanos), attempt);
 
         List<Quiz> quizzes = collectedQuizzes.stream()
                 .limit(questionCount)
@@ -241,6 +235,9 @@ public class QuizUseCase {
 
     private static final String VALIDATION_JSON_SCHEMA_INSTRUCTIONS = "\n반드시 다음 JSON 스키마에 맞는 '데이터만' JSON 객체로 출력하세요 "
             + "(스키마 정의나 metadata 포함 금지, 근거 설명 없이 판정 결과만 간결하게):\n";
+
+    private static final String VALIDATION_OUTPUT_FORMAT = VALIDATION_JSON_SCHEMA_INSTRUCTIONS
+            + new BeanOutputConverter<>(QuizValidationResponse.class).getFormat();
 
     // 생성된 퀴즈 세트를 별도 LLM 콜로 재검증해, 문제/정답/해설이 논리적으로 모순되는 항목을 걸러낸다 (사전 검증)
     // 검증은 품질 보조 장치이므로, 검증 콜 자체가 실패(429, 5xx 등)하면 이미 생성된 퀴즈를 버리지 않고 검증 없이 통과시킨다
@@ -254,21 +251,12 @@ public class QuizUseCase {
             invalidIndexes = findInvalidIndexes(quizzes);
         } catch (Exception e) {
             log.warn("[퀴즈 검증 건너뜀] 검증 콜 실패로 {}개 퀴즈를 검증 없이 통과시킵니다", quizzes.size(), e);
-            Counter.builder("quiz.validation.skipped")
-                    .description("검증 콜 실패로 검증 없이 통과된 퀴즈 수")
-                    .register(meterRegistry)
-                    .increment(quizzes.size());
+            quizGenerationMetrics.recordValidationSkipped(quizzes.size());
             return quizzes;
         }
 
-        Counter.builder("quiz.validation.checked")
-                .description("검증 콜에 포함된 퀴즈 수")
-                .register(meterRegistry)
-                .increment(quizzes.size());
-        Counter.builder("quiz.validation.invalid")
-                .description("검증에서 무효 판정되어 제외된 퀴즈 수")
-                .register(meterRegistry)
-                .increment(invalidIndexes.size());
+        quizGenerationMetrics.recordValidationChecked(quizzes.size());
+        quizGenerationMetrics.recordValidationInvalid(invalidIndexes.size());
 
         if (!invalidIndexes.isEmpty()) {
             log.warn("[퀴즈 검증 실패] 무효 판정되어 제외된 인덱스={}", invalidIndexes);
@@ -299,10 +287,7 @@ public class QuizUseCase {
                     .append("\n");
         }
 
-        String basePrompt = String.format(QuizPrompt.VALIDATE_QUIZ.getTemplate(), quizListBuilder);
-
-        BeanOutputConverter<QuizValidationResponse> converter = new BeanOutputConverter<>(QuizValidationResponse.class);
-        return basePrompt + VALIDATION_JSON_SCHEMA_INSTRUCTIONS + converter.getFormat();
+        return String.format(QuizPrompt.VALIDATE_QUIZ.getTemplate(), quizListBuilder) + VALIDATION_OUTPUT_FORMAT;
     }
 
     private void generateAndSaveQuizzes(CategoryDocument document, String categoryName, String categoryPath,

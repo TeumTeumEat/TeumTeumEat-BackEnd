@@ -13,6 +13,7 @@ import im.swyp.teumteumeat.domains.llm.application.dto.response.LLMResponse;
 import im.swyp.teumteumeat.domains.llm.application.dto.response.QuizValidationResponse;
 import im.swyp.teumteumeat.domains.llm.domain.constant.LLMResponseCode;
 import im.swyp.teumteumeat.domains.llm.domain.service.LLMService;
+import im.swyp.teumteumeat.domains.quiz.application.component.QuizGenerationMetrics;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizType;
 import im.swyp.teumteumeat.domains.quiz.domain.service.QuizService;
@@ -63,7 +64,7 @@ class QuizUseCaseBackfillTest {
         DocumentSummaryService documentSummaryService = mock(DocumentSummaryService.class);
 
         quizUseCase = new QuizUseCase(
-                quizService, meterRegistry, distributedLockFacade, categoryDocumentService, llmService,
+                quizService, new QuizGenerationMetrics(meterRegistry), distributedLockFacade, categoryDocumentService, llmService,
                 quizMapper, new ObjectMapper(), documentService, documentSectionService, userService, goalService,
                 documentSummaryService);
 
@@ -147,6 +148,24 @@ class QuizUseCaseBackfillTest {
         verify(llmService, times(2)).generateAnswer(anyString());
         assertThat(savedQuizzes()).hasSize(5);
         assertThat(meterRegistry.counter("quiz.validation.skipped").count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void 생성_및_검증_프롬프트에_출력_스키마가_포함된다() {
+        when(llmService.generateAnswer(anyString()))
+                .thenReturn(new LLMResponse(List.of(sampleQuiz())));
+        when(llmService.validateQuizzes(anyString()))
+                .thenReturn(new QuizValidationResponse(List.of(new QuizValidationResponse.Result(0, true))));
+
+        quizUseCase.createQuizzesForDocument(1L, 1L, 1);
+
+        ArgumentCaptor<String> generationPrompt = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> validationPrompt = ArgumentCaptor.forClass(String.class);
+        verify(llmService).generateAnswer(generationPrompt.capture());
+        verify(llmService).validateQuizzes(validationPrompt.capture());
+
+        assertThat(generationPrompt.getValue()).contains("반드시 다음 JSON 스키마에 맞는").contains("quizzes");
+        assertThat(validationPrompt.getValue()).contains("반드시 다음 JSON 스키마에 맞는").contains("results");
     }
 
     private List<Quiz> savedQuizzes() {
