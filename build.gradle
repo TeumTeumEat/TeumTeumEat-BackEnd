@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.8'
 	id 'io.spring.dependency-management' version '1.1.5'
 	id 'java'
+	id 'io.sentry.jvm.gradle' version '6.22.0'
 }
 
 group = 'im.swyp'
@@ -82,6 +83,7 @@ dependencies {
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.sentry:sentry-async-profiler:8.56.0'
 
 	// SSE streaming
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
