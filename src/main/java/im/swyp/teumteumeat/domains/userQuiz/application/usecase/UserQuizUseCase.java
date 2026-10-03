@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.userQuiz.application.usecase;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
+import im.swyp.teumteumeat.domains.league.domain.service.SnackHistoryService;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
@@ -54,6 +55,7 @@ public class UserQuizUseCase {
     private final CategoryDocumentService categoryDocumentService;
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
+    private final SnackHistoryService snackHistoryService;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -200,6 +202,9 @@ public class UserQuizUseCase {
         }
 
         user.consumeQuizCount();
+
+        // 리그 스낵 적립 (퀴즈 세트 1회 완료 = 1 스낵)
+        snackHistoryService.earnSnack(user);
 
         Goal currentGoal = user.getCurrentGoal();
         if (currentGoal != null && !currentGoal.isCompleted()) {
