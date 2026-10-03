@@ -99,6 +99,12 @@ jwt:
     expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
     reissue-limit-days: ${JWT_REFRESH_TOKEN_REISSUE_LIMIT_DAYS}
 
+# 웹 로그인 리프레시 토큰 쿠키
+cookie:
+  refresh-token:
+    secure: ${REFRESH_TOKEN_COOKIE_SECURE:true}
+    same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:None}
+
 # 프론트 임의 controller 내 url
 
 rest-client:
