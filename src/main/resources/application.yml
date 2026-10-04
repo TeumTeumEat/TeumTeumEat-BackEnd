@@ -160,6 +160,18 @@ management:
     ssl:
       enabled: false
 
+sentry:
+  dsn: ${SENTRY_DSN} # 고유 주소
+  environment: ${spring.profiles.active}
+  exception-resolver-order: -2147483647 # @ExceptionHandler에서 잡는 예외도 전송
+  send-default-pii: true # RequestBody 캡처
+  max-request-body-size: medium
+  logs:
+    enabled: true
+  traces-sample-rate: 1.0
+  profile-session-sample-rate: 1.0
+  profile-lifecycle: TRACE
+
 notification:
   streak-threshold: 3
   streak-message-ratio: 50
