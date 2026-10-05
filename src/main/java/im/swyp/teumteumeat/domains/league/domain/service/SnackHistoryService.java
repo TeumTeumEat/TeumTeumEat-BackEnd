@@ -22,8 +22,8 @@ public class SnackHistoryService {
      * 퀴즈 세트 완료 시 스낵 1개 적립
      */
     @Transactional
-    public void earnSnack(UserEntity user) {
-        snackHistoryRepository.save(SnackHistory.earnedBy(user));
+    public SnackHistory earnSnack(UserEntity user) {
+        return snackHistoryRepository.save(SnackHistory.earnedBy(user));
     }
 
     /**

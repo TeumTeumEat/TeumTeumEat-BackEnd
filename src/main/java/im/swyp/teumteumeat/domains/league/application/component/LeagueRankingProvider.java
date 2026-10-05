@@ -9,6 +9,7 @@ import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 /**
  * 주차별 리그 랭킹 계산 및 캐시
  * - 랭킹은 모든 유저에게 동일하므로 주차 단위로 한 번만 계산해 Redis에 캐시한다.
+ * - 스낵이 적립되면 커밋 후 해당 주차 캐시를 삭제하고, 다음 조회 시 다시 계산한다. (TTL은 안전장치)
  * - 같은 클래스 내부 호출은 캐시 프록시를 거치지 않으므로 UseCase와 분리한다.
  */
 @Component
@@ -64,5 +66,9 @@ public class LeagueRankingProvider {
                 .toList();
 
         return new LeagueRanking(participants);
+    }
+
+    @CacheEvict(cacheNames = CACHE_NAME, cacheManager = "redisCacheManager", key = "#week.cacheKey()")
+    public void evict(LeagueWeek week) {
     }
 }

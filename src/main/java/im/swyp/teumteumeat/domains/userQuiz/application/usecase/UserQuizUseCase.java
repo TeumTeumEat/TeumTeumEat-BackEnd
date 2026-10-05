@@ -3,7 +3,9 @@ package im.swyp.teumteumeat.domains.userQuiz.application.usecase;
 import im.swyp.teumteumeat.domains.categoryDocument.domain.service.CategoryDocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
+import im.swyp.teumteumeat.domains.league.domain.event.SnackEarnedEvent;
 import im.swyp.teumteumeat.domains.league.domain.service.SnackHistoryService;
+import im.swyp.teumteumeat.domains.league.persistence.entity.SnackHistory;
 import im.swyp.teumteumeat.domains.quiz.application.mapper.QuizMapper;
 import im.swyp.teumteumeat.domains.quiz.application.usecase.QuizUseCase;
 import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
@@ -28,6 +30,7 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +59,7 @@ public class UserQuizUseCase {
     private final DocumentSummaryService documentSummaryService;
     private final UserQuizMapper userQuizMapper;
     private final SnackHistoryService snackHistoryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public QuizSubmissionResponse submitQuiz(Long userId, QuizSubmissionRequest request) {
@@ -203,8 +207,9 @@ public class UserQuizUseCase {
 
         user.consumeQuizCount();
 
-        // 리그 스낵 적립 (퀴즈 세트 1회 완료 = 1 스낵)
-        snackHistoryService.earnSnack(user);
+        // 리그 스낵 적립 (퀴즈 세트 1회 완료 = 1 스낵), 커밋 후 리그 랭킹 캐시 삭제
+        SnackHistory snack = snackHistoryService.earnSnack(user);
+        eventPublisher.publishEvent(new SnackEarnedEvent(snack.getCreatedDate()));
 
         Goal currentGoal = user.getCurrentGoal();
         if (currentGoal != null && !currentGoal.isCompleted()) {

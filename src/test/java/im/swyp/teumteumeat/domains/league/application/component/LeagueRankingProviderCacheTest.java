@@ -24,7 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-// @Cacheable 키와 동작을 확인한다.
+// @Cacheable/@CacheEvict 키와 동작을 확인한다.
 // Redis 대신 같은 이름의 인메모리 CacheManager를 등록해 캐시 프록시 동작만 검증한다.
 @SpringJUnitConfig(LeagueRankingProviderCacheTest.Config.class)
 class LeagueRankingProviderCacheTest {
@@ -71,6 +71,27 @@ class LeagueRankingProviderCacheTest {
     void 같은_주차는_한_번만_계산하고_이후에는_캐시를_사용한다() {
         leagueRankingProvider.getRanking(THIS_WEEK);
         leagueRankingProvider.getRanking(THIS_WEEK);
+
+        verify(snackHistoryService, times(1)).getSnackCountsByUser(any());
+    }
+
+    @Test
+    void 캐시를_삭제하면_다음_조회에서_다시_계산한다() {
+        leagueRankingProvider.getRanking(THIS_WEEK);
+
+        leagueRankingProvider.evict(THIS_WEEK);
+        leagueRankingProvider.getRanking(THIS_WEEK);
+
+        verify(snackHistoryService, times(2)).getSnackCountsByUser(any());
+    }
+
+    @Test
+    void 다른_주차의_캐시는_삭제되지_않는다() {
+        LeagueWeek lastWeek = THIS_WEEK.previous();
+        leagueRankingProvider.getRanking(lastWeek);
+
+        leagueRankingProvider.evict(THIS_WEEK);
+        leagueRankingProvider.getRanking(lastWeek);
 
         verify(snackHistoryService, times(1)).getSnackCountsByUser(any());
     }
