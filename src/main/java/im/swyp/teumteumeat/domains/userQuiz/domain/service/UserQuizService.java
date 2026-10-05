@@ -128,6 +128,18 @@ public class UserQuizService {
      * @return 유저별 스트릭 일 수
      */
     public Map<Long, Integer> calculateStreaksForUsers(List<Long> userIds) {
+        return calculateStreaksForUsers(userIds, LocalDate.now());
+    }
+
+    /**
+     * 기준일 시점의 유저별 스트릭 일 수를 계산하여 반환
+     * 기준일 이후의 학습 기록은 무시한다. (ex. 지난주 리그 결과의 동점자 정렬)
+     *
+     * @param userIds       조회 대상 유저 목록
+     * @param referenceDate 스트릭 계산 기준일 (이 날짜를 '오늘'로 간주)
+     * @return 유저별 스트릭 일 수
+     */
+    public Map<Long, Integer> calculateStreaksForUsers(List<Long> userIds, LocalDate referenceDate) {
         // 유저별로 학습 날짜 그룹화
         List<UserStudyDateMapping> userStudyDates = userQuizRepository.findUserStudyDates(userIds);
         Map<Long, List<LocalDate>> userDaysMap = userStudyDates.stream()
@@ -139,7 +151,7 @@ public class UserQuizService {
         Map<Long, Integer> streakMap = new HashMap<>();
         for (Long userId : userIds) {
             List<LocalDate> days = userDaysMap.getOrDefault(userId, Collections.emptyList());
-            streakMap.put(userId, calculateStreak(days));
+            streakMap.put(userId, calculateStreak(days, referenceDate));
         }
         return streakMap;
     }
@@ -148,14 +160,20 @@ public class UserQuizService {
     /**
      * 스트릭 일 수 계산
      * 
-     * @param days 날짜 목록
+     * @param days          날짜 목록 (최신순)
+     * @param referenceDate 스트릭 계산 기준일
      * @return 스트릭 일 수
      */
-    private int calculateStreak(List<LocalDate> days) {
+    private int calculateStreak(List<LocalDate> days, LocalDate referenceDate) {
+        // 기준일 이후 학습 기록 제외
+        days = days.stream()
+                .filter(date -> !date.isAfter(referenceDate))
+                .toList();
+
         if (days.isEmpty())
             return 0;
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = referenceDate;
         LocalDate yesterday = today.minusDays(1);
 
         // 가장 최근 학습일이 오늘이나 어제가 아니면 스트릭 끊김
