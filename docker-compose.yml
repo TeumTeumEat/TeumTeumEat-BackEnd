@@ -80,6 +80,10 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=14d
     volumes:
       - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prom_data:/prometheus
