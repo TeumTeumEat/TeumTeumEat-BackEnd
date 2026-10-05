@@ -48,7 +48,7 @@ class LeagueUseCaseTest {
 
         when(snackHistoryService.getSnackCountsByUser(any())).thenReturn(snackCounts);
         when(userService.getUsersByIds(anyList())).thenReturn(users);
-        when(userQuizService.calculateStreaksForUsers(anyList())).thenReturn(streaks);
+        when(userQuizService.calculateStreaksForUsers(anyList(), any())).thenReturn(streaks);
     }
 
     @Test
@@ -137,7 +137,7 @@ class LeagueUseCaseTest {
 
         assertThat(response.rankers()).isEmpty();
         assertThat(response.me().rank()).isNull();
-        verify(userQuizService, never()).calculateStreaksForUsers(anyList());
+        verify(userQuizService, never()).calculateStreaksForUsers(anyList(), any());
     }
 
     @Test

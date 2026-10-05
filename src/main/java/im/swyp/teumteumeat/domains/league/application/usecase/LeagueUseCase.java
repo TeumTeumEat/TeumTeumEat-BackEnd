@@ -58,7 +58,7 @@ public class LeagueUseCase {
         List<Long> userIds = snackCounts.stream().map(UserSnackCountMapping::getUserId).toList();
         Map<Long, UserEntity> users = userService.getUsersByIds(userIds).stream()
                 .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
-        Map<Long, Integer> streaks = userQuizService.calculateStreaksForUsers(userIds);
+        Map<Long, Integer> streaks = userQuizService.calculateStreaksForUsers(userIds, week.streakReferenceDate());
 
         return snackCounts.stream()
                 .filter(count -> users.containsKey(count.getUserId()))

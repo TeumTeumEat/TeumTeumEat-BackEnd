@@ -31,6 +31,24 @@ public record LeagueWeek(
         return new LeagueWeek(weekStart, weekStart.plusWeeks(1), today.atStartOfDay(), now);
     }
 
+    /**
+     * 직전 주차 (지난주 리그 결과 조회용)
+     * 이미 끝난 주이므로 '오늘' 시작을 주 종료 시각으로 두어 오늘 스낵은 0으로 집계된다.
+     */
+    public LeagueWeek previous() {
+        return new LeagueWeek(weekStart.minusWeeks(1), weekStart, weekStart, now);
+    }
+
+    /**
+     * 동점자 정렬용 스트릭 기준일
+     * 진행 중인 주는 오늘, 끝난 주는 마지막 날(일요일) 기준으로 계산해 결과가 바뀌지 않도록 한다.
+     */
+    public LocalDate streakReferenceDate() {
+        LocalDate lastDate = nextWeekStart.toLocalDate().minusDays(1);
+        LocalDate today = now.toLocalDate();
+        return today.isBefore(lastDate) ? today : lastDate;
+    }
+
     public LocalDate weekStartDate() {
         return weekStart.toLocalDate();
     }
