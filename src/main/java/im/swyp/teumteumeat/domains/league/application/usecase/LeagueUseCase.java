@@ -7,6 +7,7 @@ import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRespons
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
 import im.swyp.teumteumeat.domains.league.application.mapper.LeagueMapper;
 import im.swyp.teumteumeat.domains.league.domain.vo.LeagueParticipant;
+import im.swyp.teumteumeat.domains.league.domain.vo.LeagueRanking;
 import im.swyp.teumteumeat.domains.league.domain.vo.LeagueWeek;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
@@ -30,11 +31,12 @@ public class LeagueUseCase {
 
     public LeagueResponse getLeague(Long userId) {
         LeagueWeek week = LeagueWeek.of(LocalDateTime.now());
-        List<LeagueParticipant> ranking = leagueRankingProvider.getRanking(week).participants();
+        LeagueRanking ranking = leagueRankingProvider.getRanking(week);
+        List<LeagueParticipant> participants = ranking.participants();
 
         List<LeagueRankerResponse> rankers = new ArrayList<>();
-        for (int i = 0; i < Math.min(RANKER_LIMIT, ranking.size()); i++) {
-            rankers.add(LeagueMapper.toRankerResponse(ranking.get(i), i + 1, userId));
+        for (int i = 0; i < Math.min(RANKER_LIMIT, participants.size()); i++) {
+            rankers.add(LeagueMapper.toRankerResponse(participants.get(i), i + 1, userId));
         }
 
         return LeagueMapper.toLeagueResponse(week, rankers, getMyRank(userId, ranking));
@@ -46,24 +48,19 @@ public class LeagueUseCase {
      */
     public LeagueResultResponse getLatestResult(Long userId) {
         LeagueWeek lastWeek = LeagueWeek.of(LocalDateTime.now()).previous();
-        List<LeagueParticipant> ranking = leagueRankingProvider.getRanking(lastWeek).participants();
+        LeagueRanking ranking = leagueRankingProvider.getRanking(lastWeek);
 
-        for (int i = 0; i < ranking.size(); i++) {
-            if (ranking.get(i).userId().equals(userId)) {
-                return LeagueMapper.toResultResponse(lastWeek, ranking.get(i), i + 1);
-            }
-        }
-        return LeagueMapper.toUnrankedResultResponse(lastWeek);
+        return ranking.rankOf(userId)
+                .map(rank -> LeagueMapper.toResultResponse(lastWeek, ranking.participantAt(rank), rank))
+                .orElseGet(() -> LeagueMapper.toUnrankedResultResponse(lastWeek));
     }
 
-    private LeagueMyRankResponse getMyRank(Long userId, List<LeagueParticipant> ranking) {
-        for (int i = 0; i < ranking.size(); i++) {
-            if (ranking.get(i).userId().equals(userId)) {
-                return LeagueMapper.toMyRankResponse(ranking.get(i), i + 1);
-            }
-        }
-
-        UserEntity user = userService.getUserById(userId);
-        return LeagueMapper.toUnrankedMyRankResponse(user.getName());
+    private LeagueMyRankResponse getMyRank(Long userId, LeagueRanking ranking) {
+        return ranking.rankOf(userId)
+                .map(rank -> LeagueMapper.toMyRankResponse(ranking.participantAt(rank), rank))
+                .orElseGet(() -> {
+                    UserEntity user = userService.getUserById(userId);
+                    return LeagueMapper.toUnrankedMyRankResponse(user.getName());
+                });
     }
 }

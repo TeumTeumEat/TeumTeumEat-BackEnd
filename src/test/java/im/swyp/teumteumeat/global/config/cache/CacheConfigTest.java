@@ -5,6 +5,7 @@ import im.swyp.teumteumeat.domains.league.domain.vo.LeagueRanking;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,17 @@ class CacheConfigTest {
 
         assertThat(restored).isEqualTo(ranking);
         assertThat(restored.participants().get(0)).isInstanceOf(LeagueParticipant.class);
+    }
+
+    @Test
+    void 조회용_메서드는_캐시_값에_포함되지_않는다() {
+        Jackson2JsonRedisSerializer<LeagueRanking> serializer = CacheConfig.jsonSerializer(LeagueRanking.class);
+        LeagueRanking ranking = new LeagueRanking(List.of(
+                new LeagueParticipant(1L, "김지민", null, 10, 2, 5)));
+
+        String json = new String(serializer.serialize(ranking), StandardCharsets.UTF_8);
+
+        assertThat(json).startsWith("{\"participants\":").doesNotContain("rankByUserId");
     }
 
     @Test
