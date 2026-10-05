@@ -19,7 +19,7 @@ public class CacheConfig {
 	private static final long OIDC_CACHE_TTL_DAY = 1;
 
 	@Bean
-	public CacheManager oidcCacheManager(RedisConnectionFactory cf) {
+	public CacheManager redisCacheManager(RedisConnectionFactory cf) {
 		RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
 			.serializeKeysWith(
 				RedisSerializationContext.SerializationPair.fromSerializer(
