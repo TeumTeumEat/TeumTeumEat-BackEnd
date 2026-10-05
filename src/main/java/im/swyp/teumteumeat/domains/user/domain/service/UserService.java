@@ -27,6 +27,10 @@ public class UserService {
         return getOrThrow(userId);
     }
 
+    public List<UserEntity> getUsersByIds(List<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
     public UserEntity getUserWithCurrentGoal(Long userId) {
         return userRepository.findWithCurrentGoalById(userId)
                 .orElseThrow(() -> new BaseException(UserResponseCode.NOT_FOUND_USER));
