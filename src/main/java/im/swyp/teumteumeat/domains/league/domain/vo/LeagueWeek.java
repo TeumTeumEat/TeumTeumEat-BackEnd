@@ -49,6 +49,14 @@ public record LeagueWeek(
         return today.isBefore(lastDate) ? today : lastDate;
     }
 
+    /**
+     * 랭킹 캐시 키 (주 시작일:스트릭 기준일)
+     * 진행 중인 주는 날짜가 바뀌면 키도 바뀌어, 자정 이후 오늘 스낵 수/스트릭이 새로 계산된다.
+     */
+    public String cacheKey() {
+        return weekStartDate() + ":" + streakReferenceDate();
+    }
+
     public LocalDate weekStartDate() {
         return weekStart.toLocalDate();
     }

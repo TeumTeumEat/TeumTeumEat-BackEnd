@@ -58,4 +58,22 @@ class LeagueWeekTest {
 
         assertThat(lastWeek.streakReferenceDate()).isEqualTo(LocalDate.of(2026, 10, 4));
     }
+
+    @Test
+    void 진행_중인_주의_캐시_키는_날짜가_바뀌면_달라진다() {
+        LeagueWeek before = LeagueWeek.of(LocalDateTime.of(2026, 10, 8, 23, 59, 59));
+        LeagueWeek after = LeagueWeek.of(LocalDateTime.of(2026, 10, 9, 0, 0));
+
+        assertThat(before.cacheKey()).isEqualTo("2026-10-05:2026-10-08");
+        assertThat(after.cacheKey()).isEqualTo("2026-10-05:2026-10-09");
+    }
+
+    @Test
+    void 끝난_주의_캐시_키는_조회_시점과_관계없이_같다() {
+        LeagueWeek mondayView = LeagueWeek.of(LocalDateTime.of(2026, 10, 12, 9, 0)).previous();
+        LeagueWeek fridayView = LeagueWeek.of(LocalDateTime.of(2026, 10, 16, 18, 0)).previous();
+
+        assertThat(mondayView.cacheKey()).isEqualTo("2026-10-05:2026-10-11");
+        assertThat(fridayView.cacheKey()).isEqualTo(mondayView.cacheKey());
+    }
 }

@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.league.application.usecase;
 
+import im.swyp.teumteumeat.domains.league.application.component.LeagueRankingProvider;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 // 리그 랭킹 정렬/상위 10명 제한/내 순위 계산 로직을 확인한다.
-// 스낵 집계 쿼리는 목킹하고, 집계 결과를 받아 순위를 만드는 로직 자체만 검증한다.
+// 스낵 집계 쿼리는 목킹하고, 집계 결과를 받아 순위를 만드는 로직 자체만 검증한다. (캐시 미적용)
 class LeagueUseCaseTest {
 
     private static final LocalDateTime BASE_JOINED_AT = LocalDateTime.of(2026, 1, 1, 0, 0);
@@ -49,7 +50,8 @@ class LeagueUseCaseTest {
         snackHistoryService = mock(SnackHistoryService.class);
         userService = mock(UserService.class);
         userQuizService = mock(UserQuizService.class);
-        leagueUseCase = new LeagueUseCase(snackHistoryService, userService, userQuizService);
+        leagueUseCase = new LeagueUseCase(
+                new LeagueRankingProvider(snackHistoryService, userService, userQuizService), userService);
 
         when(snackHistoryService.getSnackCountsByUser(any())).thenReturn(snackCounts);
         when(userService.getUsersByIds(anyList())).thenReturn(users);
