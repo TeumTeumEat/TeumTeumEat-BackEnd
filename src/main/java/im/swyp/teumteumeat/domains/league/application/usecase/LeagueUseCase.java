@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.league.application.usecase;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
+import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
 import im.swyp.teumteumeat.domains.league.application.mapper.LeagueMapper;
 import im.swyp.teumteumeat.domains.league.application.mapper.UserSnackCountMapping;
 import im.swyp.teumteumeat.domains.league.domain.service.SnackHistoryService;
@@ -47,7 +48,23 @@ public class LeagueUseCase {
     }
 
     /**
-     * 이번 주 스낵을 1개 이상 모은 유저를 순위 순으로 정렬해 반환 (스낵 0개 유저는 제외)
+     * 지난주 리그 최종 결과 중 내 순위 (리그 종료 후 결과 모달용)
+     * 끝난 주차는 스낵 기록과 스트릭 기준일이 고정되어 있어 다시 계산해도 같은 결과가 나온다.
+     */
+    public LeagueResultResponse getLatestResult(Long userId) {
+        LeagueWeek lastWeek = LeagueWeek.of(LocalDateTime.now()).previous();
+        List<LeagueParticipant> ranking = getRanking(lastWeek);
+
+        for (int i = 0; i < ranking.size(); i++) {
+            if (ranking.get(i).userId().equals(userId)) {
+                return LeagueMapper.toResultResponse(lastWeek, ranking.get(i), i + 1);
+            }
+        }
+        return LeagueMapper.toUnrankedResultResponse(lastWeek);
+    }
+
+    /**
+     * 해당 주차에 스낵을 1개 이상 모은 유저를 순위 순으로 정렬해 반환 (스낵 0개 유저는 제외)
      */
     private List<LeagueParticipant> getRanking(LeagueWeek week) {
         List<UserSnackCountMapping> snackCounts = snackHistoryService.getSnackCountsByUser(week);

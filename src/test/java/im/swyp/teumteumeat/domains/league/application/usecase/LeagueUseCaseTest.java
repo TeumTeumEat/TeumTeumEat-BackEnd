@@ -2,14 +2,18 @@ package im.swyp.teumteumeat.domains.league.application.usecase;
 
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
+import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
 import im.swyp.teumteumeat.domains.league.application.mapper.UserSnackCountMapping;
 import im.swyp.teumteumeat.domains.league.domain.service.SnackHistoryService;
+import im.swyp.teumteumeat.domains.league.domain.vo.LeagueWeek;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -149,6 +154,45 @@ class LeagueUseCaseTest {
 
         assertThat(response.rankers()).hasSize(1);
         assertThat(response.me().rank()).isEqualTo(1);
+    }
+
+    @Test
+    void 지난주_결과는_직전_주차로_집계하고_스트릭은_그_주_일요일_기준으로_계산한다() {
+        participant(1L, "가나다", 3, 0, 0);
+        LeagueWeek expectedWeek = LeagueWeek.of(LocalDateTime.now()).previous();
+
+        leagueUseCase.getLatestResult(1L);
+
+        ArgumentCaptor<LeagueWeek> weekCaptor = ArgumentCaptor.forClass(LeagueWeek.class);
+        verify(snackHistoryService).getSnackCountsByUser(weekCaptor.capture());
+        assertThat(weekCaptor.getValue().weekStart()).isEqualTo(expectedWeek.weekStart());
+        assertThat(weekCaptor.getValue().nextWeekStart()).isEqualTo(expectedWeek.weekStart().plusWeeks(1));
+
+        LocalDate lastSunday = expectedWeek.nextWeekStart().toLocalDate().minusDays(1);
+        verify(userQuizService).calculateStreaksForUsers(anyList(), eq(lastSunday));
+    }
+
+    @Test
+    void 지난주_랭킹에_있으면_최종_순위와_스낵_수를_반환한다() {
+        participant(1L, "가나다", 3, 0, 0);
+        participant(2L, "라마바", 10, 0, 0);
+
+        LeagueResultResponse response = leagueUseCase.getLatestResult(1L);
+
+        assertThat(response.rank()).isEqualTo(2);
+        assertThat(response.weeklySnackCount()).isEqualTo(3);
+        assertThat(response.weekStartDate())
+                .isEqualTo(LeagueWeek.of(LocalDateTime.now()).previous().weekStartDate());
+    }
+
+    @Test
+    void 지난주_스낵이_없으면_순위_없이_반환한다() {
+        participant(1L, "가나다", 3, 0, 0);
+
+        LeagueResultResponse response = leagueUseCase.getLatestResult(99L);
+
+        assertThat(response.rank()).isNull();
+        assertThat(response.weeklySnackCount()).isZero();
     }
 
     private void participant(Long userId, String name, long weeklySnackCount, int streak, int joinedDaysAfterBase) {
