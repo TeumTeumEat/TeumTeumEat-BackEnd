@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.league.presentation.controller;
 
+import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
 import im.swyp.teumteumeat.domains.league.application.usecase.LeagueUseCase;
@@ -34,6 +35,14 @@ public class LeagueController implements LeagueApi {
     public ResponseEntity<ApiResponse<LeagueResultResponse>> getLatestResult(
             @LoginUser CustomUserDetails user) {
         LeagueResultResponse response = leagueUseCase.getLatestResult(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<LeagueMyRankResponse>> getMyRank(
+            @LoginUser CustomUserDetails user) {
+        LeagueMyRankResponse response = leagueUseCase.getMyRank(user.getUserId());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 }

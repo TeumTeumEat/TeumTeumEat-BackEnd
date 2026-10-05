@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.league.application.usecase;
 
 import im.swyp.teumteumeat.domains.league.application.component.LeagueRankingProvider;
+import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
@@ -156,6 +157,31 @@ class LeagueUseCaseTest {
 
         assertThat(response.rankers()).hasSize(1);
         assertThat(response.me().rank()).isEqualTo(1);
+    }
+
+    @Test
+    void 내_순위만_조회하면_리그_화면의_me와_같은_값을_반환한다() {
+        participant(1L, "가나다", 3, 0, 0);
+        participant(2L, "라마바", 10, 0, 0);
+
+        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(1L);
+
+        assertThat(myRank).isEqualTo(leagueUseCase.getLeague(1L).me());
+        assertThat(myRank.rank()).isEqualTo(2);
+        assertThat(myRank.weeklySnackCount()).isEqualTo(3);
+    }
+
+    @Test
+    void 이번_주_스낵이_없으면_내_순위는_null이다() {
+        participant(1L, "가나다", 3, 0, 0);
+        UserEntity me = user(99L, "김지민", 0);
+        when(userService.getUserById(99L)).thenReturn(me);
+
+        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(99L);
+
+        assertThat(myRank.rank()).isNull();
+        assertThat(myRank.name()).isEqualTo("김*민");
+        assertThat(myRank.weeklySnackCount()).isZero();
     }
 
     @Test

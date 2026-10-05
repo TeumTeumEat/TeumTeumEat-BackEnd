@@ -43,6 +43,14 @@ public class LeagueUseCase {
     }
 
     /**
+     * 이번 주 리그 내 순위 (리그 화면 외에서 내 순위만 필요할 때)
+     */
+    public LeagueMyRankResponse getMyRank(Long userId) {
+        LeagueRanking ranking = leagueRankingProvider.getRanking(LeagueWeek.of(LocalDateTime.now()));
+        return getMyRank(userId, ranking);
+    }
+
+    /**
      * 지난주 리그 최종 결과 중 내 순위 (리그 종료 후 결과 모달용)
      * 끝난 주차는 스낵 기록과 스트릭 기준일이 고정되어 있어 다시 계산해도 같은 결과가 나온다.
      */

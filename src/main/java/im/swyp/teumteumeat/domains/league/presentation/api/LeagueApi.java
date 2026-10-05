@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.league.presentation.api;
 
+import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
@@ -68,6 +69,30 @@ public interface LeagueApi {
             )
     )
     ResponseEntity<ApiResponse<LeagueResultResponse>> getLatestResult(
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user
+    );
+
+    @Operation(
+            summary = "이번 주 리그 내 순위 조회",
+            description = """
+                    이번 주 리그에서 내 순위와 주간/오늘 스낵 수만 조회합니다.
+                    리그 화면 외의 화면(홈 등)에서 내 순위만 필요할 때 사용합니다.
+
+                    **응답**
+                    - rank: 현재 순위 (이번 주 스낵이 0개면 null)
+                    - 순위 기준은 리그 랭킹 조회 API와 동일합니다.
+                    """
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = LeagueMyRankResponse.class,
+                    description = "조회 성공"
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_FOUND_USER")
+            }
+    )
+    ResponseEntity<ApiResponse<LeagueMyRankResponse>> getMyRank(
             @Parameter(hidden = true) @LoginUser CustomUserDetails user
     );
 }
