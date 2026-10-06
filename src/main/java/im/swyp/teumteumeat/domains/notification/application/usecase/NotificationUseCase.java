@@ -29,7 +29,6 @@ public class NotificationUseCase {
     private final UserService userService;
     private final NotificationProperties notificationProperties;
     private static final Random random = new Random();
-    private static final String PUSH_TITLE = "틈틈잇 준비 완료!";
 
     public void sendNotifications(LocalTime now, LocalTime minuteEnd) {
         // 시간 범위에 속하는 출퇴근 시간인 유저를 모두 불러옴
@@ -60,7 +59,7 @@ public class NotificationUseCase {
                 Message message = Message.builder()
                         .setToken(deviceToken.getToken())
                         .setNotification(Notification.builder()
-                                .setTitle(PUSH_TITLE)
+                                .setTitle(notificationProperties.getTitle())
                                 .setBody(body)
                                 .build())
                         .build();

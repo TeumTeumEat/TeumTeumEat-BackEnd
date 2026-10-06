@@ -173,6 +173,7 @@ sentry:
   profile-lifecycle: TRACE
 
 notification:
+  title: "틈틈잇 준비 완료!"
   streak-threshold: 3
   streak-message-ratio: 50
   default-messages:
