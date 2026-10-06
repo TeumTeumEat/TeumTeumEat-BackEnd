@@ -40,6 +40,10 @@ public class UserService {
         return userRepository.findAllByCommuteTimeInRange(now, minuteEnd);
     }
 
+    public List<UserEntity> getAllWithTokensByPushEnabled() {
+        return userRepository.findAllWithTokensByPushEnabled();
+    }
+
     @Transactional
     public void updateName(UserEntity user, String name) {
         user.updateName(name);
