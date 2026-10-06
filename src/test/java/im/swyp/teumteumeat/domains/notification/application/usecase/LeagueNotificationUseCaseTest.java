@@ -6,10 +6,12 @@ import im.swyp.teumteumeat.domains.league.domain.vo.LeagueRanking;
 import im.swyp.teumteumeat.domains.league.domain.vo.LeagueWeek;
 import im.swyp.teumteumeat.domains.notification.domain.constant.DeviceType;
 import im.swyp.teumteumeat.domains.notification.domain.constant.LeagueNotificationProperties;
+import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationType;
 import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
+import im.swyp.teumteumeat.infra.fcm.dto.PushMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,17 +20,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 // 주간 리그 푸시 알림의 대상 선정(순위 유무)과 문구 치환을 확인한다.
-// FCM 발송은 목킹하고, 발송 대상 토큰 목록과 조회한 리그 주차만 검증한다.
+// FCM 발송은 목킹하고, 발송 요청된 푸시 메시지(토큰/본문/data)와 조회한 리그 주차를 검증한다.
 class LeagueNotificationUseCaseTest {
 
     // 2026-10-04(일) 20:00 → 이번 주 시작 2026-09-28(월)
@@ -69,14 +70,20 @@ class LeagueNotificationUseCaseTest {
     }
 
     @Test
-    void 마감_알림은_순위와_관계없이_푸시_허용_유저_전원의_토큰으로_발송한다() {
+    void 마감_알림은_순위와_관계없이_푸시_허용_유저_전원에게_발송한다() {
         participant(1L);
         pushUser(1L, "token-1a", "token-1b");
         pushUser(2L, "token-2");
 
         leagueNotificationUseCase.sendDeadlineNotifications(SUNDAY_EVENING);
 
-        assertThat(sentTokens()).containsExactly("token-1a", "token-1b", "token-2");
+        List<PushMessage> sent = sentPushMessages();
+        assertThat(sent).extracting(PushMessage::tokens)
+                .containsExactly(List.of("token-1a", "token-1b"), List.of("token-2"));
+        assertThat(sent).extracting(PushMessage::body)
+                .containsExactly("마감 4시간 전! 현재 1위", "마감 4시간 전!");
+        assertThat(sent).extracting(PushMessage::data)
+                .containsOnly(Map.of(NotificationType.DATA_KEY, NotificationType.LEAGUE_DEADLINE.name()));
     }
 
     @Test
@@ -94,7 +101,11 @@ class LeagueNotificationUseCaseTest {
 
         leagueNotificationUseCase.sendResultNotifications(MONDAY_MORNING);
 
-        assertThat(sentTokens()).containsExactly("token-1");
+        List<PushMessage> sent = sentPushMessages();
+        assertThat(sent).extracting(PushMessage::tokens).containsExactly(List.of("token-1"));
+        assertThat(sent).extracting(PushMessage::body).containsExactly("결과를 확인해 보세요");
+        assertThat(sent).extracting(PushMessage::data)
+                .containsOnly(Map.of(NotificationType.DATA_KEY, NotificationType.LEAGUE_RESULT.name()));
     }
 
     @Test
@@ -105,9 +116,9 @@ class LeagueNotificationUseCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> sentTokens() {
-        ArgumentCaptor<List<String>> captor = ArgumentCaptor.forClass(List.class);
-        verify(fcmService).sendBatchMessages(anyList(), captor.capture(), eq(false));
+    private List<PushMessage> sentPushMessages() {
+        ArgumentCaptor<List<PushMessage>> captor = ArgumentCaptor.forClass(List.class);
+        verify(fcmService).send(captor.capture());
         return captor.getValue();
     }
 

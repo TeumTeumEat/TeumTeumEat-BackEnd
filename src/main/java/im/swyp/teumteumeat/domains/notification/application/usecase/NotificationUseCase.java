@@ -1,16 +1,15 @@
 package im.swyp.teumteumeat.domains.notification.application.usecase;
 
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import im.swyp.teumteumeat.domains.notification.application.dto.request.NotificationRequest;
+import im.swyp.teumteumeat.domains.notification.application.mapper.PushMessageMapper;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties.FixedStreakMessage;
-import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
+import im.swyp.teumteumeat.infra.fcm.dto.PushMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,51 +45,25 @@ public class NotificationUseCase {
         List<Long> userIds = users.stream().map(UserEntity::getId).toList();
         Map<Long, Integer> streakMap = userQuizService.calculateStreaksForUsers(userIds);
 
-        List<Message> messagesToBatch = new ArrayList<>();
-        List<String> tokensToBatch = new ArrayList<>();
-
+        List<PushMessage> pushMessages = new ArrayList<>();
         for (UserEntity user : users) {
             int streak = streakMap.getOrDefault(user.getId(), 0);
             String body = getMessageByUserStreak(streak)
                     .replace("{name}", user.getName())
                     .replace("{streak}", String.valueOf(streak));
 
-            for (DeviceToken deviceToken : user.getDeviceTokens()) {
-                Message message = Message.builder()
-                        .setToken(deviceToken.getToken())
-                        .setNotification(Notification.builder()
-                                .setTitle(notificationProperties.getTitle())
-                                .setBody(body)
-                                .build())
-                        .build();
-                messagesToBatch.add(message);
-                tokensToBatch.add(deviceToken.getToken());
-            }
+            pushMessages.add(PushMessageMapper.toPushMessage(user, notificationProperties.getTitle(), body, Map.of()));
         }
 
-        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
+        fcmService.send(pushMessages);
     }
 
     @Transactional
     public void sendNotificationTest(NotificationRequest request, Long userId) {
         UserEntity user = userService.getUserById(userId);
 
-        List<Message> messagesToBatch = new ArrayList<>();
-        List<String> tokensToBatch = new ArrayList<>();
-        for (DeviceToken deviceToken : user.getDeviceTokens()) {
-            Message message = Message.builder()
-                    .setToken(deviceToken.getToken())
-                    .setNotification(Notification.builder()
-                            .setTitle(request.title())
-                            .setBody(request.body())
-                            .build())
-                    .putAllData((request.data() != null) ? request.data() : Collections.emptyMap())
-                    .build();
-            messagesToBatch.add(message);
-            tokensToBatch.add(deviceToken.getToken());
-        }
-
-        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
+        fcmService.send(List.of(
+                PushMessageMapper.toPushMessage(user, request.title(), request.body(), request.data())));
     }
 
     private String getMessageByUserStreak(int userStreak) {

@@ -1,16 +1,15 @@
 package im.swyp.teumteumeat.domains.notification.application.usecase;
 
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import im.swyp.teumteumeat.domains.league.application.component.LeagueRankingProvider;
 import im.swyp.teumteumeat.domains.league.domain.vo.LeagueWeek;
+import im.swyp.teumteumeat.domains.notification.application.mapper.PushMessageMapper;
 import im.swyp.teumteumeat.domains.notification.domain.constant.LeagueNotificationProperties;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationType;
-import im.swyp.teumteumeat.domains.notification.persistence.entity.DeviceToken;
 import im.swyp.teumteumeat.domains.user.domain.service.UserService;
 import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
+import im.swyp.teumteumeat.infra.fcm.dto.PushMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,19 +34,16 @@ public class LeagueNotificationUseCase {
     public void sendDeadlineNotifications(LocalDateTime now) {
         Map<Long, Integer> ranks = leagueRankingProvider.getRanking(LeagueWeek.of(now)).rankByUserId();
 
-        List<Message> messagesToBatch = new ArrayList<>();
-        List<String> tokensToBatch = new ArrayList<>();
+        List<PushMessage> pushMessages = new ArrayList<>();
         for (UserEntity user : userService.getAllWithTokensByPushEnabled()) {
             String body = resolveDeadlineBody(ranks.get(user.getId()));
-
-            for (DeviceToken deviceToken : user.getDeviceTokens()) {
-                messagesToBatch.add(toMessage(deviceToken.getToken(), body, NotificationType.LEAGUE_DEADLINE));
-                tokensToBatch.add(deviceToken.getToken());
-            }
+            pushMessages.add(PushMessageMapper.toPushMessage(
+                    user, leagueNotificationProperties.getTitle(), body, NotificationType.LEAGUE_DEADLINE)
+            );
         }
 
-        log.debug("League deadline notifications: users with rank={}, messages={}", ranks.size(), messagesToBatch.size());
-        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
+        log.debug("League deadline notifications: users with rank={}, push users={}", ranks.size(), pushMessages.size());
+        fcmService.send(pushMessages);
     }
 
     /**
@@ -57,21 +53,18 @@ public class LeagueNotificationUseCase {
         Map<Long, Integer> ranks = leagueRankingProvider.getRanking(LeagueWeek.of(now).previous()).rankByUserId();
         String body = leagueNotificationProperties.getResultMessage();
 
-        List<Message> messagesToBatch = new ArrayList<>();
-        List<String> tokensToBatch = new ArrayList<>();
+        List<PushMessage> pushMessages = new ArrayList<>();
         for (UserEntity user : userService.getAllWithTokensByPushEnabled()) {
             if (!ranks.containsKey(user.getId())) {
                 continue;
             }
-
-            for (DeviceToken deviceToken : user.getDeviceTokens()) {
-                messagesToBatch.add(toMessage(deviceToken.getToken(), body, NotificationType.LEAGUE_RESULT));
-                tokensToBatch.add(deviceToken.getToken());
-            }
+            pushMessages.add(PushMessageMapper.toPushMessage(
+                    user, leagueNotificationProperties.getTitle(), body, NotificationType.LEAGUE_RESULT)
+            );
         }
 
-        log.debug("League result notifications: users with rank={}, messages={}", ranks.size(), messagesToBatch.size());
-        fcmService.sendBatchMessages(messagesToBatch, tokensToBatch, false);
+        log.debug("League result notifications: users with rank={}, push users={}", ranks.size(), pushMessages.size());
+        fcmService.send(pushMessages);
     }
 
     String resolveDeadlineBody(Integer rank) {
@@ -80,16 +73,5 @@ public class LeagueNotificationUseCase {
         }
         return leagueNotificationProperties.getDeadlineRankedMessage()
                 .replace("{rank}", String.valueOf(rank));
-    }
-
-    private Message toMessage(String token, String body, NotificationType type) {
-        return Message.builder()
-                .setToken(token)
-                .setNotification(Notification.builder()
-                        .setTitle(leagueNotificationProperties.getTitle())
-                        .setBody(body)
-                        .build())
-                .putData(NotificationType.DATA_KEY, type.name())
-                .build();
     }
 }
