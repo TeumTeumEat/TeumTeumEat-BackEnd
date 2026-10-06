@@ -13,7 +13,7 @@ public class NotificationScheduler {
 
     private final NotificationUseCase notificationUseCase;
 
-    // 평일(월-금)에만 1분마다 대상 유저에게 푸쉬 알림 전송
+    // 매일 1분마다 대상 유저에게 푸쉬 알림 전송
     @Scheduled(cron = "0 * * * * *")
     public void schedule() {
         LocalTime now = LocalTime.now().withSecond(0).withNano(0);
