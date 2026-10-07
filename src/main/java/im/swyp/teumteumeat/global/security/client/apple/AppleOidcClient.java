@@ -19,7 +19,7 @@ public class AppleOidcClient extends AbstractOidcClient {
         this.appleJwksUrl = appleIssuer + "/auth/keys";
     }
 
-    @Cacheable(value = "AppleOauth", cacheManager = "oidcCacheManager")
+    @Cacheable(value = "AppleOauth", cacheManager = "redisCacheManager")
     public OidcPublicKeyResponse getOidcPublicKey() {
         return fetchKey(appleJwksUrl);
     }
