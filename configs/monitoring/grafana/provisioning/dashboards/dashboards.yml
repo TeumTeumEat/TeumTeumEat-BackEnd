@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: teumteumeat
+    type: file
+    folder: ''
+    disableDeletion: true
+    allowUiUpdates: false # 대시보드 수정은 configs/monitoring/grafana/dashboards/*.json 에서만
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/dashboards
