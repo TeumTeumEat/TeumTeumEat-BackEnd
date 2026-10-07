@@ -23,7 +23,8 @@ public interface SnackHistoryRepository extends JpaRepository<SnackHistory, Long
             @Param("nextWeekStart") LocalDateTime nextWeekStart,
             @Param("todayStart") LocalDateTime todayStart);
 
-    @Modifying(clearAutomatically = true)
+    // 탈퇴 시 앞서 삭제 예정으로 표시된 엔티티(user_quiz 등)가 사라지지 않도록 영속성 컨텍스트를 비우지 않음
+    @Modifying
     @Query("delete from SnackHistory s where s.user.id = :userId")
     void deleteAllByUserId(@Param("userId") Long userId);
 }
