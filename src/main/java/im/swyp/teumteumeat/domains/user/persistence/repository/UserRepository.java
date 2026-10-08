@@ -20,6 +20,11 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             "and u.pushEnabled = true")
     List<UserEntity> findAllByCommuteTimeInRange(LocalTime start, LocalTime end);
 
+    @Query("select distinct u from UserEntity u " +
+            "join fetch u.deviceTokens " +
+            "where u.pushEnabled = true")
+    List<UserEntity> findAllWithTokensByPushEnabled();
+
     @Query("select u from UserEntity u left join fetch u.currentGoal g left join fetch g.category where u.id = :id")
     Optional<UserEntity> findWithCurrentGoalById(Long id);
 }

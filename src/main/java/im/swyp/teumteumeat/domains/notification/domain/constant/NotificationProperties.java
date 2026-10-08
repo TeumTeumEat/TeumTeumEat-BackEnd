@@ -11,6 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @ConfigurationProperties(prefix = "notification")
 public class NotificationProperties {
+    private final String title;
     private final int streakThreshold;
     private final int streakMessageRatio;
     private final List<String> defaultMessages;

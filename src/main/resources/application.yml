@@ -173,6 +173,7 @@ sentry:
   profile-lifecycle: TRACE
 
 notification:
+  title: "틈틈잇 준비 완료!"
   streak-threshold: 3
   streak-message-ratio: 50
   default-messages:
@@ -194,3 +195,8 @@ notification:
       date: 18
     - message: "전설의 4주 연속 스탬프가 눈앞에! 🏆 25일간의 틈틈잇 대기록 잊지 마세요!"
       date: 25
+  league:
+    title: "틈틈잇"
+    deadline-ranked-message: "🍿 이번 주 간식 리그 마감까지 4시간 남았어요! 현재 {rank}위"
+    deadline-unranked-message: "🍿 이번 주 간식 리그 마감까지 4시간 남았어요!"
+    result-message: "지난주 주간 간식 리그 결과를 확인해 보세요🏆"

@@ -6,6 +6,7 @@ import com.google.api.core.ApiFutures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.messaging.*;
 import im.swyp.teumteumeat.domains.notification.domain.service.DeviceTokenService;
+import im.swyp.teumteumeat.infra.fcm.dto.PushMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,14 +22,43 @@ public class FcmService {
     private final DeviceTokenService deviceTokenService;
     private final FirebaseMessaging firebaseMessaging;
 
-    public void sendBatchMessages(List<Message> messages, List<String> tokens, boolean dryRun) {
-        // 500개씩 나누어 전송 (FCM 배치 제한)
-        for (int i = 0; i < messages.size(); i += 500) {
-            int toIndex = Math.min(i + 500, messages.size());
+    private static final int BATCH_SIZE = 500;
+
+    /**
+     * 푸시 알림을 디바이스 토큰별 FCM 메시지로 펼쳐 일괄 전송
+     */
+    public void send(List<PushMessage> pushMessages) {
+        List<Message> messages = new ArrayList<>();
+        List<String> tokens = new ArrayList<>();
+        for (PushMessage pushMessage : pushMessages) {
+            for (String token : pushMessage.tokens()) {
+                messages.add(toMessage(token, pushMessage));
+                tokens.add(token);
+            }
+        }
+
+        sendBatchMessages(messages, tokens);
+    }
+
+    private Message toMessage(String token, PushMessage pushMessage) {
+        return Message.builder()
+                .setToken(token)
+                .setNotification(Notification.builder()
+                        .setTitle(pushMessage.title())
+                        .setBody(pushMessage.body())
+                        .build())
+                .putAllData(pushMessage.data())
+                .build();
+    }
+
+    private void sendBatchMessages(List<Message> messages, List<String> tokens) {
+        // BATCH_SIZE개씩 나누어 전송 (FCM 배치 제한)
+        for (int i = 0; i < messages.size(); i += BATCH_SIZE) {
+            int toIndex = Math.min(i + BATCH_SIZE, messages.size());
             List<Message> batchMessages = messages.subList(i, toIndex);
             List<String> batchTokens = new ArrayList<>(tokens.subList(i, toIndex)); // 토큰 리스트도 동일하게 쪼갬
 
-            ApiFuture<BatchResponse> future = firebaseMessaging.sendEachAsync(batchMessages, dryRun);
+            ApiFuture<BatchResponse> future = firebaseMessaging.sendEachAsync(batchMessages);
 
             ApiFutures.addCallback(future, new ApiFutureCallback<>() {
                 @Override
