@@ -8,6 +8,7 @@ import im.swyp.teumteumeat.domains.user.persistence.entity.UserEntity;
 import im.swyp.teumteumeat.domains.userQuiz.domain.service.UserQuizService;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationProperties;
+import im.swyp.teumteumeat.domains.notification.domain.constant.NotificationType;
 import im.swyp.teumteumeat.infra.fcm.domain.FcmService;
 import im.swyp.teumteumeat.infra.fcm.dto.PushMessage;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class NotificationUseCase {
                     .replace("{name}", user.getName())
                     .replace("{streak}", String.valueOf(streak));
 
-            pushMessages.add(PushMessageMapper.toPushMessage(user, notificationProperties.getTitle(), body, Map.of()));
+            pushMessages.add(PushMessageMapper.toPushMessage(user, notificationProperties.getTitle(), body, NotificationType.DAILY_QUIZ));
         }
 
         fcmService.send(pushMessages);
