@@ -1,10 +1,11 @@
 package im.swyp.teumteumeat.infra.s3.domain.service;
 
+import im.swyp.teumteumeat.global.config.properties.S3Properties;
 import im.swyp.teumteumeat.infra.s3.constant.FileType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -20,15 +21,10 @@ public class S3Service {
 
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 2;
     private static final String PATH_DELIMITER = "/";
+    private static final String URL_PREFIX_DEFAULT = "https://%s.s3.%s.amazonaws.com/";
 
     private final S3Presigner s3Presigner;
-
-    @Value("${infra.aws.s3.bucket}")
-    private String bucketName;
-
-    @Value("${infra.aws.region.static}")
-    private String region;
-
+    private final S3Properties s3Properties;
     private final Environment environment;
 
     public URL generatePresignedUrl(
@@ -45,17 +41,26 @@ public class S3Service {
     }
 
     public String generateFileUrl(String key) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
+        return urlPrefix() + key;
     }
 
     /* HELPER METHOD */
+    // 파일 접근 URL 접두사: base-url(CDN 등)이 설정돼 있으면 사용, 없으면 S3 기본 URL
+    private String urlPrefix() {
+        String baseUrl = s3Properties.baseUrl();
+        if (StringUtils.hasText(baseUrl)) {
+            return baseUrl.endsWith(PATH_DELIMITER) ? baseUrl : baseUrl + PATH_DELIMITER;
+        }
+        return URL_PREFIX_DEFAULT.formatted(s3Properties.bucket(), s3Properties.region());
+    }
+
     private String createUniqueFileName(final String originalFileName) {
         return String.format("%s_%s", UUID.randomUUID(), originalFileName);
     }
 
     private URL generatePresignedUrlInternal(String key, Long contentLength, FileType fileType) {
         PutObjectRequest.Builder builder = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(s3Properties.bucket())
                 .key(key)
                 .contentType(fileType.getContentType());
 
