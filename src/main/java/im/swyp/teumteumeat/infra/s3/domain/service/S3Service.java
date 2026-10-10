@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.infra.s3.domain.service;
 
+import im.swyp.teumteumeat.infra.s3.constant.FileType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -19,7 +20,6 @@ public class S3Service {
 
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 2;
     private static final String PATH_DELIMITER = "/";
-    private static final String PATH_PREFIX = "origin";
 
     private final S3Presigner s3Presigner;
 
@@ -33,14 +33,15 @@ public class S3Service {
 
     public URL generatePresignedUrl(
             String key,
-            Long contentLength
+            Long contentLength,
+            FileType fileType
     ) {
-        return generatePresignedUrlInternal(key, contentLength);
+        return generatePresignedUrlInternal(key, contentLength, fileType);
     }
 
-    public String createKey(String fileName) {
+    public String createKey(String fileName, FileType fileType) {
         String env = getActiveProfile();
-        return String.join(PATH_DELIMITER, env, PATH_PREFIX, createUniqueFileName(fileName));
+        return String.join(PATH_DELIMITER, env, fileType.getPathPrefix(), createUniqueFileName(fileName));
     }
 
     public String generateFileUrl(String key) {
@@ -52,11 +53,11 @@ public class S3Service {
         return String.format("%s_%s", UUID.randomUUID(), originalFileName);
     }
 
-    private URL generatePresignedUrlInternal(String key, Long contentLength) {
+    private URL generatePresignedUrlInternal(String key, Long contentLength, FileType fileType) {
         PutObjectRequest.Builder builder = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                .contentType("application/pdf");
+                .contentType(fileType.getContentType());
 
         //todo V1 Deprecated시 contentLength을 필수값으로 요구
         if (contentLength != null) {
