@@ -9,7 +9,7 @@ public record NotificationRequest(
         String title,
         @Schema(description = "알림 본문", example = "지난주 주간 간식 리그 결과를 확인해 보세요🏆")
         String body,
-        @Schema(description = "FCM data 페이로드 (type 값은 Notification 태그 설명 참고)", example = "{\"type\": \"LEAGUE_RESULT\"}")
+        @Schema(description = "FCM data 페이로드 (type 값은 (ADMIN) 푸쉬 알림 테스트 API 설명 참고)", example = "{\"type\": \"LEAGUE_RESULT\"}")
         Map<String, String> data
 ) {
 }
