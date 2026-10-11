@@ -61,7 +61,13 @@ public record LeagueWeek(
         return weekStart.toLocalDate();
     }
 
+    /**
+     * 리셋까지 남은 시간 (초, 올림)
+     * 내림하면 클라이언트 카운트다운이 실제 리셋보다 최대 1초 먼저 0이 되어,
+     * 0 도달 시 재조회해도 이전 주 응답을 받을 수 있으므로 올림한다.
+     */
     public long remainingSeconds() {
-        return Duration.between(now, nextWeekStart).getSeconds();
+        Duration remaining = Duration.between(now, nextWeekStart);
+        return remaining.getNano() > 0 ? remaining.getSeconds() + 1 : remaining.getSeconds();
     }
 }
