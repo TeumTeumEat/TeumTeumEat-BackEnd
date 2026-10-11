@@ -1,8 +1,10 @@
 package im.swyp.teumteumeat.domains.league.presentation.api;
 
+import im.swyp.teumteumeat.domains.league.application.component.LeagueTimeResolver;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
+import im.swyp.teumteumeat.domains.league.domain.constant.LeagueResponseCode;
 import im.swyp.teumteumeat.domains.user.domain.constant.UserResponseCode;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiErrorResponseExplanation;
 import im.swyp.teumteumeat.global.annotation.swagger.ApiResponseExplanations;
@@ -12,8 +14,10 @@ import im.swyp.teumteumeat.global.security.annotation.LoginUser;
 import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "League", description = "주간 간식 리그 API")
 public interface LeagueApi {
@@ -40,11 +44,18 @@ public interface LeagueApi {
                     description = "조회 성공"
             ),
             errors = {
-                    @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_FOUND_USER")
+                    @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_FOUND_USER"),
+                    @ApiErrorResponseExplanation(exceptionCode = LeagueResponseCode.class, name = "INVALID_TIME_OFFSET")
             }
     )
     ResponseEntity<ApiResponse<LeagueResponse>> getLeague(
-            @Parameter(hidden = true) @LoginUser CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user,
+            @Parameter(
+                    in = ParameterIn.HEADER,
+                    name = LeagueTimeResolver.TIME_OFFSET_HEADER,
+                    description = "[dev/local 전용] 리그 계산 기준 시각 오프셋(초). 현재 시각에 더해 리셋 직전/직후를 테스트할 때 사용하며, 운영에서는 무시됩니다. 예) remainingSeconds - 10 → 리셋 10초 전"
+            )
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds
     );
 
     @Operation(
@@ -66,10 +77,19 @@ public interface LeagueApi {
             success = @ApiSuccessResponseExplanation(
                     responseClass = LeagueResultResponse.class,
                     description = "조회 성공"
-            )
+            ),
+            errors = {
+                    @ApiErrorResponseExplanation(exceptionCode = LeagueResponseCode.class, name = "INVALID_TIME_OFFSET")
+            }
     )
     ResponseEntity<ApiResponse<LeagueResultResponse>> getLatestResult(
-            @Parameter(hidden = true) @LoginUser CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user,
+            @Parameter(
+                    in = ParameterIn.HEADER,
+                    name = LeagueTimeResolver.TIME_OFFSET_HEADER,
+                    description = "[dev/local 전용] 리그 계산 기준 시각 오프셋(초). 현재 시각에 더해 리셋 직전/직후를 테스트할 때 사용하며, 운영에서는 무시됩니다. 예) remainingSeconds - 10 → 리셋 10초 전"
+            )
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds
     );
 
     @Operation(
@@ -89,10 +109,17 @@ public interface LeagueApi {
                     description = "조회 성공"
             ),
             errors = {
-                    @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_FOUND_USER")
+                    @ApiErrorResponseExplanation(exceptionCode = UserResponseCode.class, name = "NOT_FOUND_USER"),
+                    @ApiErrorResponseExplanation(exceptionCode = LeagueResponseCode.class, name = "INVALID_TIME_OFFSET")
             }
     )
     ResponseEntity<ApiResponse<LeagueMyRankResponse>> getMyRank(
-            @Parameter(hidden = true) @LoginUser CustomUserDetails user
+            @Parameter(hidden = true) @LoginUser CustomUserDetails user,
+            @Parameter(
+                    in = ParameterIn.HEADER,
+                    name = LeagueTimeResolver.TIME_OFFSET_HEADER,
+                    description = "[dev/local 전용] 리그 계산 기준 시각 오프셋(초). 현재 시각에 더해 리셋 직전/직후를 테스트할 때 사용하며, 운영에서는 무시됩니다. 예) remainingSeconds - 10 → 리셋 10초 전"
+            )
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds
     );
 }

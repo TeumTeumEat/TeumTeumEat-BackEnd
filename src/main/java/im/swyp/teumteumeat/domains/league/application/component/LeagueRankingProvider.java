@@ -35,11 +35,19 @@ public class LeagueRankingProvider {
     private final UserQuizService userQuizService;
 
     /**
-     * 해당 주차에 스낵을 1개 이상 모은 유저를 순위 순으로 정렬해 반환 (스낵 0개 유저는 제외)
+     * 해당 주차의 리그 랭킹 (캐시 사용)
      * 캐시가 비어 있을 때 동시에 여러 요청이 와도 한 요청만 계산하도록 sync 처리한다.
      */
     @Cacheable(cacheNames = CACHE_NAME, cacheManager = "redisCacheManager", key = "#week.cacheKey()", sync = true)
     public LeagueRanking getRanking(LeagueWeek week) {
+        return calculateRanking(week);
+    }
+
+    /**
+     * 해당 주차에 스낵을 1개 이상 모은 유저를 순위 순으로 정렬해 반환 (스낵 0개 유저는 제외, 캐시 미사용)
+     * dev 시각 오프셋 요청처럼 실제 유저 캐시와 분리해야 할 때 직접 호출한다.
+     */
+    public LeagueRanking calculateRanking(LeagueWeek week) {
         List<UserSnackCountMapping> snackCounts = snackHistoryService.getSnackCountsByUser(week);
         if (snackCounts.isEmpty()) {
             return LeagueRanking.empty();

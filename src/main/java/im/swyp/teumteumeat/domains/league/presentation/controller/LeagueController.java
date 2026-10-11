@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.domains.league.presentation.controller;
 
+import im.swyp.teumteumeat.domains.league.application.component.LeagueTimeResolver;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResultResponse;
@@ -12,6 +13,7 @@ import im.swyp.teumteumeat.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,24 +27,27 @@ public class LeagueController implements LeagueApi {
     @Override
     @GetMapping
     public ResponseEntity<ApiResponse<LeagueResponse>> getLeague(
-            @LoginUser CustomUserDetails user) {
-        LeagueResponse response = leagueUseCase.getLeague(user.getUserId());
+            @LoginUser CustomUserDetails user,
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds) {
+        LeagueResponse response = leagueUseCase.getLeague(user.getUserId(), timeOffsetSeconds);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override
     @GetMapping("/results/latest")
     public ResponseEntity<ApiResponse<LeagueResultResponse>> getLatestResult(
-            @LoginUser CustomUserDetails user) {
-        LeagueResultResponse response = leagueUseCase.getLatestResult(user.getUserId());
+            @LoginUser CustomUserDetails user,
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds) {
+        LeagueResultResponse response = leagueUseCase.getLatestResult(user.getUserId(), timeOffsetSeconds);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
     @Override
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<LeagueMyRankResponse>> getMyRank(
-            @LoginUser CustomUserDetails user) {
-        LeagueMyRankResponse response = leagueUseCase.getMyRank(user.getUserId());
+            @LoginUser CustomUserDetails user,
+            @RequestHeader(value = LeagueTimeResolver.TIME_OFFSET_HEADER, required = false) Long timeOffsetSeconds) {
+        LeagueMyRankResponse response = leagueUseCase.getMyRank(user.getUserId(), timeOffsetSeconds);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 }

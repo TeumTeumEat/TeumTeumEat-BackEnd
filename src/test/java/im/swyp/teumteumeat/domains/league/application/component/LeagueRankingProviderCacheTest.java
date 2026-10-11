@@ -17,6 +17,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -103,5 +104,25 @@ class LeagueRankingProviderCacheTest {
         leagueRankingProvider.getRanking(LeagueWeek.of(LocalDateTime.of(2026, 10, 9, 0, 1)));
 
         verify(snackHistoryService, times(2)).getSnackCountsByUser(any());
+    }
+
+    @Test
+    void 캐시_없이_계산하면_캐시를_읽지도_저장하지도_않는다() {
+        leagueRankingProvider.getRanking(THIS_WEEK);
+
+        leagueRankingProvider.calculateRanking(THIS_WEEK);
+        leagueRankingProvider.calculateRanking(THIS_WEEK);
+
+        // 캐시 조회 1번 + 캐시 미사용 계산 2번
+        verify(snackHistoryService, times(3)).getSnackCountsByUser(any());
+    }
+
+    @Test
+    void 캐시_없이_계산한_결과는_캐시에_남지_않는다() {
+        LeagueWeek sundayView = LeagueWeek.of(LocalDateTime.of(2026, 10, 11, 23, 59, 50));
+
+        leagueRankingProvider.calculateRanking(sundayView);
+
+        assertThat(cacheManager.getCache(LeagueRankingProvider.CACHE_NAME).get(sundayView.cacheKey())).isNull();
     }
 }

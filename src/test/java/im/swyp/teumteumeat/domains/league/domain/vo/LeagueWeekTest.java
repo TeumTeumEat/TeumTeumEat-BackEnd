@@ -76,4 +76,19 @@ class LeagueWeekTest {
         assertThat(mondayView.cacheKey()).isEqualTo("2026-10-05:2026-10-11");
         assertThat(fridayView.cacheKey()).isEqualTo(mondayView.cacheKey());
     }
+
+    @Test
+    void 남은_시간에_소수점이_있으면_올림한다() {
+        LeagueWeek week = LeagueWeek.of(LocalDateTime.of(2026, 10, 11, 23, 59, 49, 300_000_000));
+
+        // 실제 남은 시간 10.7초 → 11초 (내림하면 카운트다운이 리셋보다 먼저 0이 됨)
+        assertThat(week.remainingSeconds()).isEqualTo(11);
+    }
+
+    @Test
+    void 남은_시간이_정수_초면_그대로_반환한다() {
+        LeagueWeek week = LeagueWeek.of(LocalDateTime.of(2026, 10, 11, 23, 59, 50));
+
+        assertThat(week.remainingSeconds()).isEqualTo(10);
+    }
 }
