@@ -62,4 +62,12 @@ class LeagueTimeResolverTest {
         assertThatThrownBy(() -> resolver.now(-tooFar)).isInstanceOf(BaseException.class);
         assertThatThrownBy(() -> resolver.now(Long.MIN_VALUE)).isInstanceOf(BaseException.class);
     }
+
+    @Test
+    void 활성화되어_있고_헤더가_있을_때만_오프셋_요청이다() {
+        assertThat(new LeagueTimeResolver(true).isSimulated(ONE_HOUR)).isTrue();
+        assertThat(new LeagueTimeResolver(true).isSimulated(0L)).isTrue();
+        assertThat(new LeagueTimeResolver(true).isSimulated(null)).isFalse();
+        assertThat(new LeagueTimeResolver(false).isSimulated(ONE_HOUR)).isFalse();
+    }
 }

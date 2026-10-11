@@ -32,7 +32,7 @@ public class LeagueUseCase {
 
     public LeagueResponse getLeague(Long userId, Long timeOffsetSeconds) {
         LeagueWeek week = LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds));
-        LeagueRanking ranking = leagueRankingProvider.getRanking(week);
+        LeagueRanking ranking = getRanking(week, timeOffsetSeconds);
         List<LeagueParticipant> participants = ranking.participants();
 
         List<LeagueRankerResponse> rankers = new ArrayList<>();
@@ -47,7 +47,8 @@ public class LeagueUseCase {
      * 이번 주 리그 내 순위 (리그 화면 외에서 내 순위만 필요할 때)
      */
     public LeagueMyRankResponse getMyRank(Long userId, Long timeOffsetSeconds) {
-        LeagueRanking ranking = leagueRankingProvider.getRanking(LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds)));
+        LeagueWeek week = LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds));
+        LeagueRanking ranking = getRanking(week, timeOffsetSeconds);
         return getMyRank(userId, ranking);
     }
 
@@ -57,11 +58,19 @@ public class LeagueUseCase {
      */
     public LeagueResultResponse getLatestResult(Long userId, Long timeOffsetSeconds) {
         LeagueWeek lastWeek = LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds)).previous();
-        LeagueRanking ranking = leagueRankingProvider.getRanking(lastWeek);
+        LeagueRanking ranking = getRanking(lastWeek, timeOffsetSeconds);
 
         return ranking.rankOf(userId)
                 .map(rank -> LeagueMapper.toResultResponse(lastWeek, ranking.participantAt(rank), rank))
                 .orElseGet(() -> LeagueMapper.toUnrankedResultResponse(lastWeek));
+    }
+
+    // dev 시각 오프셋 요청은 실제 유저 캐시와 섞이지 않도록 캐시 없이 계산
+    private LeagueRanking getRanking(LeagueWeek week, Long timeOffsetSeconds) {
+        if (leagueTimeResolver.isSimulated(timeOffsetSeconds)) {
+            return leagueRankingProvider.calculateRanking(week);
+        }
+        return leagueRankingProvider.getRanking(week);
     }
 
     private LeagueMyRankResponse getMyRank(Long userId, LeagueRanking ranking) {

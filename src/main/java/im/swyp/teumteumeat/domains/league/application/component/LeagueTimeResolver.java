@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
  * dev/local 환경에서만 요청 헤더(X-League-Time-Offset)로 받은 오프셋(초)을 현재 시각에 더해,
  * 리셋 직전/직후 화면을 테스트할 수 있게 한다.
  * - 헤더가 붙은 그 요청의 조회 계산에만 적용되며 상태를 저장하지 않는다.
+ * - 오프셋 요청은 랭킹 캐시를 읽거나 쓰지 않는다. (실제 유저 캐시와 분리)
  * - 스낵 적립, 푸시 알림 등 다른 기능은 항상 실제 시각을 사용한다.
  * - 운영(prod)에서는 비활성화되어 헤더를 무시한다.
  */
@@ -30,9 +31,17 @@ public class LeagueTimeResolver {
         this.timeOffsetEnabled = timeOffsetEnabled;
     }
 
+    /**
+     * 오프셋이 적용되는 요청인지 (활성화 상태 + 헤더 존재)
+     * 오프셋 요청은 실제 유저의 랭킹 캐시와 섞이지 않도록 캐시를 사용하지 않는다.
+     */
+    public boolean isSimulated(Long timeOffsetSeconds) {
+        return timeOffsetEnabled && timeOffsetSeconds != null;
+    }
+
     public LocalDateTime now(Long timeOffsetSeconds) {
         LocalDateTime now = LocalDateTime.now();
-        if (!timeOffsetEnabled || timeOffsetSeconds == null) {
+        if (!isSimulated(timeOffsetSeconds)) {
             return now;
         }
         // Math.abs는 Long.MIN_VALUE에서 오버플로되므로 양쪽 경계를 직접 비교
