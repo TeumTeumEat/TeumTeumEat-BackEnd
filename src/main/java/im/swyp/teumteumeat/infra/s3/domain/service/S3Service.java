@@ -30,9 +30,9 @@ public class S3Service {
     public URL generatePresignedUrl(
             String key,
             Long contentLength,
-            FileType fileType
+            String contentType
     ) {
-        return generatePresignedUrlInternal(key, contentLength, fileType);
+        return generatePresignedUrlInternal(key, contentLength, contentType);
     }
 
     public String createKey(String fileName, FileType fileType) {
@@ -58,11 +58,11 @@ public class S3Service {
         return String.format("%s_%s", UUID.randomUUID(), originalFileName);
     }
 
-    private URL generatePresignedUrlInternal(String key, Long contentLength, FileType fileType) {
+    private URL generatePresignedUrlInternal(String key, Long contentLength, String contentType) {
         PutObjectRequest.Builder builder = PutObjectRequest.builder()
                 .bucket(s3Properties.bucket())
                 .key(key)
-                .contentType(fileType.getContentType());
+                .contentType(contentType);
 
         //todo V1 Deprecated시 contentLength을 필수값으로 요구
         if (contentLength != null) {

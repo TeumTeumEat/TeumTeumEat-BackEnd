@@ -9,10 +9,10 @@ import im.swyp.teumteumeat.infra.s3.domain.service.S3Service;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlRequest;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 
 import java.net.URL;
-import java.util.Objects;
 
 @UseCase
 @RequiredArgsConstructor
@@ -26,21 +26,21 @@ public class S3UseCase {
         String fileName = request.fileName();
         Long contentLength = request.fileSize();
         FileType fileType = request.fileType();
-        validSupportedExtension(fileName, fileType);
+        MediaType mediaType = getSupportedMediaType(fileName, fileType);
         validFileSizeLimit(contentLength, fileType);
 
         String key = s3Service.createKey(fileName, fileType);
-        URL presignedUrl = s3Service.generatePresignedUrl(key, contentLength, fileType);
+        URL presignedUrl = s3Service.generatePresignedUrl(key, contentLength, mediaType.toString());
 //        String fileUrl = s3Service.generateFileUrl(key);
 
         return S3Mapper.toPresignedUrlResponse(presignedUrl, key);
     }
 
-    // 파일 종류에 맞는 확장자인지 검사
-    private void validSupportedExtension(String fileName, FileType fileType) {
-        if (!Objects.equals(StringUtils.getFilenameExtension(fileName), fileType.getExtension())) {
-            throw new BaseException(FileResponseCode.NOT_SUPPORTED_EXTENSION);
-        }
+    // 확장자로 MIME 타입을 찾고, 파일 종류에서 허용하는 타입인지 검사
+    private MediaType getSupportedMediaType(String fileName, FileType fileType) {
+        return MediaTypeFactory.getMediaType(fileName)
+                .filter(fileType.getAllowedMediaTypes()::contains)
+                .orElseThrow(() -> new BaseException(FileResponseCode.NOT_SUPPORTED_EXTENSION));
     }
 
     private void validFileSizeLimit(Long contentLength, FileType fileType) {
