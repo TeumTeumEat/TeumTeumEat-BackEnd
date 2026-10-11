@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.league.application.usecase;
 
 import im.swyp.teumteumeat.domains.league.application.component.LeagueRankingProvider;
+import im.swyp.teumteumeat.domains.league.application.component.LeagueTimeResolver;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
@@ -15,7 +16,6 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,10 +27,11 @@ public class LeagueUseCase {
     private static final int RANKER_LIMIT = 10;
 
     private final LeagueRankingProvider leagueRankingProvider;
+    private final LeagueTimeResolver leagueTimeResolver;
     private final UserService userService;
 
-    public LeagueResponse getLeague(Long userId) {
-        LeagueWeek week = LeagueWeek.of(LocalDateTime.now());
+    public LeagueResponse getLeague(Long userId, Long timeOffsetSeconds) {
+        LeagueWeek week = LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds));
         LeagueRanking ranking = leagueRankingProvider.getRanking(week);
         List<LeagueParticipant> participants = ranking.participants();
 
@@ -45,8 +46,8 @@ public class LeagueUseCase {
     /**
      * 이번 주 리그 내 순위 (리그 화면 외에서 내 순위만 필요할 때)
      */
-    public LeagueMyRankResponse getMyRank(Long userId) {
-        LeagueRanking ranking = leagueRankingProvider.getRanking(LeagueWeek.of(LocalDateTime.now()));
+    public LeagueMyRankResponse getMyRank(Long userId, Long timeOffsetSeconds) {
+        LeagueRanking ranking = leagueRankingProvider.getRanking(LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds)));
         return getMyRank(userId, ranking);
     }
 
@@ -54,8 +55,8 @@ public class LeagueUseCase {
      * 지난주 리그 최종 결과 중 내 순위 (리그 종료 후 결과 모달용)
      * 끝난 주차는 스낵 기록과 스트릭 기준일이 고정되어 있어 다시 계산해도 같은 결과가 나온다.
      */
-    public LeagueResultResponse getLatestResult(Long userId) {
-        LeagueWeek lastWeek = LeagueWeek.of(LocalDateTime.now()).previous();
+    public LeagueResultResponse getLatestResult(Long userId, Long timeOffsetSeconds) {
+        LeagueWeek lastWeek = LeagueWeek.of(leagueTimeResolver.now(timeOffsetSeconds)).previous();
         LeagueRanking ranking = leagueRankingProvider.getRanking(lastWeek);
 
         return ranking.rankOf(userId)

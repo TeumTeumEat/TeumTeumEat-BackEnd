@@ -15,3 +15,8 @@ spring:
 
 swagger:
   server-url: ${DEV_SWAGGER_SERVER_URL}
+
+# 리그 조회 API에서 X-League-Time-Offset 헤더로 기준 시각을 옮겨 테스트 (prod는 미설정 → 비활성)
+league:
+  time-offset:
+    enabled: true

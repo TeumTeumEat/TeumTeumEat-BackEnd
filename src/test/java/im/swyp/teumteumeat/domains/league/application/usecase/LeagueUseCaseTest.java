@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.league.application.usecase;
 
 import im.swyp.teumteumeat.domains.league.application.component.LeagueRankingProvider;
+import im.swyp.teumteumeat.domains.league.application.component.LeagueTimeResolver;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueMyRankResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueRankerResponse;
 import im.swyp.teumteumeat.domains.league.application.dto.response.LeagueResponse;
@@ -52,7 +53,9 @@ class LeagueUseCaseTest {
         userService = mock(UserService.class);
         userQuizService = mock(UserQuizService.class);
         leagueUseCase = new LeagueUseCase(
-                new LeagueRankingProvider(snackHistoryService, userService, userQuizService), userService);
+                new LeagueRankingProvider(snackHistoryService, userService, userQuizService),
+                new LeagueTimeResolver(true),
+                userService);
 
         when(snackHistoryService.getSnackCountsByUser(any())).thenReturn(snackCounts);
         when(userService.getUsersByIds(anyList())).thenReturn(users);
@@ -65,7 +68,7 @@ class LeagueUseCaseTest {
         participant(2L, "라마바", 10, 0, 0);
         participant(3L, "사아자", 5, 0, 0);
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers()).extracting(LeagueRankerResponse::weeklySnackCount)
                 .containsExactly(10L, 5L, 3L);
@@ -78,7 +81,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 5, 2, 0);
         participant(2L, "라마바", 5, 7, 0);
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers()).extracting(LeagueRankerResponse::name)
                 .containsExactly("라*바", "가*다");
@@ -89,7 +92,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 5, 3, 10);
         participant(2L, "라마바", 5, 3, 1);
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers()).extracting(LeagueRankerResponse::name)
                 .containsExactly("라*바", "가*다");
@@ -101,7 +104,7 @@ class LeagueUseCaseTest {
             participant(id, "유저" + id, 100 - id, 0, 0);
         }
 
-        LeagueResponse response = leagueUseCase.getLeague(12L);
+        LeagueResponse response = leagueUseCase.getLeague(12L, null);
 
         assertThat(response.rankers()).hasSize(10);
         assertThat(response.rankers()).noneMatch(LeagueRankerResponse::isMe);
@@ -114,7 +117,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 3, 0, 0);
         participant(2L, "라마바", 10, 0, 0);
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers().get(1).isMe()).isTrue();
         assertThat(response.me().rank()).isEqualTo(2);
@@ -127,7 +130,7 @@ class LeagueUseCaseTest {
         UserEntity me = user(99L, "김지민", 0);
         when(userService.getUserById(99L)).thenReturn(me);
 
-        LeagueResponse response = leagueUseCase.getLeague(99L);
+        LeagueResponse response = leagueUseCase.getLeague(99L, null);
 
         assertThat(response.rankers()).hasSize(1);
         assertThat(response.me().rank()).isNull();
@@ -141,7 +144,7 @@ class LeagueUseCaseTest {
         UserEntity me = user(1L, "김지민", 0);
         when(userService.getUserById(1L)).thenReturn(me);
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers()).isEmpty();
         assertThat(response.me().rank()).isNull();
@@ -153,7 +156,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 3, 0, 0);
         snackCounts.add(snackCount(2L, 10, 1));
 
-        LeagueResponse response = leagueUseCase.getLeague(1L);
+        LeagueResponse response = leagueUseCase.getLeague(1L, null);
 
         assertThat(response.rankers()).hasSize(1);
         assertThat(response.me().rank()).isEqualTo(1);
@@ -164,9 +167,9 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 3, 0, 0);
         participant(2L, "라마바", 10, 0, 0);
 
-        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(1L);
+        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(1L, null);
 
-        assertThat(myRank).isEqualTo(leagueUseCase.getLeague(1L).me());
+        assertThat(myRank).isEqualTo(leagueUseCase.getLeague(1L, null).me());
         assertThat(myRank.rank()).isEqualTo(2);
         assertThat(myRank.weeklySnackCount()).isEqualTo(3);
     }
@@ -177,7 +180,7 @@ class LeagueUseCaseTest {
         UserEntity me = user(99L, "김지민", 0);
         when(userService.getUserById(99L)).thenReturn(me);
 
-        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(99L);
+        LeagueMyRankResponse myRank = leagueUseCase.getMyRank(99L, null);
 
         assertThat(myRank.rank()).isNull();
         assertThat(myRank.name()).isEqualTo("김*민");
@@ -189,7 +192,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 3, 0, 0);
         LeagueWeek expectedWeek = LeagueWeek.of(LocalDateTime.now()).previous();
 
-        leagueUseCase.getLatestResult(1L);
+        leagueUseCase.getLatestResult(1L, null);
 
         ArgumentCaptor<LeagueWeek> weekCaptor = ArgumentCaptor.forClass(LeagueWeek.class);
         verify(snackHistoryService).getSnackCountsByUser(weekCaptor.capture());
@@ -205,7 +208,7 @@ class LeagueUseCaseTest {
         participant(1L, "가나다", 3, 0, 0);
         participant(2L, "라마바", 10, 0, 0);
 
-        LeagueResultResponse response = leagueUseCase.getLatestResult(1L);
+        LeagueResultResponse response = leagueUseCase.getLatestResult(1L, null);
 
         assertThat(response.rank()).isEqualTo(2);
         assertThat(response.weeklySnackCount()).isEqualTo(3);
@@ -217,10 +220,34 @@ class LeagueUseCaseTest {
     void 지난주_스낵이_없으면_순위_없이_반환한다() {
         participant(1L, "가나다", 3, 0, 0);
 
-        LeagueResultResponse response = leagueUseCase.getLatestResult(99L);
+        LeagueResultResponse response = leagueUseCase.getLatestResult(99L, null);
 
         assertThat(response.rank()).isNull();
         assertThat(response.weeklySnackCount()).isZero();
+    }
+
+    @Test
+    void 시각_오프셋을_주면_옮긴_시각이_속한_주차로_집계한다() {
+        participant(1L, "가나다", 3, 0, 0);
+        long oneWeek = 7 * 24 * 60 * 60;
+        LeagueWeek expectedWeek = LeagueWeek.of(LocalDateTime.now().plusSeconds(oneWeek));
+
+        LeagueResponse response = leagueUseCase.getLeague(1L, oneWeek);
+
+        assertThat(response.weekStartDate()).isEqualTo(expectedWeek.weekStartDate());
+        ArgumentCaptor<LeagueWeek> weekCaptor = ArgumentCaptor.forClass(LeagueWeek.class);
+        verify(snackHistoryService).getSnackCountsByUser(weekCaptor.capture());
+        assertThat(weekCaptor.getValue().weekStart()).isEqualTo(expectedWeek.weekStart());
+    }
+
+    @Test
+    void 시각_오프셋을_주면_지난주_결과도_옮긴_시각_기준으로_조회한다() {
+        long oneWeek = 7 * 24 * 60 * 60;
+        LeagueWeek expectedLastWeek = LeagueWeek.of(LocalDateTime.now().plusSeconds(oneWeek)).previous();
+
+        LeagueResultResponse response = leagueUseCase.getLatestResult(1L, oneWeek);
+
+        assertThat(response.weekStartDate()).isEqualTo(expectedLastWeek.weekStartDate());
     }
 
     private void participant(Long userId, String name, long weeklySnackCount, int streak, int joinedDaysAfterBase) {
