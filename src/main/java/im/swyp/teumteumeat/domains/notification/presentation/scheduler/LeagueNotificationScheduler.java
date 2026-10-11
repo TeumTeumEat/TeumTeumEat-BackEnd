@@ -6,6 +6,7 @@ import im.swyp.teumteumeat.global.component.DistributedLockFacade;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @Component
+// 리그 알림 발송 여부를 환경변수(LEAGUE_NOTIFICATION_SCHEDULER_ENABLED)로 제어한다. 값이 없으면 활성화
+@ConditionalOnProperty(name = "notification.league.scheduler-enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class LeagueNotificationScheduler {
 
