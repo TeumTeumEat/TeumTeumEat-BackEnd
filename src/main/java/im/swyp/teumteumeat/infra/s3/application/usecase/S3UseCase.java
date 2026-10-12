@@ -4,46 +4,47 @@ import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.infra.s3.application.mapper.S3Mapper;
 import im.swyp.teumteumeat.infra.s3.constant.FileResponseCode;
+import im.swyp.teumteumeat.infra.s3.constant.FileType;
 import im.swyp.teumteumeat.infra.s3.domain.service.S3Service;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlRequest;
 import im.swyp.teumteumeat.infra.s3.application.dto.PresignedUrlResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 
 import java.net.URL;
-import java.util.Objects;
 
 @UseCase
 @RequiredArgsConstructor
 public class S3UseCase {
 
     private final S3Service s3Service;
-    private static final Long MAX_SIZE = 50L * 1024 * 1024; // 50MB
 
     public PresignedUrlResponse generatePresignedUrl(
             PresignedUrlRequest request
     ) {
         String fileName = request.fileName();
         Long contentLength = request.fileSize();
-        validSupportedExtension(fileName);
-        validFileSizeLimit(contentLength);
+        FileType fileType = request.fileType();
+        MediaType mediaType = getSupportedMediaType(fileName, fileType);
+        validFileSizeLimit(contentLength, fileType);
 
-        String key = s3Service.createKey(fileName);
-        URL presignedUrl = s3Service.generatePresignedUrl(key, contentLength);
+        String key = s3Service.createKey(fileName, fileType);
+        URL presignedUrl = s3Service.generatePresignedUrl(key, contentLength, mediaType.toString());
 //        String fileUrl = s3Service.generateFileUrl(key);
 
         return S3Mapper.toPresignedUrlResponse(presignedUrl, key);
     }
 
-    // PDF 파일 확장자인지 검사
-    private void validSupportedExtension(String fileName) {
-        if (!Objects.equals(StringUtils.getFilenameExtension(fileName), "pdf")) {
-            throw new BaseException(FileResponseCode.NOT_SUPPORTED_EXTENSION);
-        }
+    // 확장자로 MIME 타입을 찾고, 파일 종류에서 허용하는 타입인지 검사
+    private MediaType getSupportedMediaType(String fileName, FileType fileType) {
+        return MediaTypeFactory.getMediaType(fileName)
+                .filter(fileType.getAllowedMediaTypes()::contains)
+                .orElseThrow(() -> new BaseException(FileResponseCode.NOT_SUPPORTED_EXTENSION));
     }
 
-    private void validFileSizeLimit(Long contentLength) {
-        if (contentLength != null && contentLength > MAX_SIZE) {
+    private void validFileSizeLimit(Long contentLength, FileType fileType) {
+        if (contentLength != null && contentLength > fileType.getMaxSize()) {
             throw new BaseException(FileResponseCode.EXCEED_FILE_SIZE);
         }
     }

@@ -120,6 +120,9 @@ infra:
       static: ${AWS_REGION}
     s3:
       bucket: ${AWS_S3_BUCKET}
+      region: ${AWS_REGION}
+      # 업로드된 파일 접근 URL의 base. 비어 있으면 S3 기본 URL, CDN 도입 시 CDN 도메인으로 설정
+      base-url: ${AWS_S3_BASE_URL:}
   fcm:
     key-path: file:configs/firebaseKey.json
 
