@@ -23,20 +23,26 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LeagueNotificationUseCase {
 
+    private static final int RANKED_MESSAGE_LIMIT = 10;
+
     private final LeagueRankingProvider leagueRankingProvider;
     private final UserService userService;
     private final FcmService fcmService;
     private final LeagueNotificationProperties leagueNotificationProperties;
 
     /**
-     * 리그 마감 전 참여 독려 알림 (순위가 있으면 현재 순위 포함, 없으면 기본 문구)
+     * 리그 마감 전 참여 독려 알림 (이번 주 순위에 든 유저에게만 발송, 10위 이내면 현재 순위 포함)
      */
     public void sendDeadlineNotifications(LocalDateTime now) {
         Map<Long, Integer> ranks = leagueRankingProvider.getRanking(LeagueWeek.of(now)).rankByUserId();
 
         List<PushMessage> pushMessages = new ArrayList<>();
         for (UserEntity user : userService.getAllWithTokensByPushEnabled()) {
-            String body = resolveDeadlineBody(ranks.get(user.getId()));
+            Integer rank = ranks.get(user.getId());
+            if (rank == null) {
+                continue;
+            }
+            String body = resolveDeadlineBody(rank);
             pushMessages.add(PushMessageMapper.toPushMessage(
                     user, leagueNotificationProperties.getTitle(), body, NotificationType.LEAGUE_DEADLINE)
             );
@@ -67,8 +73,8 @@ public class LeagueNotificationUseCase {
         fcmService.send(pushMessages);
     }
 
-    String resolveDeadlineBody(Integer rank) {
-        if (rank == null) {
+    String resolveDeadlineBody(int rank) {
+        if (rank > RANKED_MESSAGE_LIMIT) {
             return leagueNotificationProperties.getDeadlineUnrankedMessage();
         }
         return leagueNotificationProperties.getDeadlineRankedMessage()
