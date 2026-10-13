@@ -29,7 +29,7 @@ public interface NotificationTestApi {
                           | type | 알림 | 발송 시점 (KST) |
                           |---|---|---|
                           | `DAILY_QUIZ` | 학습 알림 | 유저가 설정한 시간 (오늘 퀴즈를 푼 유저 제외) |
-                          | `LEAGUE_DEADLINE` | 주간 간식 리그 마감 임박 | 일 20:00 |
+                          | `LEAGUE_DEADLINE` | 주간 간식 리그 마감 임박 | 일 20:00 (이번 주 순위에 든 유저만) |
                           | `LEAGUE_RESULT` | 지난주 주간 간식 리그 결과 | 월 08:00 (지난주 순위에 든 유저만) |
                           """
     )
