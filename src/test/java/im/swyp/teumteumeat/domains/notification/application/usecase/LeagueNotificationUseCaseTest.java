@@ -28,7 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-// 주간 리그 푸시 알림의 대상 선정(순위 유무)과 문구 치환을 확인한다.
+// 주간 리그 푸시 알림의 대상 선정(순위 유무)과 문구 선택(10위 이내 여부)을 확인한다.
 // FCM 발송은 목킹하고, 발송 요청된 푸시 메시지(토큰/본문/data)와 조회한 리그 주차를 검증한다.
 class LeagueNotificationUseCaseTest {
 
@@ -60,26 +60,30 @@ class LeagueNotificationUseCaseTest {
     }
 
     @Test
-    void 순위가_있으면_마감_문구에_순위를_치환한다() {
+    void 순위가_10위_이내면_마감_문구에_순위를_치환한다() {
         assertThat(leagueNotificationUseCase.resolveDeadlineBody(3)).isEqualTo("마감 4시간 전! 현재 3위");
+        assertThat(leagueNotificationUseCase.resolveDeadlineBody(10)).isEqualTo("마감 4시간 전! 현재 10위");
     }
 
     @Test
-    void 순위가_없으면_마감_기본_문구를_사용한다() {
-        assertThat(leagueNotificationUseCase.resolveDeadlineBody(null)).isEqualTo("마감 4시간 전!");
+    void 순위가_10위_밖이면_마감_기본_문구를_사용한다() {
+        assertThat(leagueNotificationUseCase.resolveDeadlineBody(11)).isEqualTo("마감 4시간 전!");
     }
 
     @Test
-    void 마감_알림은_순위와_관계없이_푸시_허용_유저_전원에게_발송한다() {
-        participant(1L);
+    void 마감_알림은_이번_주_순위에_든_유저에게만_발송한다() {
+        for (long userId = 1; userId <= 11; userId++) {
+            participant(userId);
+        }
         pushUser(1L, "token-1a", "token-1b");
-        pushUser(2L, "token-2");
+        pushUser(11L, "token-11");
+        pushUser(12L, "token-12");
 
         leagueNotificationUseCase.sendDeadlineNotifications(SUNDAY_EVENING);
 
         List<PushMessage> sent = sentPushMessages();
         assertThat(sent).extracting(PushMessage::tokens)
-                .containsExactly(List.of("token-1a", "token-1b"), List.of("token-2"));
+                .containsExactly(List.of("token-1a", "token-1b"), List.of("token-11"));
         assertThat(sent).extracting(PushMessage::body)
                 .containsExactly("마감 4시간 전! 현재 1위", "마감 4시간 전!");
         assertThat(sent).extracting(PushMessage::data)
