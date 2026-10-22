@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,14 +19,16 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class NoticeService {
 
+    private static final Sort LATEST_FIRST = Sort.by(Sort.Direction.DESC, "id");
+
     private final NoticeRepository noticeRepository;
 
     public Slice<Notice> getNoticeSlice(Pageable pageable) {
-        return noticeRepository.findSliceByIsDeletedFalse(pageable);
+        return noticeRepository.findSliceByIsDeletedFalse(latestFirst(pageable));
     }
 
     public Page<Notice> getNoticePage(Pageable pageable) {
-        return noticeRepository.findPageByIsDeletedFalse(pageable);
+        return noticeRepository.findPageByIsDeletedFalse(latestFirst(pageable));
     }
 
     // 팝업 기간 내 공지 중 최신 1개
@@ -48,6 +51,11 @@ public class NoticeService {
     }
 
     /* HELPER METHOD */
+    // 정렬은 최신순(id DESC) 고정, 요청의 sort는 무시
+    private Pageable latestFirst(Pageable pageable) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), LATEST_FIRST);
+    }
+
     private Notice getOrThrow(Long id) {
         return noticeRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new BaseException(NoticeResponseCode.NOT_FOUND_NOTICE));
