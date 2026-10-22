@@ -12,8 +12,9 @@ public record NoticeResponse(
 
         @Schema(description = "제목", example = "서비스 신규 오픈 안내") String title,
 
-        @Schema(description = "내용", example = "안녕하세요. 틈틈잇...") String content,
+        @Schema(description = "작성일시", example = "2026-10-01T12:00:00") LocalDateTime createdDate,
 
-        @Schema(description = "작성일시", example = "2026-10-01T12:00:00") LocalDateTime createdDate
+        @Schema(description = "공지 클릭 시 띄울 전체화면 공지 (메인 모달의 detail과 동일)")
+        NoticeDetailResponse detail
 ) {
 }

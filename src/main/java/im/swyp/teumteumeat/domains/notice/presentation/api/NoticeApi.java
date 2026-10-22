@@ -24,7 +24,7 @@ public interface NoticeApi {
 
     @Operation(
             summary = "공지 목록 조회 (무한 스크롤)",
-            description = "삭제되지 않은 공지를 최신순으로 조회합니다. 전체 개수 없이 다음 페이지 존재 여부(hasNext)만 반환합니다."
+            description = "삭제되지 않은 공지를 최신순으로 조회합니다. 전체 개수 없이 다음 페이지 존재 여부(hasNext)만 반환합니다. 공지를 누르면 추가 조회 없이 detail로 전체화면을 띄웁니다. detail.externalLink가 있으면 외부 URL, detail.deepLink가 있으면 앱 내부 딥링크로 이동하고, 둘 다 null이면 액션 버튼을 띄우지 않습니다."
     )
     @PageableAsQueryParam
     @ApiResponseExplanations(

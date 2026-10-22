@@ -28,10 +28,9 @@ public class NoticeService {
         noticeRepository.save(notice);
     }
 
-    public void updateNotice(Long noticeId, String title, String content) {
+    public void updateNotice(Long noticeId, Notice source) {
         Notice notice = getOrThrow(noticeId);
-        notice.updateTitle(title);
-        notice.updateContent(content);
+        notice.updateNotice(source);
     }
 
     public void deleteNotice(Long noticeId) {
