@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.notice.presentation.controller;
 
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
 import im.swyp.teumteumeat.domains.notice.application.usecase.NoticeUseCase;
@@ -30,6 +31,13 @@ public class NoticeController implements NoticeApi {
             @PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         NoticeSliceResponse response = noticeUseCase.getNoticeSlice(pageable);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/notices/modal")
+    public ResponseEntity<ApiResponse<NoticeModalResponse>> getNoticeModal() {
+        NoticeModalResponse response = noticeUseCase.getNoticeModal();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

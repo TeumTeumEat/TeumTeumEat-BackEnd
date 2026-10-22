@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.notice.application.mapper;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeContentRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeAdminResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeDetailResponse;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
@@ -41,6 +42,15 @@ public class NoticeMapper {
                 .externalLink(notice.getExternalLink())
                 .deepLink(notice.getDeepLink())
                 .actionButtonText(notice.getActionButtonText())
+                .build();
+    }
+
+    public static NoticeModalResponse toNoticeModalResponse(Notice notice, String modalImageUrl, NoticeDetailResponse detail) {
+        return NoticeModalResponse.builder()
+                .noticeId(notice.getId())
+                .title(notice.getTitle())
+                .modalImageUrl(modalImageUrl)
+                .detail(detail)
                 .build();
     }
 

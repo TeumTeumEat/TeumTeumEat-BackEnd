@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.notice.presentation.api;
 
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
 import im.swyp.teumteumeat.domains.notice.domain.constant.NoticeResponseCode;
@@ -36,6 +37,18 @@ public interface NoticeApi {
     ResponseEntity<ApiResponse<NoticeSliceResponse>> getNotices(
             @Parameter(hidden = true) Pageable pageable
     );
+
+    @Operation(
+            summary = "메인 모달 공지 조회",
+            description = "메인 화면 진입 시 띄울 모달로, 팝업 기간(popupStartAt 이상 ~ popupEndAt 미만) 내 최신 공지 1개를 조회합니다. 공지가 없으면 data가 null입니다. 모달을 누르면 추가 조회 없이 detail로 전체화면을 띄웁니다. 액션 버튼 규칙은 공지 목록 조회와 같습니다."
+    )
+    @ApiResponseExplanations(
+            success = @ApiSuccessResponseExplanation(
+                    responseClass = NoticeModalResponse.class,
+                    description = "조회 성공"
+            )
+    )
+    ResponseEntity<ApiResponse<NoticeModalResponse>> getNoticeModal();
 
     @Operation(
             summary = "(ADMIN) 공지 목록 조회 (페이지)",

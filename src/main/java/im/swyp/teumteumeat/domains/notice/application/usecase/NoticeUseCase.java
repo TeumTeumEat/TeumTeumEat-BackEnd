@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRe
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeAdminResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeDetailResponse;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @UseCase
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,6 +29,16 @@ public class NoticeUseCase {
 
     public NoticeSliceResponse getNoticeSlice(Pageable pageable) {
         return NoticeMapper.toNoticeSliceResponse(noticeService.getNoticeSlice(pageable).map(this::toNoticeResponse));
+    }
+
+    // 팝업 기간 내 최신 공지 1개를 모달로 노출, 공지가 없으면 null
+    public NoticeModalResponse getNoticeModal() {
+        return noticeService.getPopupNotice(LocalDateTime.now())
+                .map(notice -> NoticeMapper.toNoticeModalResponse(
+                        notice,
+                        s3Service.generateFileUrl(notice.getModalImageKey()),
+                        toNoticeDetailResponse(notice)))
+                .orElse(null);
     }
 
     public NoticePageResponse getNoticePage(Pageable pageable) {

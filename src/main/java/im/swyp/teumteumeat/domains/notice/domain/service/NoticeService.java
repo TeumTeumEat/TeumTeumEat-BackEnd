@@ -6,9 +6,13 @@ import im.swyp.teumteumeat.domains.notice.persistence.repository.NoticeRepositor
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,11 @@ public class NoticeService {
 
     public Page<Notice> getNoticePage(Pageable pageable) {
         return noticeRepository.findPageByIsDeletedFalse(pageable);
+    }
+
+    // 팝업 기간 내 공지 중 최신 1개
+    public Optional<Notice> getPopupNotice(LocalDateTime now) {
+        return noticeRepository.findPopupNotices(now, PageRequest.of(0, 1)).stream().findFirst();
     }
 
     public void createNotice(Notice notice) {
