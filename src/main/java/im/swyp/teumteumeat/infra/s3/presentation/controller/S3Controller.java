@@ -29,7 +29,7 @@ public class S3Controller implements S3Api {
             @RequestBody @Valid PresignedUrlRequest request,
             @LoginUser CustomUserDetails user
     ) {
-        PresignedUrlResponse signedUrl = s3UseCase.generatePresignedUrl(request);
+        PresignedUrlResponse signedUrl = s3UseCase.generatePresignedUrl(request, user.role());
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, signedUrl));
     }
 }

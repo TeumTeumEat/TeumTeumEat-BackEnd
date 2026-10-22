@@ -11,6 +11,7 @@ public enum FileResponseCode implements BaseResponseCode {
     NOT_SUPPORTED_EXTENSION(HttpStatus.BAD_REQUEST, "FILE-001", "지원되지 않는 파일 확장자입니다."),
     NOT_FOUND_S3_FILE(HttpStatus.NOT_FOUND, "FILE-002", "업로드된 문서가 아닙니다."),
     EXCEED_FILE_SIZE(HttpStatus.BAD_REQUEST, "FILE-003", "파일 크기가 허용 용량을 초과했습니다."),
+    FORBIDDEN_FILE_TYPE(HttpStatus.FORBIDDEN, "FILE-004", "해당 파일 종류를 업로드할 권한이 없습니다."),
     ;
 
     private final HttpStatus status;
