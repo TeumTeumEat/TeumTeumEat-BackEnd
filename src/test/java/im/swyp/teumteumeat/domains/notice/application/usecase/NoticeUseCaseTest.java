@@ -15,7 +15,6 @@ import org.springframework.data.domain.SliceImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -42,10 +41,12 @@ class NoticeUseCaseTest {
     @Test
     @DisplayName("모달 공지는 모달 이미지 URL과 함께 전체화면 공지를 detail로 반환한다")
     void modalWithDetail() {
-        when(noticeService.getPopupNotice(any())).thenReturn(Optional.of(notice()));
+        when(noticeService.getPopupNotices(any())).thenReturn(List.of(notice()));
 
-        NoticeModalResponse response = noticeUseCase.getNoticeModal();
+        List<NoticeModalResponse> notices = noticeUseCase.getNoticeModals().notices();
 
+        assertThat(notices).hasSize(1);
+        NoticeModalResponse response = notices.get(0);
         assertThat(response)
                 .extracting(NoticeModalResponse::title, NoticeModalResponse::modalImageUrl)
                 .containsExactly("제목", MODAL_IMAGE_URL);
@@ -56,11 +57,11 @@ class NoticeUseCaseTest {
     }
 
     @Test
-    @DisplayName("팝업 기간 내 공지가 없으면 모달 공지는 null이다")
+    @DisplayName("팝업 기간 내 공지가 없으면 모달 공지는 빈 리스트다")
     void noModal() {
-        when(noticeService.getPopupNotice(any())).thenReturn(Optional.empty());
+        when(noticeService.getPopupNotices(any())).thenReturn(List.of());
 
-        assertThat(noticeUseCase.getNoticeModal()).isNull();
+        assertThat(noticeUseCase.getNoticeModals().notices()).isEmpty();
     }
 
     @Test

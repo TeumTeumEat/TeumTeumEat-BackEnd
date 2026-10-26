@@ -13,13 +13,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class NoticeService {
 
     private static final Sort LATEST_FIRST = Sort.by(Sort.Direction.DESC, "id");
+    // 메인 모달로 노출할 최대 공지 수
+    private static final int MAX_POPUP_NOTICE_COUNT = 1;
 
     private final NoticeRepository noticeRepository;
 
@@ -31,9 +33,9 @@ public class NoticeService {
         return noticeRepository.findPageByIsDeletedFalse(latestFirst(pageable));
     }
 
-    // 팝업 기간 내 공지 중 최신 1개
-    public Optional<Notice> getPopupNotice(LocalDateTime now) {
-        return noticeRepository.findPopupNotices(now, PageRequest.of(0, 1)).stream().findFirst();
+    // 팝업 기간 내 공지 중 최신순 최대 MAX_POPUP_NOTICE_COUNT개
+    public List<Notice> getPopupNotices(LocalDateTime now) {
+        return noticeRepository.findPopupNotices(now, PageRequest.of(0, MAX_POPUP_NOTICE_COUNT));
     }
 
     public void createNotice(Notice notice) {

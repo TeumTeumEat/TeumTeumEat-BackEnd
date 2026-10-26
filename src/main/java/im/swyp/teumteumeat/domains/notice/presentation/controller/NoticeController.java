@@ -2,7 +2,7 @@ package im.swyp.teumteumeat.domains.notice.presentation.controller;
 
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
-import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalListResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
 import im.swyp.teumteumeat.domains.notice.application.usecase.NoticeUseCase;
@@ -34,8 +34,8 @@ public class NoticeController implements NoticeApi {
 
     @Override
     @GetMapping("/notices/modal")
-    public ResponseEntity<ApiResponse<NoticeModalResponse>> getNoticeModal() {
-        NoticeModalResponse response = noticeUseCase.getNoticeModal();
+    public ResponseEntity<ApiResponse<NoticeModalListResponse>> getNoticeModals() {
+        NoticeModalListResponse response = noticeUseCase.getNoticeModals();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 

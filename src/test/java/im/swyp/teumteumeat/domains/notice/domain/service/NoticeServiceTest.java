@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.time.LocalDateTime;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -31,5 +33,15 @@ class NoticeServiceTest {
         noticeService.getNoticePage(SORTED_REQUEST);
 
         verify(noticeRepository).findPageByIsDeletedFalse(LATEST_FIRST);
+    }
+
+    @Test
+    @DisplayName("모달 공지는 팝업 기간 내 공지를 최대 1개까지 조회한다")
+    void popupNoticesLimit() {
+        LocalDateTime now = LocalDateTime.of(2026, 10, 26, 9, 0);
+
+        noticeService.getPopupNotices(now);
+
+        verify(noticeRepository).findPopupNotices(now, PageRequest.of(0, 1));
     }
 }

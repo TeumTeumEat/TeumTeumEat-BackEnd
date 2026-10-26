@@ -4,6 +4,7 @@ import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRe
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeAdminResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeDetailResponse;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalListResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeResponse;
@@ -31,14 +32,11 @@ public class NoticeUseCase {
         return NoticeMapper.toNoticeSliceResponse(noticeService.getNoticeSlice(pageable).map(this::toNoticeResponse));
     }
 
-    // 팝업 기간 내 최신 공지 1개를 모달로 노출, 공지가 없으면 null
-    public NoticeModalResponse getNoticeModal() {
-        return noticeService.getPopupNotice(LocalDateTime.now())
-                .map(notice -> NoticeMapper.toNoticeModalResponse(
-                        notice,
-                        s3Service.generateFileUrl(notice.getModalImageKey()),
-                        toNoticeDetailResponse(notice)))
-                .orElse(null);
+    // 팝업 기간 내 공지를 최신순으로 모달 노출, 공지가 없으면 빈 리스트
+    public NoticeModalListResponse getNoticeModals() {
+        return NoticeMapper.toNoticeModalListResponse(noticeService.getPopupNotices(LocalDateTime.now()).stream()
+                .map(this::toNoticeModalResponse)
+                .toList());
     }
 
     public NoticePageResponse getNoticePage(Pageable pageable) {
@@ -63,6 +61,14 @@ public class NoticeUseCase {
     /* HELPER METHOD */
     private NoticeResponse toNoticeResponse(Notice notice) {
         return NoticeMapper.toNoticeResponse(notice, toNoticeDetailResponse(notice));
+    }
+
+    private NoticeModalResponse toNoticeModalResponse(Notice notice) {
+        return NoticeMapper.toNoticeModalResponse(
+                notice,
+                s3Service.generateFileUrl(notice.getModalImageKey()),
+                toNoticeDetailResponse(notice)
+        );
     }
 
     private NoticeDetailResponse toNoticeDetailResponse(Notice notice) {

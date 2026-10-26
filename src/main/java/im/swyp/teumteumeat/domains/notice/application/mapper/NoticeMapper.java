@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.domains.notice.application.mapper;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeContentRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeAdminResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeDetailResponse;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalListResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeResponse;
@@ -11,6 +12,8 @@ import im.swyp.teumteumeat.domains.notice.persistence.entity.Notice;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 public class NoticeMapper {
     public static Notice toNotice(NoticeContentRequest request) {
@@ -51,6 +54,12 @@ public class NoticeMapper {
                 .title(notice.getTitle())
                 .modalImageUrl(modalImageUrl)
                 .detail(detail)
+                .build();
+    }
+
+    public static NoticeModalListResponse toNoticeModalListResponse(List<NoticeModalResponse> notices) {
+        return NoticeModalListResponse.builder()
+                .notices(notices)
                 .build();
     }
 
