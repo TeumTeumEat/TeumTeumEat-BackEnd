@@ -55,7 +55,7 @@ public class DocumentUseCase {
         Goal goal = goalService.getGoalById(goalId);
 
         // 임시 문서가 생성되어 있는 경우 User, Goal 업데이트
-        Optional<Document> existDocument = documentService.getDocumnetByFileKeyOptional(request.fileKey());
+        Optional<Document> existDocument = documentService.getDocumentByFileKeyOptional(request.fileKey());
 
         Document document;
         if (existDocument.isPresent()) {
@@ -193,7 +193,7 @@ public class DocumentUseCase {
 
     @Transactional
     public void handleOcrFailure(String fileKey, DocumentErrorType errorType) {
-        documentService.getDocumnetByFileKeyOptional(fileKey).ifPresent(document -> {
+        documentService.getDocumentByFileKeyOptional(fileKey).ifPresent(document -> {
             document.updateStatusToFailed(errorType);
             eventPublisher.publishEvent(new DocumentSseEvent(document));
         });

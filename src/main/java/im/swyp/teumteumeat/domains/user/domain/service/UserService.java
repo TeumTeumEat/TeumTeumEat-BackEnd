@@ -18,6 +18,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -26,16 +27,24 @@ public class UserService {
         return getOrThrow(userId);
     }
 
+    public List<UserEntity> getUsersByIds(List<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
     public UserEntity getUserWithCurrentGoal(Long userId) {
         return userRepository.findWithCurrentGoalById(userId)
                 .orElseThrow(() -> new BaseException(UserResponseCode.NOT_FOUND_USER));
     }
 
-    @Transactional(readOnly = true)
     public List<UserEntity> getAllWithTokensByCommuteTime(LocalTime now, LocalTime minuteEnd) {
         return userRepository.findAllByCommuteTimeInRange(now, minuteEnd);
     }
 
+    public List<UserEntity> getAllWithTokensByPushEnabled() {
+        return userRepository.findAllWithTokensByPushEnabled();
+    }
+
+    @Transactional
     public void updateName(UserEntity user, String name) {
         user.updateName(name);
     }
@@ -44,14 +53,17 @@ public class UserService {
         return user.getCommuteInfo();
     }
 
+    @Transactional
     public void updateCommuteInfo(UserEntity user, CommuteInfo commuteInfo) {
         user.updateCommuteInfo(commuteInfo);
     }
 
+    @Transactional
     public void updateSettings(UserEntity user, UserSettingsRequest request) {
         user.updateSettings(request);
     }
 
+    @Transactional
     public void deleteUser(UserEntity user) {
         userRepository.delete(user);
     }

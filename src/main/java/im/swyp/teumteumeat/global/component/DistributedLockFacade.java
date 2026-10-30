@@ -68,7 +68,7 @@ public class DistributedLockFacade {
                 .trySet("PROCESSING", ttlSeconds, TimeUnit.SECONDS);
 
         if (!isFirstRequest) {
-            log.warn("Duplicate request blocked by cooldown key: {}", key);
+            log.debug("Duplicate request blocked by cooldown key: {}", key);
             throw new BaseException(CommonResponseCode.TOO_MANY_REQUESTS);
         }
     }

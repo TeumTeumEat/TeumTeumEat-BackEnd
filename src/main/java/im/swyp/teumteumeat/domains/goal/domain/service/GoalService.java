@@ -10,12 +10,14 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GoalService {
 
     private final GoalRepository goalRepository;
@@ -28,10 +30,12 @@ public class GoalService {
         return goalRepository.findAllByUserId(user.getId());
     }
 
+    @Transactional
     public Long createGoal(Goal goal) {
         return goalRepository.save(goal).getId();
     }
 
+    @Transactional
     public void updateGoal(Goal goal, GoalUpdateRequest request) {
         LocalDate endDate = null;
         if (request.studyPeriod() != null) {
@@ -44,6 +48,7 @@ public class GoalService {
                 request.prompt());
     }
 
+    @Transactional
     public void deleteGoal(Long goalId) {
         goalRepository.deleteById(goalId);
     }

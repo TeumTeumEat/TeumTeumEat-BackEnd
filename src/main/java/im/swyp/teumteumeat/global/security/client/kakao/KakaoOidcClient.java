@@ -19,7 +19,7 @@ public class KakaoOidcClient extends AbstractOidcClient {
         this.kakaoJwksUrl = kakaoIssuer + "/.well-known/jwks.json";
     }
 
-    @Cacheable(value = "KakaoOauth", cacheManager = "oidcCacheManager")
+    @Cacheable(value = "KakaoOauth", cacheManager = "redisCacheManager")
     public OidcPublicKeyResponse getOidcPublicKey() {
         return fetchKey(kakaoJwksUrl);
     }

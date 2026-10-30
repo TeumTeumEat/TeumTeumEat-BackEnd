@@ -13,7 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Notification", description = "푸쉬 알림 API")
+@Tag(name = "Notification", description = "푸쉬 알림 API (data.type 명세는 '(ADMIN) 푸쉬 알림 테스트' API 설명 참고)")
 public interface DeviceTokenApi {
 
     @Operation(

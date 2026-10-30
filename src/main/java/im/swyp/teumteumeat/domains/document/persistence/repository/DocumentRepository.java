@@ -1,6 +1,7 @@
 package im.swyp.teumteumeat.domains.document.persistence.repository;
 
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     Optional<Document> findByFileKey(String fileKey);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "goal")
+    @EntityGraph(attributePaths = "goal")
     Optional<Document> findWithGoalById(Long id);
+
+    @EntityGraph(attributePaths = {"goal", "user"})
+    Optional<Document> findWithGoalAndUserById(Long id);
 }

@@ -8,7 +8,6 @@ import im.swyp.teumteumeat.domains.document.domain.service.DocumentService;
 import im.swyp.teumteumeat.domains.document.domain.service.DocumentSummaryService;
 import im.swyp.teumteumeat.domains.document.persistence.entity.Document;
 import im.swyp.teumteumeat.domains.document.persistence.entity.DocumentSummary;
-import im.swyp.teumteumeat.domains.document.persistence.repository.DocumentSummaryRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.GoalResponseCode;
 import im.swyp.teumteumeat.domains.goal.domain.service.GoalService;
 import im.swyp.teumteumeat.domains.goal.persistence.entity.Goal;
@@ -45,7 +44,6 @@ public class DocumentSummaryUseCase {
     private final UserQuizService userQuizService;
     private final DocumentService documentService;
     private final DocumentSectionService documentSectionService;
-    private final DocumentSummaryRepository documentSummaryRepository;
     private final DocumentSummaryService documentSummaryService;
     private final QuizUseCase quizUseCase;
     private final QuizService quizService;
@@ -76,6 +74,7 @@ public class DocumentSummaryUseCase {
 
     // Stream 분리 (템플릿 콜백 패턴)
     // 비동기식 요약글 생성 (스트리밍)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public SseEmitter createSummaryStream(Long userId, Long goalId, Long documentId) {
         DocumentGoalContext context = validateAndGetDocumentContext(userId, goalId, documentId);
         Document document = context.document();
@@ -121,7 +120,7 @@ public class DocumentSummaryUseCase {
         boolean hasSolvedToday = outOfQuota;
 
         // 단순 조회 로직: 가장 최신의 요약글 찾아서 반환 (자동 생성 x)
-        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+        Optional<DocumentSummary> latestSummaryOpt = documentSummaryService.getLatestSummaryByDocumentId(documentId);
         DocumentSummary summary = latestSummaryOpt.orElseThrow(() -> new BaseException(CommonResponseCode.NOT_FOUND));
 
         return DocumentMapper.toDocumentDetailResponse(document, summary, hasSolvedToday, isFirstTime);
@@ -141,7 +140,7 @@ public class DocumentSummaryUseCase {
             throw new BaseException(QuizResponseCode.TODAY_QUOTA_EXCEEDED);
         }
 
-        Optional<DocumentSummary> latestSummaryOpt = documentSummaryRepository.findLatestByDocumentId(documentId);
+        Optional<DocumentSummary> latestSummaryOpt = documentSummaryService.getLatestSummaryByDocumentId(documentId);
         if (latestSummaryOpt.isPresent()) {
             DocumentSummary latestSummary = latestSummaryOpt.get();
 

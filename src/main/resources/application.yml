@@ -99,6 +99,12 @@ jwt:
     expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
     reissue-limit-days: ${JWT_REFRESH_TOKEN_REISSUE_LIMIT_DAYS}
 
+# 웹 로그인 리프레시 토큰 쿠키
+cookie:
+  refresh-token:
+    secure: ${REFRESH_TOKEN_COOKIE_SECURE:true}
+    same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:None}
+
 # 프론트 임의 controller 내 url
 
 rest-client:
@@ -114,6 +120,9 @@ infra:
       static: ${AWS_REGION}
     s3:
       bucket: ${AWS_S3_BUCKET}
+      region: ${AWS_REGION}
+      # 업로드된 파일 접근 URL의 base. 비어 있으면 S3 기본 URL, CDN 도입 시 CDN 도메인으로 설정
+      base-url: ${AWS_S3_BASE_URL:}
   fcm:
     key-path: file:configs/firebaseKey.json
 
@@ -154,7 +163,20 @@ management:
     ssl:
       enabled: false
 
+sentry:
+  dsn: ${SENTRY_DSN} # 고유 주소
+  environment: ${spring.profiles.active}
+  exception-resolver-order: -2147483647 # @ExceptionHandler에서 잡는 예외도 전송
+  send-default-pii: true # RequestBody 캡처
+  max-request-body-size: medium
+  logs:
+    enabled: true
+  traces-sample-rate: 1.0
+  profile-session-sample-rate: 1.0
+  profile-lifecycle: TRACE
+
 notification:
+  title: "틈틈잇 준비 완료!"
   streak-threshold: 3
   streak-message-ratio: 50
   default-messages:
@@ -176,3 +198,9 @@ notification:
       date: 18
     - message: "전설의 4주 연속 스탬프가 눈앞에! 🏆 25일간의 틈틈잇 대기록 잊지 마세요!"
       date: 25
+  league:
+    scheduler-enabled: ${LEAGUE_NOTIFICATION_SCHEDULER_ENABLED:true}
+    title: "틈틈잇"
+    deadline-ranked-message: "🍿 이번 주 간식 리그 마감까지 4시간 남았어요! 현재 {rank}위"
+    deadline-unranked-message: "🍿 이번 주 간식 리그 마감까지 4시간 남았어요!"
+    result-message: "지난주 주간 간식 리그 결과를 확인해 보세요🏆"

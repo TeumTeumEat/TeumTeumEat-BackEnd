@@ -26,17 +26,15 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException {
-        log.error("OAuth2 Login Failed. Request URI: {}", request.getRequestURI());
-        log.error("Error Message: {}", exception.getMessage());
-
         if (exception instanceof OAuth2AuthenticationException oauth2Exception) {
             OAuth2Error error = oauth2Exception.getError();
-            log.error("OAuth2 Error Code: {}", error.getErrorCode());
-            log.error("OAuth2 Error Description: {}", error.getDescription());
-            log.error("OAuth2 Error URI: {}", error.getUri());
+            log.warn("OAuth2 Login Failed. Request URI: {}, Error Code: {}, Description: {}",
+                    request.getRequestURI(), error.getErrorCode(), error.getDescription());
+        } else {
+            log.warn("OAuth2 Login Failed. Request URI: {}, Message: {}",
+                    request.getRequestURI(), exception.getMessage());
         }
 
-        log.error("Stack Trace: ", exception);
         oAuth2ResponseHandler.sendRedirectOrJson(
                 request, response,
                 Map.of("error", "oauth2_login_failed"),

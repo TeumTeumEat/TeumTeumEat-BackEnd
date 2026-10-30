@@ -10,7 +10,9 @@ import im.swyp.teumteumeat.domains.quiz.persistence.repository.QuizRepository;
 import im.swyp.teumteumeat.domains.goal.domain.constant.Difficulty;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -34,20 +36,15 @@ public class QuizService {
                 return quizRepository.findByDocumentSummaryId(documentSummaryId);
         }
 
-        public List<Quiz> getUnsolvedCategoryQuizzes(Long categoryDocumentId, Long userId, int limit) {
-                return quizRepository.findUnsolvedCategoryQuizzes(categoryDocumentId, userId,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
-        }
-
         public List<Quiz> getUnsolvedQuizzesByAttributes(Long categoryDocumentId, Long userId, Difficulty difficulty,
                         String topic, int limit) {
                 return quizRepository.findUnsolvedQuizzesByAttributes(categoryDocumentId, userId, difficulty, topic,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
+                                PageRequest.of(0, limit));
         }
 
         public List<Quiz> getUnsolvedDocumentQuizzes(Long documentSummaryId, Long userId, int limit) {
                 return quizRepository.findUnsolvedByDocumentSummaryId(documentSummaryId, userId,
-                                org.springframework.data.domain.PageRequest.of(0, limit));
+                                PageRequest.of(0, limit));
         }
 
         public Quiz getQuizById(Long quizId) {
@@ -60,28 +57,28 @@ public class QuizService {
                 quizRepository.deleteById(quizId);
         }
 
-        @Transactional
-        public void createQuizFromCategoryDocument(
+        @Transactional(propagation = Propagation.NOT_SUPPORTED)
+        public Quiz buildQuizFromCategoryDocument(
                         CategoryDocument document,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
-                saveQuiz(document, null, null, question, options, answer, type, explanation, topic, difficulty);
+                return buildQuiz(document, null, null, question, options, answer, type, explanation, topic, difficulty);
         }
 
-        @Transactional
-        public void createQuizFromPdfDocument(
+        @Transactional(propagation = Propagation.NOT_SUPPORTED)
+        public Quiz buildQuizFromPdfDocument(
                         Document document,
                         DocumentSummary documentSummary,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
-                saveQuiz(null, document, documentSummary, question, options, answer, type, explanation, topic,
+                return buildQuiz(null, document, documentSummary, question, options, answer, type, explanation, topic,
                                 difficulty);
         }
 
-        private void saveQuiz(CategoryDocument categoryDocument, Document document, DocumentSummary documentSummary,
+        private Quiz buildQuiz(CategoryDocument categoryDocument, Document document, DocumentSummary documentSummary,
                         String question, String options, String answer, QuizType type, String explanation,
                         String topic, Difficulty difficulty) {
-                Quiz quiz = Quiz.builder()
+                return Quiz.builder()
                                 .categoryDocument(categoryDocument)
                                 .document(document)
                                 .documentSummary(documentSummary)
@@ -93,8 +90,11 @@ public class QuizService {
                                 .topic(topic)
                                 .difficulty(difficulty)
                                 .build();
+        }
 
-                quizRepository.save(quiz);
+        @Transactional
+        public void saveQuizzes(List<Quiz> quizzes) {
+                quizRepository.saveAll(quizzes);
         }
 
 }

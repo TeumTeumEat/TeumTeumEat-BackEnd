@@ -19,6 +19,8 @@ import im.swyp.teumteumeat.global.security.dto.request.SignUpRequest;
 import im.swyp.teumteumeat.global.security.properties.google.GoogleOidcProperties;
 import im.swyp.teumteumeat.global.security.token.JwtProvider;
 import im.swyp.teumteumeat.global.security.token.Token;
+
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,19 +52,27 @@ public class OAuth2UseCase {
             name = payload.name().trim();
         }
 
-        UserEntity user = userService.findBySocialProviderAndSocialId(provider, socialId)
-                .orElseGet(() -> {
-                    UserStatus status = request.termsAgreed() ? UserStatus.ACTIVE : UserStatus.PENDING;
-                    UserEntity savedUser = userService.getOrSaveUser(name, provider, socialId, email, status);
-                    if (status == UserStatus.PENDING) {
-                        throw new BaseException(AuthResponseCode.NEED_REGISTER);
-                    }
-                    return savedUser;
-                });
+        boolean isNewUser = false;
+
+        Optional<UserEntity> optionalUser = userService.findBySocialProviderAndSocialId(provider, socialId);
+        UserEntity user;
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+        } else {
+            UserStatus status = request.termsAgreed() ? UserStatus.ACTIVE : UserStatus.PENDING;
+            user = userService.getOrSaveUser(name, provider, socialId, email, status);
+
+            if (status == UserStatus.PENDING) {
+                throw new BaseException(AuthResponseCode.NEED_REGISTER);
+            }
+            isNewUser = true;
+        }
 
         if (user.getStatus() == UserStatus.PENDING) {
             if (request.termsAgreed()) {
                 userService.completeSignup(user.getId());
+                isNewUser = true;
             } else {
                 throw new BaseException(AuthResponseCode.NEED_REGISTER);
             }
@@ -103,6 +113,7 @@ public class OAuth2UseCase {
                 .accessToken(token.accessToken())
                 .refreshToken(token.refreshToken())
                 .isOnboardingCompleted(userService.updateAndGetOnboardingCompleted(user.getId()))
+                .isNewUser(isNewUser)
                 .build();
     }
 

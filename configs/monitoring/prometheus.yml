@@ -6,3 +6,9 @@ scrape_configs:
       - targets: ['spring-blue:9292', 'spring-green:9292']
         labels:
           group: 'spring'
+    relabel_configs:
+      # instance 라벨을 spring-blue:9292 → blue 로 줄여 대시보드 범례를 간결하게
+      - source_labels: [__address__]
+        regex: 'spring-(blue|green):\d+'
+        target_label: instance
+        replacement: '$1'

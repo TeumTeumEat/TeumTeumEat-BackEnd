@@ -1,10 +1,8 @@
 package im.swyp.teumteumeat.global.exception;
 
-import im.swyp.teumteumeat.domains.quiz.domain.constant.QuizResponseCode;
 import im.swyp.teumteumeat.global.common.ApiResponse;
 import im.swyp.teumteumeat.global.common.BaseResponseCode;
 import im.swyp.teumteumeat.global.common.CommonResponseCode;
-import im.swyp.teumteumeat.global.security.constant.AuthResponseCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -34,10 +32,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBaseException(BaseException e) {
         BaseResponseCode responseCode = e.getResponseCode();
 
-        // 의도된 예외는 로그 미출력
-        boolean isSilent = (responseCode == AuthResponseCode.NEED_REGISTER
-                || responseCode == QuizResponseCode.TODAY_QUOTA_EXCEEDED);
-        if (!isSilent) {
+        // 4xx는 클라이언트 요청에서 흔히 발생하는 상황이라 스택트레이스 없이 info로만 남김
+        if (responseCode.getStatus().is5xxServerError()) {
             log.error("BaseException: ", e);
         } else {
             log.info("BaseException: {}", e.getMessage());
@@ -112,7 +108,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("HttpRequestMethodNotSupportedException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.METHOD_NOT_ALLOWED;
         return ResponseEntity
                 .status(responseCode.getStatus())
@@ -122,7 +117,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("MethodArgumentNotValidException: ", e);
         BaseResponseCode responseCode = CommonResponseCode.INVALID_METHOD_ARGUMENT;
         return ResponseEntity
                 .status(responseCode.getStatus())
@@ -132,7 +126,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        log.error("JSON Parse Error: ", e);
         BaseResponseCode responseCode = CommonResponseCode.BAD_REQUEST;
         return ResponseEntity
                 .status(responseCode.getStatus())

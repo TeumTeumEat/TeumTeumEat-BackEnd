@@ -8,6 +8,8 @@ public record LoginResponse(
 
         String refreshToken,
 
-        boolean isOnboardingCompleted
+        boolean isOnboardingCompleted,
+
+        boolean isNewUser
 ) {
 }

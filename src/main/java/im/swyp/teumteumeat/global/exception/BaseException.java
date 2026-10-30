@@ -12,4 +12,9 @@ public class BaseException extends RuntimeException {
         super(responseCode.getMessage());
         this.responseCode = responseCode;
     }
+
+    public BaseException(BaseResponseCode responseCode, Throwable cause) {
+        super(responseCode.getMessage(), cause);
+        this.responseCode = responseCode;
+    }
 }

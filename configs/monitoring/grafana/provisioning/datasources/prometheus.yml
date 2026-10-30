@@ -1,0 +1,13 @@
+apiVersion: 1
+
+datasources:
+  # 기존에 UI로 만든 데이터소스와 같은 이름이라, 첫 기동 시 새로 생기지 않고 이 설정으로 덮어써진다
+  - name: prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 10s # prometheus.yml의 scrape_interval과 맞춰야 $__rate_interval이 올바르게 계산된다

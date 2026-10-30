@@ -19,7 +19,7 @@ public class GoogleOidcClient extends AbstractOidcClient {
         this.googleJwksUrl = googleIssuer + "/oauth2/v3/certs";
     }
 
-    @Cacheable(value = "GoogleOauth", cacheManager = "oidcCacheManager")
+    @Cacheable(value = "GoogleOauth", cacheManager = "redisCacheManager")
     public OidcPublicKeyResponse getOidcPublicKey() {
         return fetchKey(googleJwksUrl);
     }
