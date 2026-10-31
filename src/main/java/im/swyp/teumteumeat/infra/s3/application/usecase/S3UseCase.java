@@ -1,5 +1,6 @@
 package im.swyp.teumteumeat.infra.s3.application.usecase;
 
+import im.swyp.teumteumeat.domains.user.domain.constant.Role;
 import im.swyp.teumteumeat.global.annotation.UseCase;
 import im.swyp.teumteumeat.global.exception.BaseException;
 import im.swyp.teumteumeat.infra.s3.application.mapper.S3Mapper;
@@ -21,11 +22,13 @@ public class S3UseCase {
     private final S3Service s3Service;
 
     public PresignedUrlResponse generatePresignedUrl(
-            PresignedUrlRequest request
+            PresignedUrlRequest request,
+            Role role
     ) {
         String fileName = request.fileName();
         Long contentLength = request.fileSize();
         FileType fileType = request.fileType();
+        validUploadPermission(fileType, role);
         MediaType mediaType = getSupportedMediaType(fileName, fileType);
         validFileSizeLimit(contentLength, fileType);
 
@@ -34,6 +37,12 @@ public class S3UseCase {
 //        String fileUrl = s3Service.generateFileUrl(key);
 
         return S3Mapper.toPresignedUrlResponse(presignedUrl, key);
+    }
+
+    private void validUploadPermission(FileType fileType, Role role) {
+        if (fileType.isAdminOnly() && role != Role.ADMIN) {
+            throw new BaseException(FileResponseCode.FORBIDDEN_FILE_TYPE);
+        }
     }
 
     // 확장자로 MIME 타입을 찾고, 파일 종류에서 허용하는 타입인지 검사
