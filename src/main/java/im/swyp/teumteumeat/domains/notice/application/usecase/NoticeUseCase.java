@@ -28,8 +28,8 @@ public class NoticeUseCase {
     private final NoticeService noticeService;
     private final S3Service s3Service;
 
-    public NoticeSliceResponse getNoticeSlice(Pageable pageable) {
-        return NoticeMapper.toNoticeSliceResponse(noticeService.getNoticeSlice(pageable).map(this::toNoticeResponse));
+    public NoticeSliceResponse getNoticeSlice(Long lastNoticeId, int size) {
+        return NoticeMapper.toNoticeSliceResponse(noticeService.getNoticeSlice(lastNoticeId, size).map(this::toNoticeResponse));
     }
 
     // 팝업 기간 내 공지를 최신순으로 모달 노출, 공지가 없으면 빈 리스트

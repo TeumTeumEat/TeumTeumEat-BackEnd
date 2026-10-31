@@ -38,10 +38,9 @@ public interface NoticeApi {
 
     @Operation(
             summary = "공지 목록 조회 (무한 스크롤)",
-            description = "공지를 최신순으로 조회합니다. 전체 개수 없이 다음 페이지 존재 여부(hasNext)만 반환합니다. 공지를 누르면 detail 값으로 전체화면을 띄웁니다. detail.externalLink가 있으면 외부 URL, detail.deepLink가 있으면 앱 내부 딥링크로 이동하고, 둘 다 null이면 액션 버튼을 띄우지 않습니다."
+            description = "공지를 최신순으로 조회합니다. 첫 요청은 lastNoticeId 없이 보내고, 다음 요청부터는 직전 응답의 마지막 공지 noticeId를 lastNoticeId로 보냅니다. hasNext가 false이면 더 조회할 공지가 없습니다. 공지를 누르면 detail 값으로 전체화면을 띄웁니다. detail.externalLink가 있으면 외부 URL, detail.deepLink가 있으면 앱 내부 딥링크로 이동하고, 둘 다 null이면 액션 버튼을 띄우지 않습니다."
                     + IMAGE_QUERY_PARAMETER_DESCRIPTION
     )
-    @PageableAsQueryParam
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
                     responseClass = NoticeSliceResponse.class,
@@ -49,7 +48,8 @@ public interface NoticeApi {
             )
     )
     ResponseEntity<ApiResponse<NoticeSliceResponse>> getNotices(
-            @Parameter(hidden = true) Pageable pageable
+            @Parameter(description = "직전 응답의 마지막 공지 ID, 첫 요청은 생략", example = "42") Long lastNoticeId,
+            @Parameter(description = "조회할 공지 수 (1 ~ 50, 범위를 벗어나면 가까운 값으로 보정)", example = "20") int size
     );
 
     @Operation(

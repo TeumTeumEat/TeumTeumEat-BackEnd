@@ -83,8 +83,6 @@ public class NoticeMapper {
     public static NoticeSliceResponse toNoticeSliceResponse(Slice<NoticeResponse> slice) {
         return NoticeSliceResponse.builder()
                 .notices(slice.getContent())
-                .page(slice.getNumber())
-                .size(slice.getSize())
                 .hasNext(slice.hasNext())
                 .build();
     }

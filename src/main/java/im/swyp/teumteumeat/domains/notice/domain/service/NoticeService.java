@@ -22,11 +22,18 @@ public class NoticeService {
     private static final Sort LATEST_FIRST = Sort.by(Sort.Direction.DESC, "id");
     // 메인 모달로 노출할 최대 공지 수
     private static final int MAX_POPUP_NOTICE_COUNT = 1;
+    // 공지 목록 한 번에 조회할 최대 공지 수
+    private static final int MAX_SLICE_SIZE = 50;
 
     private final NoticeRepository noticeRepository;
 
-    public Slice<Notice> getNoticeSlice(Pageable pageable) {
-        return noticeRepository.findSliceByIsDeletedFalse(latestFirst(pageable));
+    // 커서 기반 최신순 조회, lastNoticeId가 없으면 첫 페이지이고 있으면 그보다 오래된 공지를 조회
+    public Slice<Notice> getNoticeSlice(Long lastNoticeId, int size) {
+        Pageable pageable = PageRequest.of(0, Math.min(Math.max(size, 1), MAX_SLICE_SIZE), LATEST_FIRST);
+        if (lastNoticeId == null) {
+            return noticeRepository.findSliceByIsDeletedFalse(pageable);
+        }
+        return noticeRepository.findSliceByIsDeletedFalseAndIdLessThan(lastNoticeId, pageable);
     }
 
     public Page<Notice> getNoticePage(Pageable pageable) {

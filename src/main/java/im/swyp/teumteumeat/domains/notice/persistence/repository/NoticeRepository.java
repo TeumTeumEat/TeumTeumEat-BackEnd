@@ -18,6 +18,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     Slice<Notice> findSliceByIsDeletedFalse(Pageable pageable);
 
+    Slice<Notice> findSliceByIsDeletedFalseAndIdLessThan(Long lastNoticeId, Pageable pageable);
+
     Page<Notice> findPageByIsDeletedFalse(Pageable pageable);
 
     @Query("SELECT n FROM Notice n WHERE n.isDeleted = false " +

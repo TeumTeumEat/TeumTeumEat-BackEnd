@@ -19,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -67,10 +68,10 @@ class NoticeUseCaseTest {
     @Test
     @DisplayName("공지 목록은 각 공지의 전체화면 공지를 detail로 함께 반환한다")
     void sliceWithDetail() {
-        when(noticeService.getNoticeSlice(any()))
+        when(noticeService.getNoticeSlice(any(), anyInt()))
                 .thenReturn(new SliceImpl<>(List.of(notice()), PageRequest.of(0, 20), false));
 
-        List<NoticeResponse> notices = noticeUseCase.getNoticeSlice(PageRequest.of(0, 20)).notices();
+        List<NoticeResponse> notices = noticeUseCase.getNoticeSlice(null, 20).notices();
 
         assertThat(notices)
                 .extracting(NoticeResponse::detail)

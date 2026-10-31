@@ -26,9 +26,10 @@ public class NoticeController implements NoticeApi {
     @Override
     @GetMapping("/notices")
     public ResponseEntity<ApiResponse<NoticeSliceResponse>> getNotices(
-            Pageable pageable
+            @RequestParam(required = false) Long lastNoticeId,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        NoticeSliceResponse response = noticeUseCase.getNoticeSlice(pageable);
+        NoticeSliceResponse response = noticeUseCase.getNoticeSlice(lastNoticeId, size);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
