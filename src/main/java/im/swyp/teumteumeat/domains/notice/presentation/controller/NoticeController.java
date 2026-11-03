@@ -2,6 +2,7 @@ package im.swyp.teumteumeat.domains.notice.presentation.controller;
 
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeCreateRequest;
 import im.swyp.teumteumeat.domains.notice.application.dto.request.NoticeUpdateRequest;
+import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeModalListResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticePageResponse;
 import im.swyp.teumteumeat.domains.notice.application.dto.response.NoticeSliceResponse;
 import im.swyp.teumteumeat.domains.notice.application.usecase.NoticeUseCase;
@@ -11,8 +12,6 @@ import im.swyp.teumteumeat.global.common.CommonResponseCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,9 +26,17 @@ public class NoticeController implements NoticeApi {
     @Override
     @GetMapping("/notices")
     public ResponseEntity<ApiResponse<NoticeSliceResponse>> getNotices(
-            @PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable
+            @RequestParam(required = false) Long lastNoticeId,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        NoticeSliceResponse response = noticeUseCase.getNoticeSlice(pageable);
+        NoticeSliceResponse response = noticeUseCase.getNoticeSlice(lastNoticeId, size);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
+    }
+
+    @Override
+    @GetMapping("/notices/modal")
+    public ResponseEntity<ApiResponse<NoticeModalListResponse>> getNoticeModals() {
+        NoticeModalListResponse response = noticeUseCase.getNoticeModals();
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));
     }
 
@@ -37,7 +44,7 @@ public class NoticeController implements NoticeApi {
     @GetMapping("/admin/notices")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<NoticePageResponse>> getNoticesForAdmin(
-            @PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable
+            Pageable pageable
     ) {
         NoticePageResponse response = noticeUseCase.getNoticePage(pageable);
         return ResponseEntity.ok(ApiResponse.ofSuccess(CommonResponseCode.OK, response));

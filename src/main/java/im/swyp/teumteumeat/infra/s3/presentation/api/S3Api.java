@@ -21,7 +21,11 @@ public interface S3Api {
 
     @Operation(
             summary = "Presigned Url 발급",
-            description = "발급 후 presignedUrl을 PUT 요청으로 클라이언트에서 파일을 s3에 업로드한 후, fileName과 fileKey를 이용해 /api/v1/goals/{goalId}/documents 에 등록합니다."
+            description = """
+                    발급 후 presignedUrl을 PUT 요청으로 클라이언트에서 파일을 s3에 업로드합니다.
+                    - USER_PDF (기본값): pdf, 최대 50MB. 업로드 후 fileName과 key로 /api/v1/goals/{goalId}/documents 에 등록
+                    - NOTICE_IMAGE (관리자 전용): png, jpg, jpeg, webp, 최대 10MB. 업로드 후 key를 공지 등록/수정의 fullScreenImageKey 또는 modalImageKey로 전달
+                    """
     )
     @ApiResponseExplanations(
             success = @ApiSuccessResponseExplanation(
@@ -29,7 +33,9 @@ public interface S3Api {
                     description = "발급 성공"
             ),
             errors = {
-                    @ApiErrorResponseExplanation(exceptionCode = FileResponseCode.class, name = "NOT_SUPPORTED_EXTENSION")
+                    @ApiErrorResponseExplanation(exceptionCode = FileResponseCode.class, name = "NOT_SUPPORTED_EXTENSION"),
+                    @ApiErrorResponseExplanation(exceptionCode = FileResponseCode.class, name = "EXCEED_FILE_SIZE"),
+                    @ApiErrorResponseExplanation(exceptionCode = FileResponseCode.class, name = "FORBIDDEN_FILE_TYPE")
             }
     )
     ResponseEntity<ApiResponse<PresignedUrlResponse>> getPresignedUrl(

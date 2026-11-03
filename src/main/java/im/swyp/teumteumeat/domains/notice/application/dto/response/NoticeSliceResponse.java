@@ -8,12 +8,8 @@ import java.util.List;
 @Builder
 public record NoticeSliceResponse(
 
-        @Schema(description = "공지 목록") List<NoticeResponse> notices,
+        @Schema(description = "공지 목록 (최신순)") List<NoticeResponse> notices,
 
-        @Schema(description = "현재 페이지 번호 (0부터 시작)", example = "0") int page,
-
-        @Schema(description = "페이지 크기", example = "20") int size,
-
-        @Schema(description = "다음 페이지 존재 여부", example = "true") boolean hasNext
+        @Schema(description = "다음 공지 존재 여부, true이면 마지막 공지의 noticeId를 lastNoticeId로 다음 요청", example = "true") boolean hasNext
 ) {
 }

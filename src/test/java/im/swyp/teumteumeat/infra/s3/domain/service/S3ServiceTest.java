@@ -3,6 +3,7 @@ package im.swyp.teumteumeat.infra.s3.domain.service;
 import im.swyp.teumteumeat.global.config.properties.S3Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
@@ -13,7 +14,7 @@ import static org.mockito.Mockito.mock;
 
 class S3ServiceTest {
 
-    private static final String KEY = "dev/origin/uuid_1강.pdf";
+    private static final String KEY = "dev/origin/uuid_lecture.pdf";
 
     private S3Service s3Service(String baseUrl) {
         S3Properties properties = new S3Properties("teumteumeat", "ap-northeast-2", baseUrl);
@@ -35,5 +36,17 @@ class S3ServiceTest {
     void generateFileUrlWithBaseUrl(String baseUrl) {
         assertThat(s3Service(baseUrl).generateFileUrl(KEY))
                 .isEqualTo("https://cdn.teumteumeat.co.kr/" + KEY);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "dev/notice/uuid_이벤트 배너#1.png | dev/notice/uuid_%EC%9D%B4%EB%B2%A4%ED%8A%B8%20%EB%B0%B0%EB%84%88%231.png",
+            "dev/notice/uuid_a+b?c%d.png       | dev/notice/uuid_a%2Bb%3Fc%25d.png",
+            "dev/notice/uuid_banner.png        | dev/notice/uuid_banner.png"
+    })
+    @DisplayName("key의 원본 파일명은 경로 구분자(/)를 유지한 채 URL 인코딩한다")
+    void generateFileUrlEncodesKey(String key, String encodedKey) {
+        assertThat(s3Service(null).generateFileUrl(key))
+                .isEqualTo("https://teumteumeat.s3.ap-northeast-2.amazonaws.com/" + encodedKey);
     }
 }
