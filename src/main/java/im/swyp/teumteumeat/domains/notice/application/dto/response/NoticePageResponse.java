@@ -8,7 +8,7 @@ import java.util.List;
 @Builder
 public record NoticePageResponse(
 
-        @Schema(description = "공지 목록") List<NoticeResponse> notices,
+        @Schema(description = "공지 목록") List<NoticeAdminResponse> notices,
 
         @Schema(description = "현재 페이지 번호 (0부터 시작)", example = "0") int page,
 

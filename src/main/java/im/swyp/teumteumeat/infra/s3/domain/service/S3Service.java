@@ -6,14 +6,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +45,7 @@ public class S3Service {
     }
 
     public String generateFileUrl(String key) {
-        return urlPrefix() + key;
+        return urlPrefix() + encodeKey(key);
     }
 
     /* HELPER METHOD */
@@ -52,6 +56,13 @@ public class S3Service {
             return baseUrl.endsWith(PATH_DELIMITER) ? baseUrl : baseUrl + PATH_DELIMITER;
         }
         return URL_PREFIX_DEFAULT.formatted(s3Properties.bucket(), s3Properties.region());
+    }
+
+    private String encodeKey(String key) {
+        return Arrays.stream(key.split(PATH_DELIMITER, -1))
+                .map(segment -> UriUtils.encodePathSegment(segment, StandardCharsets.UTF_8)
+                        .replace("+", "%2B"))
+                .collect(Collectors.joining(PATH_DELIMITER));
     }
 
     private String createUniqueFileName(final String originalFileName) {
