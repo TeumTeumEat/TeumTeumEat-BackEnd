@@ -25,13 +25,13 @@ public class Quiz extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private QuizType quizType;
 
-    @Column(nullable = false, length = 80)
+    @Column(nullable = false)
     private String content;
 
     @Column(nullable = false)
     private String answer;
 
-    @Column(nullable = false, length = 120)
+    @Column(nullable = false)
     private String description;
 
     @Column(columnDefinition = "TEXT")
